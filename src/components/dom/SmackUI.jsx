@@ -13,15 +13,15 @@ export const SmackButtons = () => {
         <div className='w-full flex items-center justify-center mb-4 bg-[#0E0504]'>
             <div className='w-full max-w-[380px] flex border-t-2 border-b-2 border-[#FABE7F]'>
                 <button 
-                    className='flex-1 px-4 py-2 font-[lemon-regular] bg-[#0E0504] text-[#FABE7F] text-4xl tracking-[0.04em] text-center align-middle'
+                    className='flex-1 px-4 py-2 font-[lemon-regular]  text-[#FABE7F] text-4xl tracking-[0.04em] text-center align-middle'
                 >
                     MENU
                 </button>
-                <div className='flex bg-[#0E0504] items-center flex-shrink-0'>
+                <div className='flex  items-center flex-shrink-0'>
                     <div className='h-[50%] w-[1px] bg-[#F5E4F8] relative mx-4'></div>
                 </div>
                 <button 
-                    className='flex-1 px-4 py-2 text-[#F5E4F8] bg-[#0E0504] text-4xl tracking-[0.04em] text-center align-middle'
+                    className='flex-1 px-4 py-2 text-[#F5E4F8]  text-4xl tracking-[0.04em] text-center align-middle'
                 >
                     <span className='font-[lemon-regular]'>CREATI</span><span className='font-[lemon-wide]'>VE</span>
                 </button>

@@ -96,13 +96,13 @@ export const Library = (props) => {
   const positions = useMemo(
     () => ({
       [magazines.smack]: isPortrait 
-        ? [-0.65 + (smackPage > 0 ? 0.65 : 0), 2, 0.5]   // Portrait: top
+        ? [-0.65 + (smackPage > 0 ? 0.65 : 0), 2.2, 2]   // Portrait: top
         : [-2.5 + (smackPage > 0 ? 0.65 : 0), 1, 5], // Landscape: left
       [magazines.vague]: isPortrait
-        ? [-0.65 + (vaguePage > 0 ? 0.65 : 0), 0, 0.5]  // Portrait: bottom
+        ? [-0.65 + (vaguePage > 0 ? 0.65 : 0), 0, 2]  // Portrait: bottom
         : [1.5 + (vaguePage > 0 ? 0.65 : 0), 1, 5],  // Landscape: right
       [magazines.engineer]: isPortrait
-        ? [-0.65 + (engineerPage > 0 ? 0.65 : 0), -2, 0.5]  // Portrait: further down
+        ? [-0.65 + (engineerPage > 0 ? 0.65 : 0), -2.2, 2]  // Portrait: further down
         : [-0.5 + (engineerPage > 0 ? 0.65 : 0), -1, 5], // Landscape: bottom
     }),
     [isPortrait, smackPage, vaguePage, engineerPage]

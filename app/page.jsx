@@ -11,6 +11,10 @@ const EngineerHeader = dynamic(() => import('@/components/dom/EngineerUI').then(
 const EngineerButtons = dynamic(() => import('@/components/dom/EngineerUI').then((mod) => mod.EngineerButtons), { ssr: true })
 const EngineerCTA = dynamic(() => import('@/components/dom/EngineerUI').then((mod) => mod.EngineerCTA), { ssr: true })
 
+const VagueHeader = dynamic(() => import('@/components/dom/VagueUI').then((mod) => mod.VagueHeader), { ssr: true })
+const VagueButtons = dynamic(() => import('@/components/dom/VagueUI').then((mod) => mod.VagueButtons), { ssr: true })
+const VagueCTA = dynamic(() => import('@/components/dom/VagueUI').then((mod) => mod.VagueCTA), { ssr: true })
+
 const Library = dynamic(() => import('@/components/canvas/Magazines/Library').then((mod) => mod.Library), {
   ssr: false,
 })
@@ -61,6 +65,27 @@ export default function Page() {
 
       <div className='relative w-full h-full'>
         <div className='absolute w-full z-10'>
+          <VagueHeader />
+        </div>
+        <div className='absolute w-full z-10 top-[80px]'>
+          <VagueButtons />
+        </div>
+        <div className='absolute w-full z-10 bottom-0'>
+          <VagueCTA />
+        </div>
+
+        <div className='w-full h-full text-center'>
+          <View className='flex h-full w-full flex-col items-center justify-center'>
+            <Suspense fallback={null}>
+              <Library position={[0, 0, 0]} />
+              <Common color={'#2C272F'} />
+            </Suspense>
+          </View>
+        </div>
+      </div>
+
+      {/* <div className='relative w-full h-full'>
+        <div className='absolute w-full z-10'>
           <EngineerHeader />
         </div>
         <div className='absolute w-full z-10 top-[80px]'>
@@ -78,7 +103,7 @@ export default function Page() {
             </Suspense>
           </View>
         </div>
-      </div>
+      </div> */}
     </>
   )
 }

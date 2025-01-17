@@ -32,6 +32,11 @@
     src: url('/fonts/HKGrotesk-SemiBold.otf') format('opentype');
 }
 
+@font-face {
+    font-family: 'Vogue';
+    src: url('/fonts/Vogue.ttf') format('truetype');
+}
+
 @layer base {
     * {
         box-sizing: border-box;
