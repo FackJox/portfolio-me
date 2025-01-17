@@ -1,10 +1,9 @@
 // Library.js
-import { Float, useTexture } from "@react-three/drei";
 import { atom, useAtom } from "jotai";
 import { Magazine } from "./Magazine";
-import React, { useEffect, useState, useMemo, useLayoutEffect } from "react";
+import React, { useState, useMemo, useLayoutEffect } from "react";
 import { useThree } from "@react-three/fiber";
-import { useSpring, animated } from "@react-spring/three";
+import { animated } from "@react-spring/three";
 
 // Atoms for page states
 const smackAtom = atom(0);
@@ -82,10 +81,7 @@ export const Library = (props) => {
   const [isPortrait, setIsPortrait] = useState(false);
   
   useLayoutEffect(() => {
-    console.log('Viewport dimensions (Three.js units):', { width: viewport.width, height: viewport.height });
-    console.log('Window dimensions (pixels):', { width: window.innerWidth, height: window.innerHeight });
     const newIsPortrait = viewport.width < viewport.height;
-    console.log('isPortrait changed:', { previous: isPortrait, new: newIsPortrait });
     setIsPortrait(newIsPortrait);
   }, [viewport.width, viewport.height, isPortrait]);
 
@@ -97,13 +93,13 @@ export const Library = (props) => {
     () => ({
       [magazines.smack]: isPortrait 
         ? [-0.65 + (smackPage > 0 ? 0.65 : 0), 2.2, 2]   // Portrait: top
-        : [-2.5 + (smackPage > 0 ? 0.65 : 0), 1, 5], // Landscape: left
+        : [-2.75 + (smackPage > 0 ? 0.65 : 0), -0.4, 6], // Landscape: left
       [magazines.vague]: isPortrait
         ? [-0.65 + (vaguePage > 0 ? 0.65 : 0), 0, 2]  // Portrait: bottom
-        : [1.5 + (vaguePage > 0 ? 0.65 : 0), 1, 5],  // Landscape: right
+        : [-0.5 + (vaguePage > 0 ? 0.65 : 0), -0.4, 6],  // Landscape: right
       [magazines.engineer]: isPortrait
         ? [-0.65 + (engineerPage > 0 ? 0.65 : 0), -2.2, 2]  // Portrait: further down
-        : [-0.5 + (engineerPage > 0 ? 0.65 : 0), -1, 5], // Landscape: bottom
+        : [1.75 + (engineerPage > 0 ? 0.65 : 0), -0.4, 6], // Landscape: bottom
     }),
     [isPortrait, smackPage, vaguePage, engineerPage]
   );

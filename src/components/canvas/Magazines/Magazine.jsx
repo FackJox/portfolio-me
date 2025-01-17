@@ -25,6 +25,8 @@ export const Magazine = ({
   const [focusedMagazine, setFocusedMagazine] = useAtom(focusedMagazineAtom);
   const [highlighted, setHighlighted] = useState(false);
   const [viewingRightPage, setViewingRightPage] = useState(false);
+  const [horizontalOffsetTarget, setHorizontalOffsetTarget] = useState(0);
+  const horizontalOffsetRef = useRef(0);
 
   // ------------------------------
   // Refs
@@ -39,12 +41,6 @@ export const Magazine = ({
   const initialQuaternionRef = useRef(null);
   const initialCameraQuaternionRef = useRef(null);
 
-  // Add new refs for boundary checking
-  const boundingBoxRef = useRef(new THREE.Box3());
-  const frustumRef = useRef(new THREE.Frustum());
-  const projScreenMatrixRef = useRef(new THREE.Matrix4());
-  const targetZDistRef = useRef(null);
-
   // ------------------------------
   // R3F Hooks
   // ------------------------------
@@ -52,7 +48,6 @@ export const Magazine = ({
 
   useEffect(() => {
     console.log(`Magazine ${magazine} position:`, layoutPosition);
-    console.log("🚀 ~ camera.position:", camera.position )
   }, [layoutPosition, magazine, camera.position]);
 
 
@@ -105,6 +100,8 @@ export const Magazine = ({
   // Gestures (swipe vs click)
   // ------------------------------
   const handleSwipeOrClick = (deltaX, deltaY, e) => {
+    console.log("page", page)
+
     if (focusedMagazine && focusedMagazine !== magazine) return;
 
     const totalMovement = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
@@ -201,27 +198,38 @@ export const Magazine = ({
 
     if (focusedMagazine === magazine) {
       const geometryWidth = 3;
-      const zDist = 7.5; // Fixed distance from camera when focused
+      const zDist = 7.5;
       
-      // Calculate center position in front of camera
       const newPos = new THREE.Vector3().copy(camera.position);
       const forward = new THREE.Vector3(-0.002, -0.03, -1)
         .applyQuaternion(camera.quaternion)
         .normalize();
       
-      const portraitZoomFactor = isPortrait ? 0.52 : 1;
+      const portraitZoomFactor = isPortrait ? 0.52 : 0.4;
       newPos.addScaledVector(forward, zDist * portraitZoomFactor);
 
-      // Calculate base position before horizontal offset
-      const basePos = newPos.clone();
+      const right = new THREE.Vector3(1, 0, 0)
+        .applyQuaternion(camera.quaternion)
+        .normalize();
 
-      // Add horizontal offset in portrait mode based on which page we're viewing
       if (isPortrait) {
-        const right = new THREE.Vector3(1, 0, 0)
-          .applyQuaternion(camera.quaternion)
-          .normalize();
+        // Portrait mode offset
         const horizontalOffset = viewingRightPage ? -geometryWidth / 4.75 : geometryWidth / 4.75;
         newPos.addScaledVector(right, horizontalOffset);
+      } else {
+        // Landscape mode - smooth transition
+        // Update target based on page
+        const targetOffset = delayedPage < 1 ? -geometryWidth / 4.75 : 0;
+        setHorizontalOffsetTarget(targetOffset);
+        
+        // Lerp the actual offset
+        horizontalOffsetRef.current = THREE.MathUtils.lerp(
+          horizontalOffsetRef.current,
+          horizontalOffsetTarget,
+          0.1
+        );
+        
+        newPos.addScaledVector(right, horizontalOffsetRef.current);
       }
 
       // Apply layout-specific offset
@@ -240,27 +248,22 @@ export const Magazine = ({
       const horizontalLerpFactor = 0.03; // Slower horizontal movement
       const normalLerpFactor = 0.1; // Original speed for other movements
 
-      if (isPortrait) {
-        // Separate horizontal and vertical movements
-        const horizontalDelta = new THREE.Vector3(
-          newPos.x - currentPos.x,
-          0,
-          0
-        );
-        const otherDelta = new THREE.Vector3(
-          0,
-          newPos.y - currentPos.y,
-          newPos.z - currentPos.z
-        );
+      // Separate horizontal and vertical movements for both portrait and landscape
+      const horizontalDelta = new THREE.Vector3(
+        newPos.x - currentPos.x,
+        0,
+        0
+      );
+      const otherDelta = new THREE.Vector3(
+        0,
+        newPos.y - currentPos.y,
+        newPos.z - currentPos.z
+      );
 
-        // Apply different lerp speeds
-        currentPos.add(horizontalDelta.multiplyScalar(horizontalLerpFactor));
-        currentPos.add(otherDelta.multiplyScalar(normalLerpFactor));
-        groupRef.current.position.copy(currentPos);
-      } else {
-        // Use normal lerp for landscape mode
-        groupRef.current.position.lerp(newPos, normalLerpFactor);
-      }
+      // Apply different lerp speeds
+      currentPos.add(horizontalDelta.multiplyScalar(horizontalLerpFactor));
+      currentPos.add(otherDelta.multiplyScalar(normalLerpFactor));
+      groupRef.current.position.copy(currentPos);
 
       // Quaternion lerp remains the same speed
       groupRef.current.quaternion.slerp(camera.quaternion, 0.1);
