@@ -192,19 +192,6 @@ export const Magazine = ({
     initialCameraQuaternionRef.current = camera.quaternion.clone();
   }, [camera]);
 
-  // Add helper function to get corners from bounding box
-  const getBoxCorners = (box) => {
-    return [
-      new THREE.Vector3(box.min.x, box.min.y, box.min.z), // 000
-      new THREE.Vector3(box.min.x, box.min.y, box.max.z), // 001
-      new THREE.Vector3(box.min.x, box.max.y, box.min.z), // 010
-      new THREE.Vector3(box.min.x, box.max.y, box.max.z), // 011
-      new THREE.Vector3(box.max.x, box.min.y, box.min.z), // 100
-      new THREE.Vector3(box.max.x, box.min.y, box.max.z), // 101
-      new THREE.Vector3(box.max.x, box.max.y, box.min.z), // 110
-      new THREE.Vector3(box.max.x, box.max.y, box.max.z), // 111
-    ];
-  };
 
   // ------------------------------
   // Focus/unfocus animation
@@ -214,87 +201,16 @@ export const Magazine = ({
 
     if (focusedMagazine === magazine) {
       const geometryWidth = 3;
-      const geometryHeight = 2;
-      // Reduce minimum safety margin
-      const minSafetyMargin = 1.1; // Reduced from 1.1
-      const aspect = size.width / size.height;
-      const fovRad = (camera.fov * Math.PI) / 180;
-
-      // Calculate initial zDist with tighter margins
-      const zDistH = (geometryWidth / 2) / (aspect * Math.tan(fovRad / 2));
-      const zDistV = (geometryHeight / 2) / Math.tan(fovRad / 2);
-      let zDist = Math.max(zDistH, zDistV) * minSafetyMargin;
-
-      // Update bounding box
-      boundingBoxRef.current.setFromObject(groupRef.current);
+      const zDist = 7.5; // Fixed distance from camera when focused
       
-      // Update projection matrix
-      camera.updateMatrixWorld();
-      projScreenMatrixRef.current.multiplyMatrices(
-        camera.projectionMatrix,
-        camera.matrixWorldInverse
-      );
-      frustumRef.current.setFromProjectionMatrix(projScreenMatrixRef.current);
-
-      const corners = getBoxCorners(boundingBoxRef.current);
-      
-      // Convert corners to NDC space
-      const ndcCorners = corners.map(corner => {
-        corner.project(camera);
-        return corner;
-      });
-
-      // More aggressive clipping check
-      const isClipping = ndcCorners.some(
-        corner => 
-          Math.abs(corner.x) > 0.98 || // Reduced from 1
-          Math.abs(corner.y) > 0.98 || // Reduced from 1
-          corner.z < -1 || 
-          corner.z > 1
-      );
-
-      // Adjust target zDist if clipping
-      if (isClipping) {
-        zDist *= 1.05; // Smaller increase (from 1.1)
-      } else {
-        // More aggressive approach to moving closer
-        const testZDist = zDist * 0.98; // Try 2% closer (from 0.95)
-        const testPos = camera.position.clone().add(
-          new THREE.Vector3(0, 0, -testZDist)
-            .applyQuaternion(camera.quaternion)
-        );
-        
-        // More lenient clipping test when moving closer
-        const wouldClip = ndcCorners.some(corner => {
-          const testCorner = corner.clone();
-          testCorner.project(camera);
-          return Math.abs(testCorner.x) > 0.97 || // Reduced from 0.95
-                 Math.abs(testCorner.y) > 0.97;    // Reduced from 0.95
-        });
-
-        if (!wouldClip) {
-          zDist = testZDist;
-        }
-      }
-
-      // Faster interpolation for distance changes
-      if (targetZDistRef.current === null) {
-        targetZDistRef.current = zDist;
-      } else {
-        targetZDistRef.current = THREE.MathUtils.lerp(
-          targetZDistRef.current,
-          zDist,
-          0.15 // Increased from 0.1 for faster response
-        );
-      }
-
+      // Calculate center position in front of camera
       const newPos = new THREE.Vector3().copy(camera.position);
-      const forward = new THREE.Vector3(0, 0, -1)
+      const forward = new THREE.Vector3(-0.002, -0.03, -1)
         .applyQuaternion(camera.quaternion)
         .normalize();
       
       const portraitZoomFactor = isPortrait ? 0.52 : 1;
-      newPos.addScaledVector(forward, targetZDistRef.current * portraitZoomFactor);
+      newPos.addScaledVector(forward, zDist * portraitZoomFactor);
 
       // Calculate base position before horizontal offset
       const basePos = newPos.clone();
@@ -364,9 +280,6 @@ export const Magazine = ({
       if (initialCameraQuaternionRef.current) {
         camera.quaternion.slerp(initialCameraQuaternionRef.current, 0.1);
       }
-      
-      // Reset target zDist when unfocused
-      targetZDistRef.current = null;
     }
   });
 
