@@ -33,10 +33,6 @@ export const metadata = {
     siteName: title,
     description: description,
   },
-  twitter: {
-    card: 'summary',
-    site: twitter,
-  },
   manifest: '/manifest.json',
   formatDetection: { email: true, telephone: true },
   icons: {
