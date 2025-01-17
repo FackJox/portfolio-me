@@ -421,7 +421,7 @@ export const Magazine = ({
         <Float
           ref={floatRef}
           floatIntensity={0.5}
-          speed={1.5}
+          speed={0.7}
           rotationIntensity={2}
           enabled={focusedMagazine !== magazine}
         >

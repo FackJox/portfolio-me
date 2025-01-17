@@ -7,6 +7,10 @@ const SmackHeader = dynamic(() => import('@/components/dom/SmackUI').then((mod) 
 const SmackButtons = dynamic(() => import('@/components/dom/SmackUI').then((mod) => mod.SmackButtons), { ssr: true })
 const SmackCTA = dynamic(() => import('@/components/dom/SmackUI').then((mod) => mod.SmackCTA), { ssr: true })
 
+const EngineerHeader = dynamic(() => import('@/components/dom/EngineerUI').then((mod) => mod.EngineerHeader), { ssr: true })
+const EngineerButtons = dynamic(() => import('@/components/dom/EngineerUI').then((mod) => mod.EngineerButtons), { ssr: true })
+const EngineerCTA = dynamic(() => import('@/components/dom/EngineerUI').then((mod) => mod.EngineerCTA), { ssr: true })
+
 const Library = dynamic(() => import('@/components/canvas/Magazines/Library').then((mod) => mod.Library), {
   ssr: false,
 })
@@ -34,7 +38,7 @@ const Common = dynamic(() => import('@/components/canvas/View').then((mod) => mo
 export default function Page() {
   return (
     <>
-      <div className='relative w-full h-full'>
+      {/* <div className='relative w-full h-full'>
         <div className='absolute w-full z-10'>
           <SmackHeader />
         </div>
@@ -50,6 +54,27 @@ export default function Page() {
             <Suspense fallback={null}>
               <Library position={[0, 0, 0]} />
               <Common color={'#0E0504'} />
+            </Suspense>
+          </View>
+        </div>
+      </div> */}
+
+      <div className='relative w-full h-full'>
+        <div className='absolute w-full z-10'>
+          <EngineerHeader />
+        </div>
+        <div className='absolute w-full z-10 top-[80px]'>
+          <EngineerButtons />
+        </div>
+        <div className='absolute w-full z-10 bottom-0'>
+          <EngineerCTA />
+        </div>
+
+        <div className='w-full h-full text-center'>
+          <View className='flex h-full w-full flex-col items-center justify-center'>
+            <Suspense fallback={null}>
+              <Library position={[0, 0, 0]} />
+              <Common color={'#200B5F'} />
             </Suspense>
           </View>
         </div>
