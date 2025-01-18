@@ -34,7 +34,6 @@ export const Magazine = ({
   const groupRef = useRef();
   const floatRef = useRef();
   const floatNullifyRef = useRef();
-  const helper = useRef(new THREE.Object3D()).current;
 
   // For storing original transform:
   const initialPositionRef = useRef(null);
@@ -193,13 +192,9 @@ export const Magazine = ({
     if (!groupRef.current) return;
     initialPositionRef.current = groupRef.current.position.clone();
     initialQuaternionRef.current = groupRef.current.quaternion.clone();
-    initialCameraQuaternionRef.current = camera.quaternion.clone();
   }, [camera]);
 
-
-  // ------------------------------
   // Focus/unfocus animation
-  // ------------------------------
   useFrame(() => {
     if (!groupRef.current || !initialPositionRef.current) return;
 
@@ -208,7 +203,7 @@ export const Magazine = ({
       const zDist = 7.5;
       
       const newPos = new THREE.Vector3().copy(camera.position);
-      const forward = new THREE.Vector3(-0.002, -0.03, -1)
+      const forward = new THREE.Vector3(-0.00, 0.0, -1)
         .applyQuaternion(camera.quaternion)
         .normalize();
       
@@ -274,22 +269,10 @@ export const Magazine = ({
 
       // Quaternion lerp remains the same speed
       groupRef.current.quaternion.slerp(camera.quaternion, 0.1);
-
-      // Gently rotate camera to look at the group
-      const currentCamQuat = camera.quaternion.clone();
-      camera.lookAt(groupRef.current.position);
-      const targetCamQuat = camera.quaternion.clone();
-      camera.quaternion.copy(currentCamQuat);
-      camera.quaternion.slerp(targetCamQuat, 0.1);
     } else {
       // Unfocused => back to original transform
       groupRef.current.position.lerp(initialPositionRef.current, 0.1);
       groupRef.current.quaternion.slerp(initialQuaternionRef.current, 0.1);
-
-      // Also restore camera orientation
-      if (initialCameraQuaternionRef.current) {
-        camera.quaternion.slerp(initialCameraQuaternionRef.current, 0.1);
-      }
     }
   });
 
