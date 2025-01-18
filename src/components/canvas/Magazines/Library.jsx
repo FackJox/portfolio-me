@@ -15,6 +15,9 @@ const engineerAtom = atom(0);
 // Atom to track the focused magazine
 export const focusedMagazineAtom = atom(null);
 
+// Atom to track which magazine is in the middle
+export const middleMagazineAtom = atom("vague"); // Default to vague on first render
+
 const picturesSmack = [
   "02Contents",
   "03Contents",
@@ -228,7 +231,23 @@ export const Library = (props) => {
     );
     
     setDragOffset(newOffset);
+
+    // Determine which magazine is in the middle based on wrapped offset
+    const spacing = 2.2;
+    const wrappedOffset = ((newOffset % (spacing * 3)) + spacing * 4.5) % (spacing * 3) - spacing * 1.5;
+    
+    // Calculate which magazine should be in the middle
+    const index = Math.round(wrappedOffset / spacing);
+    const magazineOrder = [magazines.vague, magazines.smack, magazines.engineer];
+    const middleMagazine = magazineOrder[((index % 3) + 3) % 3];
+    
+    // Update middle magazine atom if it changed
+    if (middleMagazine !== currentMiddleMagazine) {
+      setMiddleMagazine(middleMagazine);
+    }
   });
+
+  const [currentMiddleMagazine, setMiddleMagazine] = useAtom(middleMagazineAtom);
 
   return (
     <group {...props} ref={groupRef}>

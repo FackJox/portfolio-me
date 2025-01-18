@@ -36,3 +36,27 @@ export const SmackCTA = () => {
     </div>
   )
 }
+
+
+export const SmackTopBar = () => {
+  return (
+    <div className='w-full h-10 flex items-center justify-between pl-6 pr-8 bg-[#200B5F] border-b-[1px]'>
+      <h1 className='font-[HKGrotesk-SemiBold] text-[#F7F6F7] text-[2.5rem] tracking-[-0.13em] whitespace-nowrap'>
+        Jack Foxcroft
+      </h1>
+      <div className='flex items-center gap-8'>
+        <button className='font-[HKGrotesk-Bold] text-[#F4EEDC] text-xl tracking-[-0.12em]'>
+          MENU
+        </button>
+        <div className='h-[24px] w-[1px] bg-[#F7F6F7]'></div>
+        <button className='font-[HKGrotesk-SemiBold] text-[#FFB79C] text-xl tracking-[-0.12em]'>
+          TECHNICAL
+        </button>
+        <div className='h-[24px] w-[1px] bg-[#F7F6F7]'></div>
+        <button className='font-[HKGrotesk-Regular] text-[#FFB79C] text-2xl tracking-[-0.12em]'>
+          CONNECT
+        </button>
+      </div>
+    </div>
+  )
+}

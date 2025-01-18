@@ -2,10 +2,13 @@
 
 import dynamic from 'next/dynamic'
 import { Suspense } from 'react'
+import { useAtom } from 'jotai'
+import { middleMagazineAtom } from '@/components/canvas/Magazines/Library'
 
 const SmackHeader = dynamic(() => import('@/components/dom/SmackUI').then((mod) => mod.SmackHeader), { ssr: true })
 const SmackButtons = dynamic(() => import('@/components/dom/SmackUI').then((mod) => mod.SmackButtons), { ssr: true })
 const SmackCTA = dynamic(() => import('@/components/dom/SmackUI').then((mod) => mod.SmackCTA), { ssr: true })
+const SmackTopBar = dynamic(() => import('@/components/dom/SmackUI').then((mod) => mod.SmackTopBar), { ssr: true })
 
 const EngineerHeader = dynamic(() => import('@/components/dom/EngineerUI').then((mod) => mod.EngineerHeader), { ssr: true })
 const EngineerButtons = dynamic(() => import('@/components/dom/EngineerUI').then((mod) => mod.EngineerButtons), { ssr: true })
@@ -16,6 +19,7 @@ const EngineerTopBar = dynamic(() => import('@/components/dom/EngineerUI').then(
 const VagueHeader = dynamic(() => import('@/components/dom/VagueUI').then((mod) => mod.VagueHeader), { ssr: true })
 const VagueButtons = dynamic(() => import('@/components/dom/VagueUI').then((mod) => mod.VagueButtons), { ssr: true })
 const VagueCTA = dynamic(() => import('@/components/dom/VagueUI').then((mod) => mod.VagueCTA), { ssr: true })
+const VagueTopBar = dynamic(() => import('@/components/dom/VagueUI').then((mod) => mod.VagueTopBar), { ssr: true })
 
 const Library = dynamic(() => import('@/components/canvas/Magazines/Library').then((mod) => mod.Library), {
   ssr: false,
@@ -42,84 +46,86 @@ const View = dynamic(() => import('@/components/canvas/View').then((mod) => mod.
 const Common = dynamic(() => import('@/components/canvas/View').then((mod) => mod.Common), { ssr: false })
 
 export default function Page() {
+  const [middleMagazine] = useAtom(middleMagazineAtom)
+
+  const renderUI = () => {
+    switch (middleMagazine) {
+      case 'smack':
+        return (
+          <>
+            <div className='absolute w-full z-10'>
+              <SmackHeader />
+            </div>
+            <div className='absolute w-full z-10 top-[80px]'>
+              <SmackButtons />
+            </div>
+            <div className='absolute w-full z-10 bottom-0'>
+              <SmackCTA />
+            </div>
+            <div className='portrait:hidden landscape:block'>
+              <div className='absolute w-full z-10'>
+                <SmackTopBar />
+              </div>
+            </div>
+          </>
+        )
+      case 'vague':
+        return (
+          <>
+            <div className='absolute w-full z-10'>
+              <VagueHeader />
+            </div>
+            <div className='absolute w-full z-10 top-[80px]'>
+              <VagueButtons />
+            </div>
+            <div className='absolute w-full z-10 bottom-0'>
+              <VagueCTA />
+            </div>
+            <div className='portrait:hidden landscape:block'>
+              <div className='absolute w-full z-10'>
+                <VagueTopBar />
+              </div>
+            </div>
+          </>
+        )
+      case 'engineer':
+        return (
+          <>
+            <div className='portrait:block landscape:hidden'>
+              <div className='absolute w-full z-10'>
+                <EngineerHeader />
+              </div>
+              <div className='absolute w-full z-10 top-[80px]'>
+                <EngineerButtons />
+              </div>
+              <div className='absolute w-full z-10 bottom-0'>
+                <EngineerCTA />
+              </div>
+            </div>
+            <div className='portrait:hidden landscape:block'>
+              <div className='absolute w-full z-10'>
+                <EngineerTopBar />
+              </div>
+            </div>
+          </>
+        )
+      default:
+        return null
+    }
+  }
+
   return (
     <>
-      {/* <div className='relative w-full h-full'>
-        <div className='absolute w-full z-10'>
-          <SmackHeader />
-        </div>
-        <div className='absolute w-full z-10 top-[80px]'>
-          <SmackButtons />
-        </div>
-        <div className='absolute w-full z-10 bottom-0'>
-          <SmackCTA />
-        </div>
-
-        <div className='w-full h-full text-center'>
-          <View className='flex h-full w-full flex-col items-center justify-center'>
-            <Suspense fallback={null}>
-              <Library position={[0, 0, 0]} />
-              <Common color={'#0E0504'} />
-            </Suspense>
-          </View>
-        </div>
-      </div> */}
-
-{/* <div className='absolute w-full h-full z-[100]' style={{
-        backgroundImage: 'url(/iPhone14.png)',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-        pointerEvents: 'none',
-        opacity: 0.5,
-      }}></div> */}
-
-      {/* <div className='relative w-full h-full '>
-        <div className='absolute w-full z-10'>
-          <VagueHeader />
-        </div>
-        <div className='absolute w-full z-10 top-[80px]'>
-          <VagueButtons />
-        </div>
-        <div className='absolute w-full z-10 bottom-0'>
-          <VagueCTA />
-        </div>
-
-        <div className='w-full h-full text-center'>
-          <View className='flex h-full w-full flex-col items-center justify-center'>
-            <Suspense fallback={null}>
-              <Library position={[0, 0, 0]} />
-              <Common color={'#2C272F'} />
-            </Suspense>
-          </View>
-        </div>
-      </div>  */}
-
       <div className='relative w-full h-full'>
-        <div className='portrait:block landscape:hidden'>
-          <div className='absolute w-full z-10'>
-            <EngineerHeader />
-          </div>
-          <div className='absolute w-full z-10 top-[80px]'>
-            <EngineerButtons />
-          </div>
-          <div className='absolute w-full z-10 bottom-0'>
-            <EngineerCTA />
-          </div>
+        {renderUI()}
+        <div className='w-full h-full text-center'>
+          <View className='flex h-full w-full flex-col items-center justify-center'>
+            <Suspense fallback={null}>
+              <Library position={[0, 0, 0]} />
+              <Common color={middleMagazine === 'smack' ? '#0E0504' : middleMagazine === 'vague' ? '#2C272F' : '#200B5F'} />
+            </Suspense>
+          </View>
         </div>
-
-        <div className='portrait:hidden landscape:block'>
-          <div className='absolute w-full z-10'>
-            <EngineerTopBar />
-          </div>
-        </div>
-
-        <View className='flex h-full w-full flex-col items-center justify-center'>
-          <Suspense fallback={null}>
-            <Library position={[0, 0, 0]} />
-            <Common color={'#200B5F'} />
-          </Suspense>
-        </View>
       </div>
     </>
   )
