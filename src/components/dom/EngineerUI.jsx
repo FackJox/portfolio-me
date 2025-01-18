@@ -41,7 +41,7 @@ export const EngineerCTA = () => {
 
 export const EngineerTopBar = () => {
   return (
-    <div className='w-full h-[92px] flex items-center justify-between px-8 bg-[#200B5F]'>
+    <div className='w-full h-10 flex items-center justify-between pl-6 pr-8 bg-[#200B5F] border-b-[1px]'>
       <h1 className='font-[HKGrotesk-SemiBold] text-[#F7F6F7] text-[2.5rem] tracking-[-0.13em] whitespace-nowrap'>
         Jack Foxcroft
       </h1>
@@ -54,7 +54,7 @@ export const EngineerTopBar = () => {
           TECHNICAL
         </button>
         <div className='h-[24px] w-[1px] bg-[#F7F6F7]'></div>
-        <button className='font-[HKGrotesk-Regular] text-[#FFB79C] text-xl tracking-[-0.12em]'>
+        <button className='font-[HKGrotesk-Regular] text-[#FFB79C] text-2xl tracking-[-0.12em]'>
           CONNECT
         </button>
       </div>
