@@ -53,14 +53,16 @@ export default function Page() {
       case 'smack':
         return (
           <>
-            <div className='absolute w-full z-10'>
-              <SmackHeader />
-            </div>
-            <div className='absolute w-full z-10 top-[80px]'>
-              <SmackButtons />
-            </div>
-            <div className='absolute w-full z-10 bottom-0'>
-              <SmackCTA />
+            <div className='portrait:block landscape:hidden'>
+              <div className='absolute w-full z-10'>
+                <SmackHeader />
+              </div>
+              <div className='absolute w-full z-10 top-[80px]'>
+                <SmackButtons />
+              </div>
+              <div className='absolute w-full z-10 bottom-0'>
+                <SmackCTA />
+              </div>
             </div>
             <div className='portrait:hidden landscape:block'>
               <div className='absolute w-full z-10'>
@@ -72,14 +74,16 @@ export default function Page() {
       case 'vague':
         return (
           <>
-            <div className='absolute w-full z-10'>
-              <VagueHeader />
-            </div>
-            <div className='absolute w-full z-10 top-[80px]'>
-              <VagueButtons />
-            </div>
-            <div className='absolute w-full z-10 bottom-0'>
-              <VagueCTA />
+            <div className='portrait:block landscape:hidden'>
+              <div className='absolute w-full z-10'>
+                <VagueHeader />
+              </div>
+              <div className='absolute w-full z-10 top-[80px]'>
+                <VagueButtons />
+              </div>
+              <div className='absolute w-full z-10 bottom-0'>
+                <VagueCTA />
+              </div>
             </div>
             <div className='portrait:hidden landscape:block'>
               <div className='absolute w-full z-10'>
