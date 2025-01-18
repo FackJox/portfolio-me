@@ -63,8 +63,17 @@ export default function Page() {
         </div>
       </div> */}
 
-      <div className='relative w-full h-full'>
-        {/* <div className='absolute w-full z-10'>
+{/* <div className='absolute w-full h-full z-[100]' style={{
+        backgroundImage: 'url(/iPhone14.png)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        pointerEvents: 'none',
+        opacity: 0.5,
+      }}></div> */}
+
+      {/* <div className='relative w-full h-full '>
+        <div className='absolute w-full z-10'>
           <VagueHeader />
         </div>
         <div className='absolute w-full z-10 top-[80px]'>
@@ -72,7 +81,7 @@ export default function Page() {
         </div>
         <div className='absolute w-full z-10 bottom-0'>
           <VagueCTA />
-        </div> */}
+        </div>
 
         <div className='w-full h-full text-center'>
           <View className='flex h-full w-full flex-col items-center justify-center'>
@@ -82,9 +91,9 @@ export default function Page() {
             </Suspense>
           </View>
         </div>
-      </div>
+      </div>  */}
 
-      {/* <div className='relative w-full h-full'>
+      <div className='relative w-full h-full'>
         <div className='absolute w-full z-10'>
           <EngineerHeader />
         </div>
@@ -103,7 +112,7 @@ export default function Page() {
             </Suspense>
           </View>
         </div>
-      </div> */}
+      </div>
     </>
   )
 }
