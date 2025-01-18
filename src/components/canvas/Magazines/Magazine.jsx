@@ -39,6 +39,7 @@ export const Magazine = ({
   const initialPositionRef = useRef(null);
   const initialQuaternionRef = useRef(null);
   const initialCameraQuaternionRef = useRef(null);
+  const previousViewingRightPageRef = useRef(false); // Store previous state
 
   // ------------------------------
   // R3F Hooks
@@ -53,10 +54,20 @@ export const Magazine = ({
   // Change pointer if hovered & not focused
   useCursor(highlighted && focusedMagazine !== magazine);
 
-  // Set initial right page view when focusing
+  // Set initial right page view when focusing/unfocusing
   useEffect(() => {
     if (focusedMagazine === magazine) {
-      setViewingRightPage(true);
+      // When focusing, set page to 1 if it's 0
+      if (page === 0) {
+        setPage(1);
+        setViewingRightPage(false);
+      } else {
+        // Restore previous viewing state
+        setViewingRightPage(previousViewingRightPageRef.current);
+      }
+    } else if (focusedMagazine !== magazine && previousViewingRightPageRef.current !== viewingRightPage) {
+      // Store the current state when unfocusing
+      previousViewingRightPageRef.current = viewingRightPage;
     }
   }, [focusedMagazine, magazine]);
 
