@@ -203,7 +203,7 @@ export const Magazine = ({
       const zDist = 7.5;
       
       const newPos = new THREE.Vector3().copy(camera.position);
-      const forward = new THREE.Vector3(-0.00, 0.0, -1)
+      const forward = new THREE.Vector3(-0.003, 0.0, -1)
         .applyQuaternion(camera.quaternion)
         .normalize();
       
@@ -342,8 +342,7 @@ export const Magazine = ({
                   number={idx}
                   magazine={magazine}
                   opened={delayedPage > idx}
-                  // "bookClosed" if front cover or back cover fully closed:
-                  bookClosed={delayedPage === 0 || delayedPage === pages.length}
+                  magazineClosed={delayedPage === 0 || delayedPage === pages.length}
                   pages={pages}
                   setPage={setPage}
                   highlighted={highlighted}
