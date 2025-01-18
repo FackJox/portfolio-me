@@ -17,6 +17,7 @@ import {
   Vector3,
 } from "three";
 import { degToRad } from "three/src/math/MathUtils.js";
+import { useGesture } from "@use-gesture/react";
 
 // Constants
 const PAGE_WIDTH = 1.28;
@@ -87,7 +88,7 @@ const pageMaterials = [
 
 
 
-export const Page = ({ number, front, back, page, magazine, opened, pages, bookClosed, setPage, highlighted, isFocused, ...props }) => {
+export const Page = ({ number, front, back, page, magazine, opened, pages, magazineClosed, setPage, highlighted, isFocused, ...props }) => {
   const [picture, picture2, pictureRoughness] = useTexture([
     `/textures/${magazine}/${front}.png`,
     `/textures/${magazine}/${back}.png`,
@@ -179,7 +180,7 @@ export const Page = ({ number, front, back, page, magazine, opened, pages, bookC
     turningTime = Math.sin(turningTime * Math.PI);
 
     let targetRotation = opened ? -Math.PI / 2 : Math.PI / 2;
-    if (!bookClosed) {
+    if (!magazineClosed) {
       targetRotation += degToRad(number * 0.8);
     }
 
@@ -200,7 +201,7 @@ export const Page = ({ number, front, back, page, magazine, opened, pages, bookC
 
 
       let foldRotationAngle = degToRad(Math.sign(targetRotation) * 2);
-      if (bookClosed) {
+      if (magazineClosed) {
         if (i === 0) {
             rotationAngle = targetRotation;
             foldRotationAngle = 0;

@@ -78,14 +78,26 @@ const magazines = {
   smack: "smack",
 };
 
+// Define scroll positions
+const scrollPositions = {
+  a: { x: -2.75, y: -2.2 }, 
+  b: { x: -0.5, y: 0 },
+  c: { x: 1.75, y: 2.2 },
+};
+
 export const Library = (props) => {
   const { viewport } = useThree();
   const [isPortrait, setIsPortrait] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  const [dragOffset, setDragOffset] = useState(0);
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [scrollIndex, setScrollIndex] = useState({
+    [magazines.smack]: 0,    // starts at position a
+    [magazines.vague]: 1,    // starts at position b
+    [magazines.engineer]: 2, // starts at position c
+  });
   const dragStartRef = useRef(0);
   const velocityRef = useRef(0);
-  const targetOffsetRef = useRef(0);
+  const scrollStartRef = useRef(0);
   const groupRef = useRef();
   const [focusedMagazine] = useAtom(focusedMagazineAtom);
   
@@ -98,68 +110,46 @@ export const Library = (props) => {
   const [vaguePage] = useAtom(vagueAtom);
   const [engineerPage] = useAtom(engineerAtom);
 
-  // Default positions serve as the center points for the carousel
-  const defaultPositions = useMemo(
-    () => ({
-      [magazines.vague]: isPortrait
-        ? [-0.65 + (vaguePage > 0 ? 0.65 : 0), 2.2, 2]      // Portrait: top
-        : [-2.75 + (vaguePage > 0 ? 0.65 : 0), -0.2, 6],    // Landscape: left
-      [magazines.smack]: isPortrait 
-        ? [-0.65 + (smackPage > 0 ? 0.65 : 0), -2.2, 2]     // Portrait: bottom
-        : [-0.5 + (smackPage > 0 ? 0.65 : 0), -0.2, 6],     // Landscape: middle
-      [magazines.engineer]: isPortrait 
-        ? [-0.65 + (engineerPage > 0 ? 0.65 : 0), 0, 2]     // Portrait: middle
-        : [1.75 + (engineerPage > 0 ? 0.65 : 0), -0.2, 6],  // Landscape: right
-    }),
-    [isPortrait, smackPage, vaguePage, engineerPage]
-  );
+  const getScrollPosition = (index, progress = 0) => {
+    // Wrap index between 0 and 2
+    const wrappedIndex = ((index % 3) + 3) % 3;
+    const currentPos = wrappedIndex === 0 ? scrollPositions.a :
+                      wrappedIndex === 1 ? scrollPositions.b :
+                                         scrollPositions.c;
+    
+    // Calculate next position for interpolation
+    const nextIndex = ((wrappedIndex + 1) % 3);
+    const nextPos = nextIndex === 0 ? scrollPositions.a :
+                   nextIndex === 1 ? scrollPositions.b :
+                                   scrollPositions.c;
+    
+    // Interpolate between current and next position
+    return {
+      x: THREE.MathUtils.lerp(currentPos.x, nextPos.x, progress),
+      y: THREE.MathUtils.lerp(currentPos.y, nextPos.y, progress)
+    };
+  };
 
-  // Calculate positions with drag offset and wrapping
+  // Calculate positions for each magazine
   const positions = useMemo(() => {
-    const spacing = 2.2; // Use consistent spacing regardless of orientation
-    const totalSpacing = spacing * 3; // Total space for all 3 magazines
-
-    // Function to wrap offset within the total spacing
-    const wrapOffset = (offset) => {
-      // Normalize to [-totalSpacing/2, totalSpacing/2]
-      const normalizedOffset = ((offset % totalSpacing) + totalSpacing * 1.5) % totalSpacing - totalSpacing / 2;
-      return normalizedOffset;
-    };
-
-    // Calculate base offset for each magazine based on its default position
-    const getBaseIndex = (magazineName) => {
-      return magazineName === magazines.vague ? 0 :
-             magazineName === magazines.engineer ? 1 : 2;
-    };
-
-    // Calculate positions for each magazine with wrapping
     const calculatePosition = (magazineName) => {
-      const basePosition = defaultPositions[magazineName];
-      const index = getBaseIndex(magazineName);
-      
-      // Calculate individual magazine offset including its index position
-      const magazineOffset = dragOffset + (index * spacing);
-      const wrappedOffset = wrapOffset(magazineOffset);
+      const pageOffset = magazineName === magazines.smack ? smackPage :
+                        magazineName === magazines.vague ? vaguePage :
+                                                         engineerPage;
+      const pos = getScrollPosition(scrollIndex[magazineName], scrollProgress);
+      const xOffset = pageOffset > 0 ? 0.65 : 0;
       
       return isPortrait
-        ? [
-            basePosition[0],
-            wrappedOffset,
-            basePosition[2]
-          ]
-        : [
-            wrappedOffset,
-            basePosition[1],
-            basePosition[2]
-          ];
+        ? [-0.65 + xOffset, pos.y, 4]
+        : [pos.x + xOffset, -0.2, 6];
     };
 
     return {
-      [magazines.vague]: calculatePosition(magazines.vague),
       [magazines.smack]: calculatePosition(magazines.smack),
+      [magazines.vague]: calculatePosition(magazines.vague),
       [magazines.engineer]: calculatePosition(magazines.engineer),
     };
-  }, [defaultPositions, dragOffset, isPortrait]);
+  }, [isPortrait, smackPage, vaguePage, engineerPage, scrollIndex, scrollProgress]);
 
   // Handle drag gestures
   const bind = useGesture(
@@ -168,32 +158,42 @@ export const Library = (props) => {
         if (focusedMagazine) return;
         event.stopPropagation();
         setIsDragging(true);
-        dragStartRef.current = dragOffset;
+        scrollStartRef.current = scrollProgress;
+        dragStartRef.current = 0;
         velocityRef.current = 0;
       },
       onDrag: ({ event, movement: [dx, dy], velocity: [vx, vy], last }) => {
         if (focusedMagazine) return;
         event.stopPropagation();
         
-        // Calculate movement and velocity
-        const movement = isPortrait ? -dy * 0.005 : dx * 0.005;
+        const movement = isPortrait ? -dy * 0.001 : dx * 0.001;
         const velocity = isPortrait ? -vy : vx;
         velocityRef.current = velocity;
         
-        // Update drag offset
-        const newOffset = dragStartRef.current + movement;
-        targetOffsetRef.current = newOffset;
+        // Calculate scroll progress (0 to 1)
+        let newProgress = scrollStartRef.current + movement;
+        newProgress = newProgress - Math.floor(newProgress); // Wrap to 0-1
+        setScrollProgress(newProgress);
         
         if (last) {
           setIsDragging(false);
-          // Add momentum based on velocity
-          const momentum = velocity * 0.5;
-          const projectedOffset = newOffset + momentum;
+          const momentum = velocity * 0.2;
+          let targetProgress = newProgress + momentum;
           
-          // Use consistent spacing for snapping
-          const spacing = 2.2;
-          const snapOffset = Math.round(projectedOffset / spacing) * spacing;
-          targetOffsetRef.current = snapOffset;
+          // Snap to nearest position (0, 0.33, 0.66, or 1)
+          targetProgress = Math.round(targetProgress * 3) / 3;
+          
+          // If we crossed a position boundary, update indices
+          if (Math.abs(targetProgress - scrollStartRef.current) > 0.1) {
+            const direction = Math.sign(targetProgress - scrollStartRef.current);
+            setScrollIndex(prev => ({
+              [magazines.smack]: ((prev[magazines.smack] + direction) % 3 + 3) % 3,
+              [magazines.vague]: ((prev[magazines.vague] + direction) % 3 + 3) % 3,
+              [magazines.engineer]: ((prev[magazines.engineer] + direction) % 3 + 3) % 3,
+            }));
+          }
+          
+          setScrollProgress(0); // Reset progress after updating indices
         }
       },
     },
@@ -202,16 +202,13 @@ export const Library = (props) => {
 
   // Smooth animation
   useFrame((_, delta) => {
-    // No need for bounds since we're wrapping around
-    // Just smooth lerp to target
-    const lerpFactor = isDragging ? 0.4 : 0.1;
-    const newOffset = THREE.MathUtils.lerp(
-      dragOffset,
-      targetOffsetRef.current,
-      lerpFactor
-    );
+    if (focusedMagazine || !isDragging) return;
     
-    setDragOffset(newOffset);
+    // Smooth lerp for drag movement
+    const lerpFactor = isDragging ? 0.4 : 0.1;
+    setScrollProgress(current => 
+      THREE.MathUtils.lerp(current, isDragging ? current : 0, lerpFactor)
+    );
   });
 
   return (
@@ -220,7 +217,7 @@ export const Library = (props) => {
       <mesh 
         position={[0, 0, 10]} 
         {...bind()}
-        onPointerOver={(e) => e.stopPropagation()}
+        // onPointerOver={(e) => e.stopPropagation()}
       >
         <planeGeometry args={[50, 50]} />
         <meshBasicMaterial transparent opacity={0} />
@@ -252,6 +249,8 @@ export const Library = (props) => {
             focusedMagazineAtom={focusedMagazineAtom}
             isPortrait={isPortrait}
             layoutPosition={positions[magazineName]}
+            focusedX={0}  // Magazine will move to x=2 when focused
+            focusedY={0}  // Magazine will move to y=1 when focused
           />
         </animated.group>
       ))}
