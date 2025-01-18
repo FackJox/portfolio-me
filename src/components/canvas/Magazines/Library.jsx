@@ -103,13 +103,13 @@ export const Library = (props) => {
     () => ({
       [magazines.vague]: isPortrait
         ? [-0.65 + (vaguePage > 0 ? 0.65 : 0), 2.2, 2]      // Portrait: top
-        : [-2.75 + (vaguePage > 0 ? 0.65 : 0), -0.4, 6],    // Landscape: left
+        : [-2.75 + (vaguePage > 0 ? 0.65 : 0), -0.2, 6],    // Landscape: left
       [magazines.smack]: isPortrait 
         ? [-0.65 + (smackPage > 0 ? 0.65 : 0), -2.2, 2]     // Portrait: bottom
-        : [-0.5 + (smackPage > 0 ? 0.65 : 0), -0.4, 6],     // Landscape: middle
+        : [-0.5 + (smackPage > 0 ? 0.65 : 0), -0.2, 6],     // Landscape: middle
       [magazines.engineer]: isPortrait 
         ? [-0.65 + (engineerPage > 0 ? 0.65 : 0), 0, 2]     // Portrait: middle
-        : [1.75 + (engineerPage > 0 ? 0.65 : 0), -0.4, 6],  // Landscape: right
+        : [1.75 + (engineerPage > 0 ? 0.65 : 0), -0.2, 6],  // Landscape: right
     }),
     [isPortrait, smackPage, vaguePage, engineerPage]
   );
