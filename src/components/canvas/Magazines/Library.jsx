@@ -1,9 +1,11 @@
 // Library.js
 import { atom, useAtom } from "jotai";
 import { Magazine } from "./Magazine";
-import React, { useState, useMemo, useLayoutEffect } from "react";
-import { useThree } from "@react-three/fiber";
+import React, { useState, useMemo, useLayoutEffect, useRef } from "react";
+import { useThree, useFrame } from "@react-three/fiber";
 import { animated } from "@react-spring/three";
+import { useGesture } from "@use-gesture/react";
+import * as THREE from "three";
 
 // Atoms for page states
 const smackAtom = atom(0);
@@ -79,6 +81,13 @@ const magazines = {
 export const Library = (props) => {
   const { viewport } = useThree();
   const [isPortrait, setIsPortrait] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState(0);
+  const dragStartRef = useRef(0);
+  const velocityRef = useRef(0);
+  const targetOffsetRef = useRef(0);
+  const groupRef = useRef();
+  const [focusedMagazine] = useAtom(focusedMagazineAtom);
   
   useLayoutEffect(() => {
     const newIsPortrait = viewport.width < viewport.height;
@@ -89,23 +98,135 @@ export const Library = (props) => {
   const [vaguePage] = useAtom(vagueAtom);
   const [engineerPage] = useAtom(engineerAtom);
 
-  const positions = useMemo(
+  // Default positions serve as the center points for the carousel
+  const defaultPositions = useMemo(
     () => ({
-      [magazines.smack]: isPortrait 
-        ? [-0.65 + (smackPage > 0 ? 0.65 : 0), 2.2, 2]   // Portrait: top
-        : [-2.75 + (smackPage > 0 ? 0.65 : 0), -0.4, 6], // Landscape: left
       [magazines.vague]: isPortrait
-        ? [-0.65 + (vaguePage > 0 ? 0.65 : 0), 0, 2]  // Portrait: bottom
-        : [-0.5 + (vaguePage > 0 ? 0.65 : 0), -0.4, 6],  // Landscape: right
-      [magazines.engineer]: isPortrait
-        ? [-0.65 + (engineerPage > 0 ? 0.65 : 0), -2.2, 2]  // Portrait: further down
-        : [1.75 + (engineerPage > 0 ? 0.65 : 0), -0.4, 6], // Landscape: bottom
+        ? [-0.65 + (vaguePage > 0 ? 0.65 : 0), 2.2, 2]      // Portrait: top
+        : [-2.75 + (vaguePage > 0 ? 0.65 : 0), -0.4, 6],    // Landscape: left
+      [magazines.smack]: isPortrait 
+        ? [-0.65 + (smackPage > 0 ? 0.65 : 0), -2.2, 2]     // Portrait: bottom
+        : [-0.5 + (smackPage > 0 ? 0.65 : 0), -0.4, 6],     // Landscape: middle
+      [magazines.engineer]: isPortrait 
+        ? [-0.65 + (engineerPage > 0 ? 0.65 : 0), 0, 2]     // Portrait: middle
+        : [1.75 + (engineerPage > 0 ? 0.65 : 0), -0.4, 6],  // Landscape: right
     }),
     [isPortrait, smackPage, vaguePage, engineerPage]
   );
 
+  // Calculate positions with drag offset and wrapping
+  const positions = useMemo(() => {
+    const spacing = 2.2; // Use consistent spacing regardless of orientation
+    const totalSpacing = spacing * 3; // Total space for all 3 magazines
+
+    // Function to wrap offset within the total spacing
+    const wrapOffset = (offset) => {
+      // Normalize to [-totalSpacing/2, totalSpacing/2]
+      const normalizedOffset = ((offset % totalSpacing) + totalSpacing * 1.5) % totalSpacing - totalSpacing / 2;
+      return normalizedOffset;
+    };
+
+    // Calculate base offset for each magazine based on its default position
+    const getBaseIndex = (magazineName) => {
+      return magazineName === magazines.vague ? 0 :
+             magazineName === magazines.engineer ? 1 : 2;
+    };
+
+    // Calculate positions for each magazine with wrapping
+    const calculatePosition = (magazineName) => {
+      const basePosition = defaultPositions[magazineName];
+      const index = getBaseIndex(magazineName);
+      
+      // Calculate individual magazine offset including its index position
+      const magazineOffset = dragOffset + (index * spacing);
+      const wrappedOffset = wrapOffset(magazineOffset);
+      
+      return isPortrait
+        ? [
+            basePosition[0],
+            wrappedOffset,
+            basePosition[2]
+          ]
+        : [
+            wrappedOffset,
+            basePosition[1],
+            basePosition[2]
+          ];
+    };
+
+    return {
+      [magazines.vague]: calculatePosition(magazines.vague),
+      [magazines.smack]: calculatePosition(magazines.smack),
+      [magazines.engineer]: calculatePosition(magazines.engineer),
+    };
+  }, [defaultPositions, dragOffset, isPortrait]);
+
+  // Handle drag gestures
+  const bind = useGesture(
+    {
+      onDragStart: ({ event }) => {
+        if (focusedMagazine) return;
+        event.stopPropagation();
+        setIsDragging(true);
+        dragStartRef.current = dragOffset;
+        velocityRef.current = 0;
+      },
+      onDrag: ({ event, movement: [dx, dy], velocity: [vx, vy], last }) => {
+        if (focusedMagazine) return;
+        event.stopPropagation();
+        
+        // Calculate movement and velocity
+        const movement = isPortrait ? -dy * 0.005 : dx * 0.005;
+        const velocity = isPortrait ? -vy : vx;
+        velocityRef.current = velocity;
+        
+        // Update drag offset
+        const newOffset = dragStartRef.current + movement;
+        targetOffsetRef.current = newOffset;
+        
+        if (last) {
+          setIsDragging(false);
+          // Add momentum based on velocity
+          const momentum = velocity * 0.5;
+          const projectedOffset = newOffset + momentum;
+          
+          // Use consistent spacing for snapping
+          const spacing = 2.2;
+          const snapOffset = Math.round(projectedOffset / spacing) * spacing;
+          targetOffsetRef.current = snapOffset;
+        }
+      },
+    },
+    { drag: { filterTaps: true } }
+  );
+
+  // Smooth animation
+  useFrame((_, delta) => {
+    // No need for bounds since we're wrapping around
+    // Just smooth lerp to target
+    const lerpFactor = isDragging ? 0.4 : 0.1;
+    const newOffset = THREE.MathUtils.lerp(
+      dragOffset,
+      targetOffsetRef.current,
+      lerpFactor
+    );
+    
+    setDragOffset(newOffset);
+  });
+
   return (
-    <group {...props}>
+    <group {...props} ref={groupRef}>
+      {/* Invisible plane for drag detection */}
+      <mesh 
+        position={[0, 0, 10]} 
+        {...bind()}
+        onPointerOver={(e) => e.stopPropagation()}
+      >
+        <planeGeometry args={[50, 50]} />
+        <meshBasicMaterial transparent opacity={0} />
+      </mesh>
+      
+      {/* Magazines */}
       {Object.entries({
         [magazines.smack]: {
           position: positions[magazines.smack],
