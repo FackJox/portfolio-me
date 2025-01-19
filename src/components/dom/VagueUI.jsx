@@ -40,7 +40,7 @@ export const VagueCTA = () => {
 
 export const VagueTopBar = () => {
   return (
-    <div className='w-full h-10 flex items-center justify-between pt-6 pb-4 pl-6 pr-8 bg-[#2C272F] border-b-[1px]'>
+    <div className='w-full h-10 flex items-center justify-between pt-6 pb-6  pl-6 pr-8 bg-[#2C272F] border-b-[1px]'>
       <h1 className='font-[Vogue] text-[#F7F6F7] text-[2.5rem] tracking-[-0.07em] whitespace-nowrap'>
         Jack Foxcroft
       </h1>

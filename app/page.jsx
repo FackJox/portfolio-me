@@ -3,6 +3,7 @@
 import dynamic from 'next/dynamic'
 import { Suspense } from 'react'
 import { useAtom } from 'jotai'
+import { motion, AnimatePresence } from 'framer-motion'
 import { styleMagazineAtom } from '@/components/canvas/Magazines/Library'
 
 const SmackHeader = dynamic(() => import('@/components/dom/SmackUI').then((mod) => mod.SmackHeader), { ssr: true })
@@ -52,51 +53,171 @@ export default function Page() {
 
   return (
     <>
-      <div
+      <motion.div
         className='relative flex min-h-[100dvh] w-full flex-col items-center'
-        style={{
+        animate={{
           backgroundColor: styleMagazine === 'smack' ? '#0E0504' : styleMagazine === 'vague' ? '#2C272F' : '#200B5F',
         }}
+        transition={{ duration: 0.6, ease: 'easeInOut' }}
       >
         {/* TopBar for md and above */}
-        <div className='hidden md:block w-full'>
-          {styleMagazine === 'smack' && <SmackTopBar />}
-          {styleMagazine === 'engineer' && <EngineerTopBar />}
-          {styleMagazine === 'vague' && <VagueTopBar />}
-        </div>
+        <motion.div layout className='hidden md:block w-full'>
+          <AnimatePresence mode='wait'>
+            {styleMagazine === 'smack' && (
+              <motion.div
+                key="smack-top"
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                transition={{ duration: 0.4 }}
+              >
+                <SmackTopBar />
+              </motion.div>
+            )}
+            {styleMagazine === 'engineer' && (
+              <motion.div
+                key="engineer-top"
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                transition={{ duration: 0.4 }}
+              >
+                <EngineerTopBar />
+              </motion.div>
+            )}
+            {styleMagazine === 'vague' && (
+              <motion.div
+                key="vague-top"
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                transition={{ duration: 0.4 }}
+              >
+                <VagueTopBar />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
 
         {/* Original UI for below md */}
-        <div className='md:hidden w-full'>
-          <div className='w-full'>
-            {styleMagazine === 'smack' && <SmackHeader />}
-            {styleMagazine === 'engineer' && <EngineerHeader />}
-            {styleMagazine === 'vague' && <VagueHeader />}
-          </div>
+        <motion.div layout className='md:hidden w-full'>
+          <AnimatePresence mode='wait'>
+            <motion.div className='w-full' key={`header-${styleMagazine}`}>
+              {styleMagazine === 'smack' && (
+                <motion.div
+                  initial={{ opacity: 0, rotateX: 90 }}
+                  animate={{ opacity: 1, rotateX: 0 }}
+                  exit={{ opacity: 0, rotateX: -90 }}
+                  transition={{ duration: 0.4 }}
+                >
+                  <SmackHeader />
+                </motion.div>
+              )}
+              {styleMagazine === 'engineer' && (
+                <motion.div
+                  initial={{ opacity: 0, rotateX: 90 }}
+                  animate={{ opacity: 1, rotateX: 0 }}
+                  exit={{ opacity: 0, rotateX: -90 }}
+                  transition={{ duration: 0.4 }}
+                >
+                  <EngineerHeader />
+                </motion.div>
+              )}
+              {styleMagazine === 'vague' && (
+                <motion.div
+                  initial={{ opacity: 0, rotateX: 90 }}
+                  animate={{ opacity: 1, rotateX: 0 }}
+                  exit={{ opacity: 0, rotateX: -90 }}
+                  transition={{ duration: 0.4 }}
+                >
+                  <VagueHeader />
+                </motion.div>
+              )}
+            </motion.div>
 
-          <div className='w-full'>
-            {styleMagazine === 'smack' && <SmackButtons />}
-            {styleMagazine === 'engineer' && <EngineerButtons />}
-            {styleMagazine === 'vague' && <VagueButtons />}
-          </div>
-        </div>
+            <motion.div className='w-full' key={`buttons-${styleMagazine}`}>
+              {styleMagazine === 'smack' && (
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  transition={{ duration: 0.4, delay: 0.2 }}
+                >
+                  <SmackButtons />
+                </motion.div>
+              )}
+              {styleMagazine === 'engineer' && (
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  transition={{ duration: 0.4, delay: 0.2 }}
+                >
+                  <EngineerButtons />
+                </motion.div>
+              )}
+              {styleMagazine === 'vague' && (
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  transition={{ duration: 0.4, delay: 0.2 }}
+                >
+                  <VagueButtons />
+                </motion.div>
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </motion.div>
 
-        <div className='relative w-full flex-1'>
+        <motion.div layout className='relative w-full flex-1'>
           <View className='absolute inset-0 flex items-center justify-center'>
             <Suspense fallback={null}>
               <Library position={[0, 0, 0]} />
               <Common
-                color={styleMagazine === 'smack' ? '#0E0504' : styleMagazine === 'vague' ? '#2C272F' : '#200B5F'}
               />
             </Suspense>
           </View>
-        </div>
+        </motion.div>
 
-        <div className='w-full md:hidden'>
-          {styleMagazine === 'smack' && <SmackCTA />}
-          {styleMagazine === 'engineer' && <EngineerCTA />}
-          {styleMagazine === 'vague' && <VagueCTA />}
-        </div>
-      </div>
+        <motion.div layout className='w-full md:hidden'>
+          <AnimatePresence mode='wait'>
+            {styleMagazine === 'smack' && (
+              <motion.div
+                key="smack-cta"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.4 }}
+              >
+                <SmackCTA />
+              </motion.div>
+            )}
+            {styleMagazine === 'engineer' && (
+              <motion.div
+                key="engineer-cta"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.4 }}
+              >
+                <EngineerCTA />
+              </motion.div>
+            )}
+            {styleMagazine === 'vague' && (
+              <motion.div
+                key="vague-cta"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.4 }}
+              >
+                <VagueCTA />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+      </motion.div>
     </>
   )
 }
