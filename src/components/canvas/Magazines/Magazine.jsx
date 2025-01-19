@@ -123,8 +123,9 @@ export const Magazine = ({
       // Tiny movement => treat as click to focus/unfocus
       e.stopPropagation();
       
-      // Only allow focusing if this is the middle magazine
-      if (isMiddleMagazine) {
+      // In landscape mode, allow focusing any magazine
+      // In portrait mode, only allow focusing the middle magazine
+      if (!isPortrait || isMiddleMagazine) {
         setFocusedMagazine((prev) => (prev === magazine ? null : magazine));
       }
     } else {
@@ -211,7 +212,7 @@ export const Magazine = ({
 
     if (focusedMagazine === magazine) {
       const geometryWidth = 3;
-      const zDist = 2.58;
+      const zDist = 2.6;
       
       const newPos = new THREE.Vector3().copy(camera.position);
       const forward = new THREE.Vector3(-0.003, 0.0, -1)

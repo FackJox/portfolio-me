@@ -93,15 +93,13 @@ export default function Page() {
 
         <div className='fixed bottom-0 w-full flex items-center justify-center lg:hidden'>
           {middleMagazine === 'smack' && (
-            <SmackCTA className='w-full'>
-              <div className='w-full max-w-[392px] md:max-w-[676px]' />
-            </SmackCTA>
+            <SmackCTA  />
+           
           )}
           {middleMagazine === 'engineer' && <EngineerCTA />}
           {middleMagazine === 'vague' && (
-            <VagueCTA className='w-full'>
-              <div className='w-full max-w-[392px] md:max-w-[676px]' />
-            </VagueCTA>
+            <VagueCTA />
+            
           )}
         </div>
       </div>
