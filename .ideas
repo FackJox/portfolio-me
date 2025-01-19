@@ -1,23 +1,32 @@
 search / keyword cloud to list projects that can then be flicked to - 3d with react three flex
 Different font for each type of cloud - filter clouds by Technical and Creative
 
-Move CTA button right at the bottom
 
-Adjust font size
+landscape mode in mobile different layout to ipad mode - aspect ratio
 
-Get rid of landscape mode in mobile
+Change landscape carosuel spacing for different aspect ratios
 
-Design for breakpoints
+Blueprint effects on engineer background
 
-Adjust 3d window to flex in middle of CTA and menu
+incrase speed of lerp between right and left pages
 
-In mobile the 
+in desktop mode stop style changes when magazine is in focus mode
+
+suspense all pages until the magazine is selected in focus mode
+
+a website loader of all of the pages flying around
+
+---
+
+animations -
+For buttons - easeinout the background colour
+rotate the text like the header
+lerp between the line colour
 
 ---
 
 Desktop - 
 
-Display books in landsape
 
 Get rid of menu and have the titles underneath them
 

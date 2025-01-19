@@ -1,5 +1,6 @@
 import { Layout } from '@/components/dom/Layout'
 import '@/global.css'
+import { Provider } from 'jotai'
 
 const title = "Jack Fox Portfolio"
 const url =  process.env.NODE_ENV ==="development" ? 'http://localhost:3000' : 'https://jackfox.dev'
@@ -57,8 +58,9 @@ export default function RootLayout({ children }) {
       */}
       <head />
       <body>
-        {/* To avoid FOUT with styled-components wrap Layout with StyledComponentsRegistry https://beta.nextjs.org/docs/styling/css-in-js#styled-components */}
-        <Layout>{children}</Layout>
+        <Provider>
+          <Layout>{children}</Layout>
+        </Provider>
       </body>
     </html>
   )
