@@ -82,7 +82,7 @@ export default function Page() {
 
 
 
-        <div className={`w-full flex-1 text-center ${middleMagazine === 'vague' ? 'pb-[73px]' : 'pb-[65px]'}`}>
+        <div className={`w-full flex-1 text-center ${middleMagazine === 'vague' ? 'lg:pb-0 pb-[73px]' : 'lg:pb-0 pb-[65px]'}`}>
           <View className='flex h-full w-full flex-col items-center justify-center'>
             <Suspense fallback={null}>
               <Library position={[0, 0, 0]} />

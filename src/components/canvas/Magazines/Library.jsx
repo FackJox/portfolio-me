@@ -93,9 +93,10 @@ export const Library = (props) => {
   const [focusedMagazine, setFocusedMagazine] = useAtom(focusedMagazineAtom);
   
   useLayoutEffect(() => {
-    const newIsPortrait = viewport.width < viewport.height;
+    const newIsPortrait = viewport.width <= 11; // Adjusted threshold for Three.js viewport units
     console.log('newIsPortrait:', newIsPortrait);
     setIsPortrait(newIsPortrait);
+    console.log("🚀 ~ useLayoutEffect ~ viewport.width:", viewport.width)
   }, [viewport.width, viewport.height, isPortrait]);
 
   const [smackPage] = useAtom(smackAtom);
@@ -107,13 +108,13 @@ export const Library = (props) => {
     () => ({
       [magazines.vague]: isPortrait
         ? [-0.65 + (vaguePage > 0 ? 0.65 : 0), 2, 3.5]      // Portrait: top
-        : [-2.75 + (vaguePage > 0 ? 0.65 : 0), -0.4, 6],    // Landscape: left
+        : [-2.5 + (vaguePage > 0 ? 0.65 : 0), -0, 5],    // Landscape: left
       [magazines.smack]: isPortrait 
         ? [-0.65 + (smackPage > 0 ? 0.65 : 0), -2, 3.5]     // Portrait: bottom
-        : [-0.5 + (smackPage > 0 ? 0.65 : 0), -0.4, 6],     // Landscape: middle
+        : [-2 + (smackPage > 0 ? 0.65 : 0), -0, 5],     // Landscape: middle
       [magazines.engineer]: isPortrait 
         ? [-0.65 + (engineerPage > 0 ? 0.65 : 0), 0, 3.5]     // Portrait: middle
-        : [1.75 + (engineerPage > 0 ? 0.65 : 0), -0.4, 6],  // Landscape: right
+        : [2.5 + (engineerPage > 0 ? 0.65 : 0), -0, 5],  // Landscape: right
     }),
     [isPortrait, smackPage, vaguePage, engineerPage]
   );

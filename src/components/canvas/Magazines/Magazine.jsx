@@ -211,15 +211,14 @@ export const Magazine = ({
 
     if (focusedMagazine === magazine) {
       const geometryWidth = 3;
-      const zDist = 7.5;
+      const zDist = 2.58;
       
       const newPos = new THREE.Vector3().copy(camera.position);
       const forward = new THREE.Vector3(-0.003, 0.0, -1)
         .applyQuaternion(camera.quaternion)
         .normalize();
       
-      const portraitZoomFactor = isPortrait ? 0.52 : 0.4;
-      newPos.addScaledVector(forward, zDist * portraitZoomFactor);
+      newPos.addScaledVector(forward, zDist);
 
       const right = new THREE.Vector3(1, 0, 0)
         .applyQuaternion(camera.quaternion)
