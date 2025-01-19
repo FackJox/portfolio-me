@@ -31,7 +31,7 @@ export const SmackCTA = () => {
   return (
     <div className='w-full flex items-center justify-center'>
       <div className='w-full mx-5'>
-        <button className='w-full py-1.5 border-t-2 border-[#FABE7F] text-2xl sm:text-3xl md:text-3xl font-[lemon-wide] text-[#FABE7F]'>CONNECT</button>
+        <button className='w-full py-6 border-t-2 border-[#FABE7F] text-3xl sm:text-3xl md:text-3xl font-[lemon-wide] text-[#FABE7F]'>CONNECT</button>
       </div>
     </div>
   )
@@ -41,20 +41,20 @@ export const SmackCTA = () => {
 export const SmackTopBar = () => {
   return (
     <div className='w-full h-10 flex items-center justify-between pt-6 pb-6 pl-6 pr-8 bg-[#0E0504] border-b-[1px] border-[#FABE7F]'>
-      <h1 className='font-[YoungSerif] text-[#FABE7F] text-[2.5rem] tracking-[-0.04em] whitespace-nowrap'>
+      <h1 className='font-[YoungSerif] text-[#FABE7F] text-3xl tracking-[-0.04em] whitespace-nowrap'>
         Jack Foxcroft
       </h1>
       <div className='flex items-center gap-8'>
-        <button className='font-[lemon-regular] text-[#F5E4F8] text-4xl tracking-[-0.04em]'>
+        <button className='font-[lemon-regular] text-[#F5E4F8] text-3xl '>
           MENU
         </button>
         <div className='h-6 w-[1px] bg-[#F5E4F8]'></div>
-        <button className='flex items-center text-[#F5E4F8] text-4xl tracking-[-0.04em]'>
+        <button className='flex items-center text-[#F5E4F8] text-3xl '>
           <span className='font-[lemon-regular]'>CREATI</span>
           <span className='font-[lemon-wide]'>VE</span>
         </button>
         <div className='h-6 w-[1px] bg-[#F5E4F8]'></div>
-        <button className='font-[lemon-wide] text-[#FABE7F] text-4xl tracking-[-0.04em]'>
+        <button className='font-[lemon-wide] text-[#FABE7F] text-3xl '>
           CONNECT
         </button>
       </div>

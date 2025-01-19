@@ -30,8 +30,8 @@ export const EngineerCTA = () => {
   return (
     <div className='w-full flex items-center justify-center'>
       <div className='w-full mx-5'>
-        <button className='w-full py-2 border-t-[1px] border-[#F7F6F7] text-xl sm:text-2xl md:text-2xl bg-[#200B5F] font-[HKGrotesk-Regular] tracking-[-0.12em] text-[#FFB79C]'>
-          CONNECT.
+        <button className='w-full py-6 border-t-[1px] border-[#F7F6F7] text-xl sm:text-2xl md:text-3xl bg-[#200B5F] font-[HKGrotesk-Regular] tracking-[-0.12em] text-[#FFB79C]'>
+          CONNECT
         </button>
       </div>
     </div>

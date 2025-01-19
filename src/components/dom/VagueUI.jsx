@@ -30,7 +30,7 @@ export const VagueCTA = () => {
   return (
     <div className='w-full flex items-center justify-center'>
       <div className='w-full mx-5'>
-        <button className='w-full py-2 border-t-[1px] border-[#FFFFFF] text-xl sm:text-2xl md:text-2xl bg-[#2C272F] font-[HKGrotesk-Regular] tracking-[-0.12em] text-[#F7F6F7]'>
+        <button className='w-full py-6 border-t-[1px] border-[#FFFFFF] text-xl sm:text-2xl md:text-2xl bg-[#2C272F] font-[HKGrotesk-Regular] tracking-[-0.12em] text-[#F7F6F7]'>
           CONNECT.
         </button>
       </div>

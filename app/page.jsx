@@ -53,7 +53,7 @@ export default function Page() {
   return (
     <>
       <div
-        className='mx-auto flex h-screen w-full flex-col items-center'
+        className='relative flex min-h-[100dvh] w-full flex-col items-center'
         style={{
           backgroundColor: styleMagazine === 'smack' ? '#0E0504' : styleMagazine === 'vague' ? '#2C272F' : '#200B5F',
         }}
@@ -67,21 +67,21 @@ export default function Page() {
 
         {/* Original UI for below lg */}
         <div className='lg:hidden w-full'>
-          <div>
+          <div className='w-full'>
             {styleMagazine === 'smack' && <SmackHeader />}
             {styleMagazine === 'engineer' && <EngineerHeader />}
             {styleMagazine === 'vague' && <VagueHeader />}
           </div>
 
-          <div>
+          <div className='w-full'>
             {styleMagazine === 'smack' && <SmackButtons />}
             {styleMagazine === 'engineer' && <EngineerButtons />}
             {styleMagazine === 'vague' && <VagueButtons />}
           </div>
         </div>
 
-        <div className='w-full flex-1 flex '>
-          <View className='w-full flex items-center justify-center'>
+        <div className='relative w-full flex-1'>
+          <View className='absolute inset-0 flex items-center justify-center'>
             <Suspense fallback={null}>
               <Library position={[0, 0, 0]} />
               <Common
@@ -91,7 +91,7 @@ export default function Page() {
           </View>
         </div>
 
-        <div className='w-full flex items-center justify-center lg:hidden'>
+        <div className='w-full lg:hidden'>
           {styleMagazine === 'smack' && <SmackCTA />}
           {styleMagazine === 'engineer' && <EngineerCTA />}
           {styleMagazine === 'vague' && <VagueCTA />}
