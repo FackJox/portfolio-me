@@ -46,9 +46,9 @@ export const Magazine = ({
   // ------------------------------
   const { camera, size } = useThree();
 
-  useEffect(() => {
-    console.log(`Magazine ${magazine} position:`, layoutPosition);
-  }, [layoutPosition, magazine, camera.position]);
+  // useEffect(() => {
+  //   console.log(`Magazine ${magazine} position:`, layoutPosition);
+  // }, [layoutPosition, magazine, camera.position]);
 
 
   // Change pointer if hovered & not focused

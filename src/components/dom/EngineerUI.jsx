@@ -1,6 +1,6 @@
 export const EngineerHeader = () => {
   return (
-    <div className='w-full flex items-center justify-center pt-6 pb-4 bg-[#200B5F]'>
+    <div className='w-full flex items-center justify-center pt-2 pb-2 bg-[#200B5F]'>
       <h1 className='font-[HKGrotesk-SemiBold] text-[#F7F6F7] text-5xl sm:text-6xl md:text-7xl tracking-[-0.13em] text-center align-middle whitespace-nowrap'>
         Jack Foxcroft
       </h1>
@@ -11,7 +11,7 @@ export const EngineerHeader = () => {
 export const EngineerButtons = () => {
   return (
     <div className='w-full flex items-center justify-center bg-[#200B5F]'>
-      <div className='w-full max-w-[392px] flex border-t-[1px] md:max-w-[676px] border-b-[1px] border-[#F7F6F7]'>
+      <div className='w-full mx-5 flex border-t-[1px] md:max-w-[676px] border-b-[1px] border-[#F7F6F7]'>
         <button className='flex-1 py-2 font-[HKGrotesk-Bold] text-[#F4EEDC] text-xl sm:text-2xl md:text-3xl tracking-[-0.12em] text-center align-middle'>
           MENU
         </button>
@@ -29,8 +29,8 @@ export const EngineerButtons = () => {
 export const EngineerCTA = () => {
   return (
     <div className='fixed bottom-0 w-full flex items-center justify-center'>
-      <div className='w-full max-w-[392px] md:max-w-[676px]'>
-        <button className='w-full py-5 border-t-[1px] border-[#F7F6F7] text-4xl bg-[#200B5F] font-[HKGrotesk-Regular] tracking-[-0.12em] text-[#FFB79C]'>
+      <div className='w-full mx-5'>
+        <button className='w-full py-3 border-t-[1px] border-[#F7F6F7] text-4xl bg-[#200B5F] font-[HKGrotesk-Regular] tracking-[-0.12em] text-[#FFB79C]'>
           CONNECT.
         </button>
       </div>
@@ -40,12 +40,12 @@ export const EngineerCTA = () => {
 
 export const EngineerTopBar = () => {
   return (
-    <div className='w-full h-10 flex items-center justify-between pl-6 pr-8 bg-[#200B5F] border-b-[1px]'>
+    <div className='w-full h-10 flex items-center justify-between pt-6 pb-6 pl-6 pr-8 bg-[#200B5F] border-b-[1px]'>
       <h1 className='font-[HKGrotesk-SemiBold] text-[#F7F6F7] text-[2.5rem] tracking-[-0.13em] whitespace-nowrap'>
         Jack Foxcroft
       </h1>
       <div className='flex items-center gap-8'>
-        <button className='font-[HKGrotesk-Bold] text-[#F4EEDC] text-xl tracking-[-0.12em]'>
+        <button className='font-[HKGrotesk-SemiBold]  text-[#FFB79C] text-xl tracking-[-0.12em]'>
           MENU
         </button>
         <div className='h-[24px] w-[1px] bg-[#F7F6F7]'></div>
@@ -53,7 +53,7 @@ export const EngineerTopBar = () => {
           TECHNICAL
         </button>
         <div className='h-[24px] w-[1px] bg-[#F7F6F7]'></div>
-        <button className='font-[HKGrotesk-Regular] text-[#FFB79C] text-2xl tracking-[-0.12em]'>
+        <button className='font-[HKGrotesk-Bold] text-[#F4EEDC] text-2xl tracking-[-0.12em]'>
           CONNECT
         </button>
       </div>

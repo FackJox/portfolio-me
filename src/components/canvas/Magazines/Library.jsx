@@ -94,6 +94,7 @@ export const Library = (props) => {
   
   useLayoutEffect(() => {
     const newIsPortrait = viewport.width < viewport.height;
+    console.log('newIsPortrait:', newIsPortrait);
     setIsPortrait(newIsPortrait);
   }, [viewport.width, viewport.height, isPortrait]);
 
