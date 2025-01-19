@@ -1,0 +1,105 @@
+search / keyword cloud to list projects that can then be flicked to - 3d with react three flex
+Different font for each type of cloud - filter clouds by Technical and Creative
+
+Move CTA button right at the bottom
+
+Adjust font size
+
+Get rid of landscape mode in mobile
+
+Design for breakpoints
+
+Adjust 3d window to flex in middle of CTA and menu
+
+In mobile the 
+
+---
+
+Desktop - 
+
+Display books in landsape
+
+Get rid of menu and have the titles underneath them
+
+---
+
+If can do clickable website -
+
+
+
+----
+
+
+Below are a few approaches for replacing the “picture” textures with interactive HTML content that follows the same folding/page-turning logic. Each approach has upsides and downsides, particularly around how (and if) you can warp the HTML to match the curvature of the 3D geometry.
+--------------------------------------------------------------------------------
+1) Use a CSS3D Renderer (or Drei’s <Html/> Helper) for 3D Positioning, Without True Deformation
+--------------------------------------------------------------------------------
+Summary
+• Place your HTML elements in 3D space using a CSS3DRenderer (a parallel scene that uses a CSS-based rendering approach) or using the <Html /> component from @react-three/drei.
+• Pros: Easiest way to keep HTML truly interactive (native DOM events).
+• Cons: Cannot realistically “deform” the HTML into a smooth curve. Instead, you can only rotate or tilt it in 3D as a rigid plane. It won’t bend or fold with the bones.
+Concept
+Wrap each “page” inside a <group> that is managed by the usual bone transformations for turning/folding.
+In parallel, each page has a separate CSS3DObject (or <Html />) that you attach to the same transform.
+The HTML will appear as a flat plane, albeit rotating/flipping in 3D with the page. However, you will not see the true curvature.
+Steps
+Install and configure the CSS3DRenderer or <Html/> from @react-three/drei.
+In your Page component, remove the MeshStandardMaterial (or keep it invisible).
+For each page that you want HTML on, attach the <Html> component at the same place in the scene, referencing the same bones or group transforms.
+The code snippet might look like this:
+This keeps the page-turning logic the same; the <Html /> layer will move/rotate as a rigid plane. You do get full DOM interactivity, but you cannot match the page’s curved shape.
+--------------------------------------------------------------------------------
+2) Render HTML to a Live Texture (HTML → Canvas → Texture) and Warp on the 3D Mesh
+--------------------------------------------------------------------------------
+Summary
+• Use something like html2canvas or a hidden <iframe> plus a canvas to “snapshot” your HTML. Then map that dynamic canvas as the texture of the page’s mesh.
+• Pros: It volumetrically folds or bends exactly like the page geometry. The page-turn animations will look physically correct.
+• Cons: The HTML is no longer natively interactive because it’s “baked” into a texture. You would have to do custom event-mapping if you want to preserve interactivity (very advanced). Also requires re-rendering the texture every time your HTML updates.
+Concept
+Duplicate your HTML in a hidden DOM or <iframe>.
+Use a library like html2canvas or an <iframe> + canvas “drawImage” approach to capture that HTML into a <canvas>.
+Set the <canvas> as a texture on the page’s material.
+If the HTML changes, re-run html2canvas or update your hidden <canvas> to keep refreshing the texture.
+Steps
+Create a hidden div or <iframe> of the same size as your “page.”
+Use html2canvas or similar to convert that hidden HTML to a <canvas>.
+Turn that <canvas> into a THREE.CanvasTexture:
+Apply the updated texture to your SkinnedMesh so that it deforms and moves with the page.
+If you need user interactivity, you’ll have to do an advanced approach: track the user’s pointer events in 3D, convert them to the appropriate 2D coordinates, and forward them to your original HTML. This is non-trivial and can be quite expensive if done in real time.
+--------------------------------------------------------------------------------
+3) Use GPU Shaders or Custom Distortion of an <iframe> / <Html> (Advanced / Experimental)
+--------------------------------------------------------------------------------
+Summary
+• Keep an actual DOM piece for each page, but physically deform it on the GPU. This involves advanced usage of multi-pass rendering or “projecting” onto the 3D geometry.
+• Pros: Potentially you get real-time warping of an actual HTML layer.
+• Cons: Extremely complex. Typically not recommended unless you have to do something VR-like with full interactivity. The performance cost can be quite high.
+Concept
+Render the HTML on a plane (like approach #1 or a separate “viewport”).
+Capture that plane’s texture or geometry on the GPU.
+Use a custom shader that baked the HTML fragment’s texture and then warp it using the same bone data.
+You would re-route pointer events via raycasting.
+Steps (High-Level)
+Use approach #1 or <Html /> from @react-three/drei for your live DOM.
+Deploy a secondary “render target” to capture it as a texture in real-time inside the WebGL pipeline.
+On your page’s SkinnedMesh, use a custom shader that fetches from that render target and applies the same bone transformations.
+You’d create a custom event-layer that translates 3D picks to 2D coordinates, injecting them back into the live HTML.
+Given the complexity, there aren’t many ready-to-go code examples for this, and it tends to be a major performance challenge.
+--------------------------------------------------------------------------------
+Which Approach to Choose?
+--------------------------------------------------------------------------------
+• If you absolutely must let users click and type on the folded portion of your page, and genuinely see it bending, you’re in extremely complex territory (Approach #3).
+• For simpler needs—if you can accept that the HTML is not bent—Approach #1 (CSS3D / <Html/>) is simplest.
+• For capturing a static or semi-static layout that does warp with the mesh, Approach #2 is the most common (taking snapshots of your HTML and mapping them as a texture), but you lose direct DOM events.
+--------------------------------------------------------------------------------
+Performance Notes
+--------------------------------------------------------------------------------
+• True mesh-based warping of live HTML is always expensive.
+• The cheaper method is to take frequent snapshots (Approach #2) only when your HTML changes, so you don’t do it every frame.
+• If you do not need the HTML to bend or fold physically, Approach #1 is best for a truly interactive experience.
+--------------------------------------------------------------------------------
+Conclusion
+--------------------------------------------------------------------------------
+Decide whether real-time bending of interactive HTML is absolutely necessary.
+If it is not, consider Approach #1 for easy DOM interaction.
+If it is, either do snapshot-based texture updates (Approach #2) or do a very advanced GPU-based pipeline (Approach #3).
+Each of these solutions will allow you to keep the existing page-turning logic (bones, rotation, folding, easing, etc.), but the fidelity of the “bent HTML” versus actual user interactivity will vary significantly depending on which approach you choose

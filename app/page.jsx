@@ -15,7 +15,6 @@ const EngineerButtons = dynamic(() => import('@/components/dom/EngineerUI').then
 const EngineerCTA = dynamic(() => import('@/components/dom/EngineerUI').then((mod) => mod.EngineerCTA), { ssr: true })
 const EngineerTopBar = dynamic(() => import('@/components/dom/EngineerUI').then((mod) => mod.EngineerTopBar), { ssr: true })
 
-
 const VagueHeader = dynamic(() => import('@/components/dom/VagueUI').then((mod) => mod.VagueHeader), { ssr: true })
 const VagueButtons = dynamic(() => import('@/components/dom/VagueUI').then((mod) => mod.VagueButtons), { ssr: true })
 const VagueCTA = dynamic(() => import('@/components/dom/VagueUI').then((mod) => mod.VagueCTA), { ssr: true })
@@ -25,9 +24,7 @@ const Library = dynamic(() => import('@/components/canvas/Magazines/Library').th
   ssr: false,
 })
 
-const Logo = dynamic(() => import('@/components/canvas/Examples').then((mod) => mod.Logo), { ssr: false })
-const Dog = dynamic(() => import('@/components/canvas/Examples').then((mod) => mod.Dog), { ssr: false })
-const Duck = dynamic(() => import('@/components/canvas/Examples').then((mod) => mod.Duck), { ssr: false })
+
 const View = dynamic(() => import('@/components/canvas/View').then((mod) => mod.View), {
   ssr: false,
   loading: () => (
@@ -48,87 +45,62 @@ const Common = dynamic(() => import('@/components/canvas/View').then((mod) => mo
 export default function Page() {
   const [middleMagazine] = useAtom(middleMagazineAtom)
 
-  const renderUI = () => {
-    switch (middleMagazine) {
-      case 'smack':
-        return (
-          <>
-            <div className='portrait:block landscape:hidden'>
-              <div className='absolute w-full z-10'>
-                <SmackHeader />
-              </div>
-              <div className='absolute w-full z-10 top-[80px]'>
-                <SmackButtons />
-              </div>
-              <div className='absolute w-full z-10 bottom-0'>
-                <SmackCTA />
-              </div>
-            </div>
-            <div className='portrait:hidden landscape:block'>
-              <div className='absolute w-full z-10'>
-                <SmackTopBar />
-              </div>
-            </div>
-          </>
-        )
-      case 'vague':
-        return (
-          <>
-            <div className='portrait:block landscape:hidden'>
-              <div className='absolute w-full z-10'>
-                <VagueHeader />
-              </div>
-              <div className='absolute w-full z-10 top-[80px]'>
-                <VagueButtons />
-              </div>
-              <div className='absolute w-full z-10 bottom-0'>
-                <VagueCTA />
-              </div>
-            </div>
-            <div className='portrait:hidden landscape:block'>
-              <div className='absolute w-full z-10'>
-                <VagueTopBar />
-              </div>
-            </div>
-          </>
-        )
-      case 'engineer':
-        return (
-          <>
-            <div className='portrait:block landscape:hidden'>
-              <div className='absolute w-full z-10'>
-                <EngineerHeader />
-              </div>
-              <div className='absolute w-full z-10 top-[80px]'>
-                <EngineerButtons />
-              </div>
-              <div className='absolute w-full z-10 bottom-0'>
-                <EngineerCTA />
-              </div>
-            </div>
-            <div className='portrait:hidden landscape:block'>
-              <div className='absolute w-full z-10'>
-                <EngineerTopBar />
-              </div>
-            </div>
-          </>
-        )
-      default:
-        return null
-    }
-  }
-
   return (
     <>
-      <div className='relative w-full h-full'>
-        {renderUI()}
-        <div className='w-full h-full text-center'>
+      <div className='mx-auto flex h-screen w-full flex-col flex-wrap items-center' 
+           style={{ backgroundColor: middleMagazine === 'smack' ? '#0E0504' : middleMagazine === 'vague' ? '#2C272F' : '#200B5F' }}>
+        
+        {/* TopBar for lg and above */}
+        <div className='hidden lg:block w-full'>
+          {middleMagazine === 'smack' && <SmackTopBar />}
+          {middleMagazine === 'engineer' && <EngineerTopBar />}
+          {middleMagazine === 'vague' && <VagueTopBar />}
+        </div>
+
+        {/* Original UI for below lg */}
+        <div className='lg:hidden w-full'>
+          <div className='flex w-full flex-col items-start justify-center'>
+            {middleMagazine === 'smack' && <SmackHeader className='w-full' />}
+            {middleMagazine === 'engineer' && <EngineerHeader />}
+            {middleMagazine === 'vague' && <VagueHeader className='w-full' />}
+          </div>
+
+          <div className='flex w-full flex-col items-start justify-center'>
+            {middleMagazine === 'smack' && (
+              <SmackButtons className='w-full'>
+                <div className='w-full max-w-[392px] md:max-w-[676px]' />
+              </SmackButtons>
+            )}
+            {middleMagazine === 'engineer' && <EngineerButtons />}
+            {middleMagazine === 'vague' && (
+              <VagueButtons className='w-full'>
+                <div className='w-full max-w-[392px] md:max-w-[676px]' />
+              </VagueButtons>
+            )}
+          </div>
+        </div>
+
+        <div className='w-full flex-1 text-center pb-[88px]'>
           <View className='flex h-full w-full flex-col items-center justify-center'>
             <Suspense fallback={null}>
               <Library position={[0, 0, 0]} />
               <Common color={middleMagazine === 'smack' ? '#0E0504' : middleMagazine === 'vague' ? '#2C272F' : '#200B5F'} />
             </Suspense>
           </View>
+        </div>
+
+        <div className='fixed bottom-0 w-full flex items-center justify-center lg:hidden'>
+          {middleMagazine === 'smack' && (
+            <SmackCTA className='w-full'>
+              <div className='w-full max-w-[392px] md:max-w-[676px]' />
+            </SmackCTA>
+          )}
+          {middleMagazine === 'engineer' && <EngineerCTA />}
+          {middleMagazine === 'vague' && (
+            <VagueCTA className='w-full'>
+              <div className='w-full max-w-[392px] md:max-w-[676px]' />
+            </VagueCTA>
+          )}
         </div>
       </div>
     </>

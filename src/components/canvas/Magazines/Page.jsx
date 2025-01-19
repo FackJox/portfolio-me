@@ -17,7 +17,6 @@ import {
   Vector3,
 } from "three";
 import { degToRad } from "three/src/math/MathUtils.js";
-import { useGesture } from "@use-gesture/react";
 
 // Constants
 const PAGE_WIDTH = 1.28;

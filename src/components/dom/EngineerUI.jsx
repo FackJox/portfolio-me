@@ -1,7 +1,7 @@
 export const EngineerHeader = () => {
   return (
-    <div className='w-full flex items-center justify-center mb-4 bg-[#200B5F]'>
-      <h1 className='font-[HKGrotesk-SemiBold] text-[#F7F6F7] text-[5.5rem] tracking-[-0.13em] text-center align-middle whitespace-nowrap pr-4'>
+    <div className='w-full flex items-center justify-center pt-6 pb-4 bg-[#200B5F]'>
+      <h1 className='font-[HKGrotesk-SemiBold] text-[#F7F6F7] text-5xl sm:text-6xl md:text-7xl tracking-[-0.13em] text-center align-middle whitespace-nowrap'>
         Jack Foxcroft
       </h1>
     </div>
@@ -10,15 +10,15 @@ export const EngineerHeader = () => {
 
 export const EngineerButtons = () => {
   return (
-    <div className='w-full flex items-center justify-center mt-7 mb-4 bg-[#200B5F] '>
+    <div className='w-full flex items-center justify-center bg-[#200B5F]'>
       <div className='w-full max-w-[392px] flex border-t-[1px] md:max-w-[676px] border-b-[1px] border-[#F7F6F7]'>
-        <button className='flex-1 py-2 font-[HKGrotesk-Bold]  text-[#F4EEDC] text-3xl md:text-2xl tracking-[-0.12em] text-center align-middle'>
+        <button className='flex-1 py-2 font-[HKGrotesk-Bold] text-[#F4EEDC] text-xl sm:text-2xl md:text-3xl tracking-[-0.12em] text-center align-middle'>
           MENU
         </button>
-        <div className='flex  items-center flex-shrink-0'>
+        <div className='flex items-center flex-shrink-0'>
           <div className='h-[50%] w-[1px] bg-[#F7F6F7] relative mx-4'></div>
         </div>
-        <button className='flex-1 py-2 text-[#FFB79C] font-[HKGrotesk-SemiBold]  text-3xl md:text-2xl tracking-[-0.12em] text-center align-middle'>
+        <button className='flex-1 py-2 text-[#FFB79C] font-[HKGrotesk-SemiBold] text-xl sm:text-2xl md:text-3xltracking-[-0.12em] text-center align-middle'>
           TECHNICAL
         </button>
       </div>
@@ -28,10 +28,9 @@ export const EngineerButtons = () => {
 
 export const EngineerCTA = () => {
   return (
-    
-    <div className='fixed bottom-0 mb-20 w-full flex items-center justify-center'>
+    <div className='fixed bottom-0 w-full flex items-center justify-center'>
       <div className='w-full max-w-[392px] md:max-w-[676px]'>
-        <button className='w-full py-5 border-t-[1px] border-b-[1px] border-[#F7F6F7] text-4xl bg-[#200B5F] font-[HKGrotesk-Regular] tracking-[-0.12em] text-[#FFB79C]'>
+        <button className='w-full py-5 border-t-[1px] border-[#F7F6F7] text-4xl bg-[#200B5F] font-[HKGrotesk-Regular] tracking-[-0.12em] text-[#FFB79C]'>
           CONNECT.
         </button>
       </div>
