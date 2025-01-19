@@ -1,6 +1,6 @@
 export const EngineerHeader = () => {
   return (
-    <div className='w-full flex items-center justify-center pt-2 pb-2 bg-[#200B5F]'>
+    <div className='w-full flex items-center justify-center pt-6 pb-4 bg-[#200B5F]'>
       <h1 className='font-[HKGrotesk-SemiBold] text-[#F7F6F7] text-5xl sm:text-6xl md:text-7xl tracking-[-0.13em] text-center align-middle whitespace-nowrap'>
         Jack Foxcroft
       </h1>

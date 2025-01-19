@@ -11,7 +11,7 @@ export const SmackHeader = () => {
 export const SmackButtons = () => {
   return (
     <div className='w-full flex items-center justify-center mb-4 bg-[#0E0504]'>
-      <div className='w-full max-w-72 sm:max-w-96 flex border-t-2 border-b-2 border-[#FABE7F]'>
+      <div className='w-full mx-5 flex border-t-2 border-b-2 border-[#FABE7F]'>
         <button className='flex-1 px-4 py-2 md:py-3 font-[lemon-regular] bg-[#0E0504] text-[#FABE7F] text-3xl sm:text-4xl tracking-[0.04em] text-center align-middle'>
           MENU
         </button>
@@ -30,7 +30,7 @@ export const SmackButtons = () => {
 export const SmackCTA = () => {
   return (
     <div className='fixed bottom-0 w-full flex items-center justify-center'>
-      <div className='w-full max-w-72 sm:max-w-96'>
+      <div className='w-full mx-5'>
         <button className='w-full p-2 bg-[#FABE7F] text-5xl font-[lemon-wide] text-[#0E0504]'>CONNECT</button>
       </div>
     </div>
