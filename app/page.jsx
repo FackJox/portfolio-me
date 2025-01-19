@@ -3,7 +3,7 @@
 import dynamic from 'next/dynamic'
 import { Suspense } from 'react'
 import { useAtom } from 'jotai'
-import { middleMagazineAtom } from '@/components/canvas/Magazines/Library'
+import { styleMagazineAtom } from '@/components/canvas/Magazines/Library'
 
 const SmackHeader = dynamic(() => import('@/components/dom/SmackUI').then((mod) => mod.SmackHeader), { ssr: true })
 const SmackButtons = dynamic(() => import('@/components/dom/SmackUI').then((mod) => mod.SmackButtons), { ssr: true })
@@ -48,35 +48,35 @@ const View = dynamic(() => import('@/components/canvas/View').then((mod) => mod.
 const Common = dynamic(() => import('@/components/canvas/View').then((mod) => mod.Common), { ssr: false })
 
 export default function Page() {
-  const [middleMagazine] = useAtom(middleMagazineAtom)
+  const [styleMagazine] = useAtom(styleMagazineAtom)
 
   return (
     <>
       <div
         className='mx-auto flex h-screen w-full flex-col items-center'
         style={{
-          backgroundColor: middleMagazine === 'smack' ? '#0E0504' : middleMagazine === 'vague' ? '#2C272F' : '#200B5F',
+          backgroundColor: styleMagazine === 'smack' ? '#0E0504' : styleMagazine === 'vague' ? '#2C272F' : '#200B5F',
         }}
       >
         {/* TopBar for lg and above */}
         <div className='hidden lg:block w-full'>
-          {middleMagazine === 'smack' && <SmackTopBar />}
-          {middleMagazine === 'engineer' && <EngineerTopBar />}
-          {middleMagazine === 'vague' && <VagueTopBar />}
+          {styleMagazine === 'smack' && <SmackTopBar />}
+          {styleMagazine === 'engineer' && <EngineerTopBar />}
+          {styleMagazine === 'vague' && <VagueTopBar />}
         </div>
 
         {/* Original UI for below lg */}
         <div className='lg:hidden w-full'>
-          <div >
-            {middleMagazine === 'smack' && <SmackHeader />}
-            {middleMagazine === 'engineer' && <EngineerHeader />}
-            {middleMagazine === 'vague' && <VagueHeader />}
+          <div>
+            {styleMagazine === 'smack' && <SmackHeader />}
+            {styleMagazine === 'engineer' && <EngineerHeader />}
+            {styleMagazine === 'vague' && <VagueHeader />}
           </div>
 
-          <div >
-            {middleMagazine === 'smack' && <SmackButtons />}
-            {middleMagazine === 'engineer' && <EngineerButtons />}
-            {middleMagazine === 'vague' && <VagueButtons />}
+          <div>
+            {styleMagazine === 'smack' && <SmackButtons />}
+            {styleMagazine === 'engineer' && <EngineerButtons />}
+            {styleMagazine === 'vague' && <VagueButtons />}
           </div>
         </div>
 
@@ -85,16 +85,16 @@ export default function Page() {
             <Suspense fallback={null}>
               <Library position={[0, 0, 0]} />
               <Common
-                color={middleMagazine === 'smack' ? '#0E0504' : middleMagazine === 'vague' ? '#2C272F' : '#200B5F'}
+                color={styleMagazine === 'smack' ? '#0E0504' : styleMagazine === 'vague' ? '#2C272F' : '#200B5F'}
               />
             </Suspense>
           </View>
         </div>
 
         <div className='w-full flex items-center justify-center lg:hidden'>
-          {middleMagazine === 'smack' && <SmackCTA />}
-          {middleMagazine === 'engineer' && <EngineerCTA />}
-          {middleMagazine === 'vague' && <VagueCTA />}
+          {styleMagazine === 'smack' && <SmackCTA />}
+          {styleMagazine === 'engineer' && <EngineerCTA />}
+          {styleMagazine === 'vague' && <VagueCTA />}
         </div>
       </div>
     </>

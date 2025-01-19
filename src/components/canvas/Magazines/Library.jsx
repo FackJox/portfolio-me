@@ -16,7 +16,7 @@ const engineerAtom = atom(0);
 export const focusedMagazineAtom = atom(null);
 
 // Atom to track which magazine is in the middle
-export const middleMagazineAtom = atom("vague"); // Default to vague on first render
+export const styleMagazineAtom = atom("vague"); // Default to vague on first render
 
 const picturesSmack = [
   "02Contents",
@@ -243,7 +243,7 @@ export const Library = (props) => {
     }
   });
 
-  const [currentMiddleMagazine, setMiddleMagazine] = useAtom(middleMagazineAtom);
+  const [currentMiddleMagazine, setMiddleMagazine] = useAtom(styleMagazineAtom);
 
   return (
     <group {...props} ref={groupRef}>

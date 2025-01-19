@@ -5,6 +5,7 @@ import { Float, useCursor, useTexture } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useGesture } from "@use-gesture/react";
 import * as THREE from "three";
+import { styleMagazineAtom } from "./Library";
 
 export const Magazine = ({
   pictures,
@@ -23,6 +24,7 @@ export const Magazine = ({
   const [page, setPage] = useAtom(pageAtom);
   const [delayedPage, setDelayedPage] = useState(page);
   const [focusedMagazine, setFocusedMagazine] = useAtom(focusedMagazineAtom);
+  const [, setStyleMagazine] = useAtom(styleMagazineAtom);
   const [highlighted, setHighlighted] = useState(false);
   const [viewingRightPage, setViewingRightPage] = useState(false);
   const [horizontalOffsetTarget, setHorizontalOffsetTarget] = useState(0);
@@ -324,6 +326,7 @@ export const Magazine = ({
         onPointerEnter={(e) => {
           e.stopPropagation();
           setHighlighted(true);
+          setStyleMagazine(magazine);
         }}
         onPointerLeave={(e) => {
           e.stopPropagation();
