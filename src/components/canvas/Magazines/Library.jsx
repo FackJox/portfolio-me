@@ -93,10 +93,12 @@ export const Library = (props) => {
   const [focusedMagazine, setFocusedMagazine] = useAtom(focusedMagazineAtom);
   
   useLayoutEffect(() => {
-    const newIsPortrait = viewport.width <= 11; // Adjusted threshold for Three.js viewport units
-    console.log('newIsPortrait:', newIsPortrait);
+    // Get the actual window width in pixels
+    const windowWidth = window.innerWidth;
+    const newIsPortrait = windowWidth <= 1024; // 1024px threshold for portrait mode
+    console.log('Window width in pixels:', windowWidth);
+    console.log('Is portrait:', newIsPortrait);
     setIsPortrait(newIsPortrait);
-    console.log("🚀 ~ useLayoutEffect ~ viewport.width:", viewport.width)
   }, [viewport.width, viewport.height, isPortrait]);
 
   const [smackPage] = useAtom(smackAtom);

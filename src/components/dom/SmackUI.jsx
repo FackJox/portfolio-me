@@ -1,7 +1,7 @@
 export const SmackHeader = () => {
   return (
-    <div className='w-full flex items-center justify-center pt-6 pb-4 bg-[#0E0504]'>
-      <h1 className='font-[YoungSerif] text-[#FABE7F] text-4xl sm:text-5xl   tracking-[-0.04em] text-center align-middle whitespace-nowrap'>
+    <div className='w-full flex items-center justify-center pt-3 pb-2 bg-[#0E0504]'>
+      <h1 className='font-[YoungSerif] text-[#FABE7F] text-3xl sm:text-4xl md:text-5xl tracking-[-0.04em] text-center align-middle whitespace-nowrap'>
         JACK FOXCROFT
       </h1>
     </div>
@@ -10,15 +10,15 @@ export const SmackHeader = () => {
 
 export const SmackButtons = () => {
   return (
-    <div className='w-full flex items-center justify-center mb-4 bg-[#0E0504]'>
+    <div className='w-full flex items-center justify-center bg-[#0E0504]'>
       <div className='w-full mx-5 flex border-t-2 border-b-2 border-[#FABE7F]'>
-        <button className='flex-1 px-4 py-2 md:py-3 font-[lemon-regular] bg-[#0E0504] text-[#FABE7F] text-3xl sm:text-4xl tracking-[0.04em] text-center align-middle'>
+        <button className='flex-1 py-1.5 font-[lemon-regular] bg-[#0E0504] text-[#FABE7F] text-xl sm:text-2xl md:text-3xl tracking-[0.04em] text-center align-middle'>
           MENU
         </button>
         <div className='flex bg-[#0E0504] items-center flex-shrink-0'>
           <div className='h-[50%] w-[1px] bg-[#F5E4F8] relative mx-4'></div>
         </div>
-        <button className='flex-1 px-4 py-2 md:py-3 text-[#F5E4F8] bg-[#0E0504] text-3xl sm:text-4xl tracking-[0.04em] text-center align-middle'>
+        <button className='flex-1 py-1.5 text-[#F5E4F8] bg-[#0E0504] text-xl sm:text-2xl md:text-3xl tracking-[0.04em] text-center align-middle'>
           <span className='font-[lemon-regular]'>CREATI</span>
           <span className='font-[lemon-wide]'>VE</span>
         </button>
@@ -29,9 +29,9 @@ export const SmackButtons = () => {
 
 export const SmackCTA = () => {
   return (
-    <div className='fixed bottom-0 w-full flex items-center justify-center'>
+    <div className='w-full flex items-center justify-center'>
       <div className='w-full mx-5'>
-        <button className='w-full p-2 bg-[#FABE7F] text-5xl font-[lemon-wide] text-[#0E0504]'>CONNECT</button>
+        <button className='w-full py-1.5 border-t-2 border-[#FABE7F] text-2xl sm:text-3xl md:text-3xl font-[lemon-wide] text-[#FABE7F]'>CONNECT</button>
       </div>
     </div>
   )

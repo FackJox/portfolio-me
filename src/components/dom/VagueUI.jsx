@@ -1,7 +1,7 @@
 export const VagueHeader = () => {
   return (
-    <div className='w-full flex items-center justify-center pt-6 pb-4 bg-[#2C272F] '>
-      <h1 className='font-[Vogue] text-[#F7F6F7]  text-5xl sm:text-6xl md:text-7xl tracking-[-0.07em] text-center align-middle whitespace-nowrap '>
+    <div className='w-full flex items-center justify-center pt-4 pb-3 bg-[#2C272F]'>
+      <h1 className='font-[Vogue] text-[#F7F6F7] text-4xl sm:text-5xl md:text-6xl tracking-[-0.07em] text-center align-middle whitespace-nowrap'>
         JACK FOXCROFT
       </h1>
     </div>
@@ -10,15 +10,15 @@ export const VagueHeader = () => {
 
 export const VagueButtons = () => {
   return (
-    <div className='w-full flex items-center justify-center bg-[#2C272F] '>
-      <div className='w-full  flex border-t-[1px] border-b-[1px] border-[#FFFFFF]'>
-        <button className='flex-1 py-2 font-[HKGrotesk-SemiBold]  text-[#F7F6F7] text-xl sm:text-2xl md:text-3xl  tracking-[-0.12em] text-center align-middle'>
+    <div className='w-full flex items-center justify-center bg-[#2C272F]'>
+      <div className='w-full mx-5 flex border-t-[1px] border-b-[1px] border-[#FFFFFF]'>
+        <button className='flex-1 py-2 font-[HKGrotesk-SemiBold] text-[#F7F6F7] text-xl sm:text-2xl md:text-2xl tracking-[-0.12em] text-center align-middle'>
           MENU
         </button>
-        <div className='flex  items-center flex-shrink-0'>
+        <div className='flex items-center flex-shrink-0'>
           <div className='h-[50%] w-[1px] bg-[#FFFFFF] relative mx-4'></div>
         </div>
-        <button className='flex-1 py-2 text-[#F7F6F7] font-[HKGrotesk-Regular]  text-xl sm:text-2xl md:text-3xl tracking-[-0.12em] text-center align-middle'>
+        <button className='flex-1 py-2 text-[#F7F6F7] font-[HKGrotesk-Regular] text-xl sm:text-2xl md:text-2xl tracking-[-0.12em] text-center align-middle'>
           ABOUT
         </button>
       </div>
@@ -28,9 +28,9 @@ export const VagueButtons = () => {
 
 export const VagueCTA = () => {
   return (
-    <div className='fixed bottom-0 w-full flex items-center justify-center'>
-      <div className='w-full'>
-        <button className='w-full py-5 border-t-[1px]  border-[#FFFFFF] text-2xl md:text-3xl bg-[#2C272F] font-[HKGrotesk-Regular] tracking-[-0.12em] text-[#F7F6F7]'>
+    <div className='w-full flex items-center justify-center'>
+      <div className='w-full mx-5'>
+        <button className='w-full py-2 border-t-[1px] border-[#FFFFFF] text-xl sm:text-2xl md:text-2xl bg-[#2C272F] font-[HKGrotesk-Regular] tracking-[-0.12em] text-[#F7F6F7]'>
           CONNECT.
         </button>
       </div>

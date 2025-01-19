@@ -10,10 +10,16 @@ const SmackButtons = dynamic(() => import('@/components/dom/SmackUI').then((mod)
 const SmackCTA = dynamic(() => import('@/components/dom/SmackUI').then((mod) => mod.SmackCTA), { ssr: true })
 const SmackTopBar = dynamic(() => import('@/components/dom/SmackUI').then((mod) => mod.SmackTopBar), { ssr: true })
 
-const EngineerHeader = dynamic(() => import('@/components/dom/EngineerUI').then((mod) => mod.EngineerHeader), { ssr: true })
-const EngineerButtons = dynamic(() => import('@/components/dom/EngineerUI').then((mod) => mod.EngineerButtons), { ssr: true })
+const EngineerHeader = dynamic(() => import('@/components/dom/EngineerUI').then((mod) => mod.EngineerHeader), {
+  ssr: true,
+})
+const EngineerButtons = dynamic(() => import('@/components/dom/EngineerUI').then((mod) => mod.EngineerButtons), {
+  ssr: true,
+})
 const EngineerCTA = dynamic(() => import('@/components/dom/EngineerUI').then((mod) => mod.EngineerCTA), { ssr: true })
-const EngineerTopBar = dynamic(() => import('@/components/dom/EngineerUI').then((mod) => mod.EngineerTopBar), { ssr: true })
+const EngineerTopBar = dynamic(() => import('@/components/dom/EngineerUI').then((mod) => mod.EngineerTopBar), {
+  ssr: true,
+})
 
 const VagueHeader = dynamic(() => import('@/components/dom/VagueUI').then((mod) => mod.VagueHeader), { ssr: true })
 const VagueButtons = dynamic(() => import('@/components/dom/VagueUI').then((mod) => mod.VagueButtons), { ssr: true })
@@ -23,7 +29,6 @@ const VagueTopBar = dynamic(() => import('@/components/dom/VagueUI').then((mod) 
 const Library = dynamic(() => import('@/components/canvas/Magazines/Library').then((mod) => mod.Library), {
   ssr: false,
 })
-
 
 const View = dynamic(() => import('@/components/canvas/View').then((mod) => mod.View), {
   ssr: false,
@@ -47,9 +52,12 @@ export default function Page() {
 
   return (
     <>
-      <div className='mx-auto flex h-screen w-full flex-col flex-wrap items-center' 
-           style={{ backgroundColor: middleMagazine === 'smack' ? '#0E0504' : middleMagazine === 'vague' ? '#2C272F' : '#200B5F' }}>
-        
+      <div
+        className='mx-auto flex h-screen w-full flex-col items-center'
+        style={{
+          backgroundColor: middleMagazine === 'smack' ? '#0E0504' : middleMagazine === 'vague' ? '#2C272F' : '#200B5F',
+        }}
+      >
         {/* TopBar for lg and above */}
         <div className='hidden lg:block w-full'>
           {middleMagazine === 'smack' && <SmackTopBar />}
@@ -59,48 +67,34 @@ export default function Page() {
 
         {/* Original UI for below lg */}
         <div className='lg:hidden w-full'>
-          <div className='flex w-full flex-col items-start justify-center'>
-            {middleMagazine === 'smack' && <SmackHeader className='w-full' />}
+          <div >
+            {middleMagazine === 'smack' && <SmackHeader />}
             {middleMagazine === 'engineer' && <EngineerHeader />}
-            {middleMagazine === 'vague' && <VagueHeader className='w-full' />}
+            {middleMagazine === 'vague' && <VagueHeader />}
           </div>
 
-          <div className='flex w-full flex-col items-start justify-center'>
-            {middleMagazine === 'smack' && (
-              <SmackButtons className='w-full'>
-                <div className='w-full max-w-[392px] md:max-w-[676px]' />
-              </SmackButtons>
-            )}
+          <div >
+            {middleMagazine === 'smack' && <SmackButtons />}
             {middleMagazine === 'engineer' && <EngineerButtons />}
-            {middleMagazine === 'vague' && (
-              <VagueButtons className='w-full'>
-                <div className='w-full max-w-[392px] md:max-w-[676px]' />
-              </VagueButtons>
-            )}
+            {middleMagazine === 'vague' && <VagueButtons />}
           </div>
         </div>
 
-
-
-        <div className={`w-full flex-1 text-center ${middleMagazine === 'vague' ? 'lg:pb-0 pb-[73px]' : 'lg:pb-0 pb-[65px]'}`}>
-          <View className='flex h-full w-full flex-col items-center justify-center'>
+        <div className='w-full flex-1 flex '>
+          <View className='w-full flex items-center justify-center'>
             <Suspense fallback={null}>
               <Library position={[0, 0, 0]} />
-              <Common color={middleMagazine === 'smack' ? '#0E0504' : middleMagazine === 'vague' ? '#2C272F' : '#200B5F'} />
+              <Common
+                color={middleMagazine === 'smack' ? '#0E0504' : middleMagazine === 'vague' ? '#2C272F' : '#200B5F'}
+              />
             </Suspense>
           </View>
         </div>
 
-        <div className='fixed bottom-0 w-full flex items-center justify-center lg:hidden'>
-          {middleMagazine === 'smack' && (
-            <SmackCTA  />
-           
-          )}
+        <div className='w-full flex items-center justify-center lg:hidden'>
+          {middleMagazine === 'smack' && <SmackCTA />}
           {middleMagazine === 'engineer' && <EngineerCTA />}
-          {middleMagazine === 'vague' && (
-            <VagueCTA />
-            
-          )}
+          {middleMagazine === 'vague' && <VagueCTA />}
         </div>
       </div>
     </>
