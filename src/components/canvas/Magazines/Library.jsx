@@ -95,7 +95,7 @@ export const Library = (props) => {
   useLayoutEffect(() => {
     // Get the actual window width in pixels
     const windowWidth = window.innerWidth;
-    const newIsPortrait = windowWidth <= 1024; // 1024px threshold for portrait mode
+    const newIsPortrait = windowWidth <= 768; // 1024px threshold for portrait mode
     console.log('Window width in pixels:', windowWidth);
     console.log('Is portrait:', newIsPortrait);
     setIsPortrait(newIsPortrait);

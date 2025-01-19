@@ -58,15 +58,15 @@ export default function Page() {
           backgroundColor: styleMagazine === 'smack' ? '#0E0504' : styleMagazine === 'vague' ? '#2C272F' : '#200B5F',
         }}
       >
-        {/* TopBar for lg and above */}
-        <div className='hidden lg:block w-full'>
+        {/* TopBar for md and above */}
+        <div className='hidden md:block w-full'>
           {styleMagazine === 'smack' && <SmackTopBar />}
           {styleMagazine === 'engineer' && <EngineerTopBar />}
           {styleMagazine === 'vague' && <VagueTopBar />}
         </div>
 
-        {/* Original UI for below lg */}
-        <div className='lg:hidden w-full'>
+        {/* Original UI for below md */}
+        <div className='md:hidden w-full'>
           <div className='w-full'>
             {styleMagazine === 'smack' && <SmackHeader />}
             {styleMagazine === 'engineer' && <EngineerHeader />}
@@ -91,7 +91,7 @@ export default function Page() {
           </View>
         </div>
 
-        <div className='w-full lg:hidden'>
+        <div className='w-full md:hidden'>
           {styleMagazine === 'smack' && <SmackCTA />}
           {styleMagazine === 'engineer' && <EngineerCTA />}
           {styleMagazine === 'vague' && <VagueCTA />}
