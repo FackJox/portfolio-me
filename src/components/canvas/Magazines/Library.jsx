@@ -15,7 +15,7 @@ import {
   styleMagazineAtom,
   magazineViewingStatesAtom
 } from '@/helpers/atoms';
-import { calculateMagazineTargetPosition } from "@/helpers/positionHelper"; // Import helper
+import { calculateMagazineTargetPosition } from "@/helpers/positionHelper";
 
 const picturesSmack = [
   "02Contents",
@@ -81,7 +81,7 @@ const magazines = {
 };
 
 export const Library = (props) => {
-  const { viewport, camera } = useThree(); // Access camera
+  const { viewport, camera } = useThree();
   const [isPortrait, setIsPortrait] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState(0);
@@ -98,39 +98,10 @@ export const Library = (props) => {
   const isMountedRef = useRef(false);
   const initializationCountRef = useRef(0);
 
-  // Detailed logging helper
-  const logPositionDetails = (prefix, data) => {
-    const now = Date.now();
-    console.log(`[Library ${now}] ${prefix}:`, {
-      ...data,
-      initCount: initializationCountRef.current,
-      isMounted: isMountedRef.current,
-      isInitialized: isInitializedRef.current,
-      // Ensure arrays are properly stringified
-      ...(data.cameraPosition && { 
-        cameraPosition: Array.from(data.cameraPosition).map(v => v.toFixed(3))
-      }),
-      ...(data.vaguePosition && { 
-        vaguePosition: Array.from(data.vaguePosition).map(v => v.toFixed(3))
-      }),
-      ...(data.smackPosition && { 
-        smackPosition: Array.from(data.smackPosition).map(v => v.toFixed(3))
-      }),
-      ...(data.engineerPosition && { 
-        engineerPosition: Array.from(data.engineerPosition).map(v => v.toFixed(3))
-      })
-    });
-  };
-
   useEffect(() => {
     isMountedRef.current = true;
-    logPositionDetails('Initial Mount', {
-      cameraPosition: camera.position.toArray()
-    });
-
     return () => {
       isMountedRef.current = false;
-      logPositionDetails('Component Unmounting', {});
     };
   }, []);
 
@@ -141,12 +112,6 @@ export const Library = (props) => {
       const windowWidth = window.innerWidth;
       const newIsPortrait = windowWidth <= 768;
       setIsPortrait(newIsPortrait);
-      
-      logPositionDetails('Layout Update', {
-        windowWidth,
-        isPortrait: newIsPortrait,
-        cameraPosition: camera.position.toArray()
-      });
     };
 
     handleResize();
@@ -160,7 +125,7 @@ export const Library = (props) => {
   
   // Smoothly update dragOffset and determine middle magazine
   useFrame((_, delta) => {
-    if (!isPortrait) return; // Only apply dragging in portrait mode
+    if (!isPortrait) return;
 
     const lerpFactor = isDragging ? 0.4 : 0.1;
     const newOffset = THREE.MathUtils.lerp(
@@ -175,18 +140,9 @@ export const Library = (props) => {
     const wrappedOffset = ((newOffset % (spacing * 3)) + spacing * 4.5) % (spacing * 3) - spacing * 1.5;
     
     const index = Math.round(wrappedOffset / spacing) % 3;
-    const magazineOrder = [magazines.vague, magazines.smack, magazines.engineer];
-    const calculatedIndex = (index + 3) % 3; // Ensure positive index
+    const magazineOrder = [magazines.engineer, magazines.vague, magazines.smack];
+    const calculatedIndex = (index + 1) % 3;  // Shift by 1 to make vague the middle magazine initially
     const middleMagazine = magazineOrder[calculatedIndex];
-
-    logPositionDetails('Carousel State', {
-      dragOffset: newOffset,
-      wrappedOffset,
-      index,
-      calculatedIndex,
-      middleMagazine,
-      isDragging
-    });
     
     if (middleMagazine !== currentMiddleMagazine) {
       setMiddleMagazine(middleMagazine);
@@ -197,14 +153,11 @@ export const Library = (props) => {
   const bind = useGesture(
     {
       onDragStart: ({ event }) => {
-        if (focusedMagazine) return; // Disable drag when a magazine is focused
+        if (focusedMagazine) return;
         event.stopPropagation();
         setIsDragging(true);
         dragStartRef.current = dragOffset;
         velocityRef.current = 0;
-        logPositionDetails('Drag Start', {
-          dragStartOffset: dragStartRef.current
-        });
       },
       onDrag: ({ event, movement: [dx, dy], velocity: [vx, vy], last }) => {
         if (focusedMagazine) return;
@@ -220,13 +173,6 @@ export const Library = (props) => {
           const newOffset = dragStartRef.current + movement;
           targetOffsetRef.current = newOffset;
           
-          logPositionDetails('Dragging', {
-            movement,
-            velocity,
-            newOffset,
-            isPortrait
-          });
-          
           if (last) {
             setIsDragging(false);
             const momentum = velocity * 0.5;
@@ -234,12 +180,6 @@ export const Library = (props) => {
             const spacing = 2.2;
             const snapOffset = Math.round(projectedOffset / spacing) * spacing;
             targetOffsetRef.current = snapOffset;
-            
-            logPositionDetails('Drag End', {
-              momentum,
-              projectedOffset,
-              snapOffset
-            });
           }
         } else if (last) {
           setIsDragging(false);
@@ -254,9 +194,6 @@ export const Library = (props) => {
     initializationCountRef.current++;
     
     if (!isMountedRef.current) {
-      logPositionDetails('Skipping premature initialization', {
-        cameraPosition: camera.position.toArray()
-      });
       return {};
     }
 
@@ -295,14 +232,6 @@ export const Library = (props) => {
         camera
       }),
     };
-
-    logPositionDetails('Target Positions Calculated', {
-      isPortrait,
-      cameraPosition: camera.position.toArray(),
-      vaguePosition: positions[magazines.vague].toArray(),
-      smackPosition: positions[magazines.smack].toArray(),
-      engineerPosition: positions[magazines.engineer].toArray(),
-    });
 
     return positions;
   }, [isPortrait, dragOffset, focusedMagazine, vaguePage, smackPage, engineerPage, camera, magazineViewStates]);

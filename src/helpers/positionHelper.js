@@ -45,23 +45,6 @@ export const handlePageViewTransition = ({
   return { newPage: currentPage, newViewingRightPage: isViewingRightPage };
 };
 
-const logPosition = (prefix, data) => {
-  const now = Date.now();
-  console.log(`[PositionHelper ${now}] ${prefix}:`, {
-    ...data,
-    // Ensure arrays are properly stringified
-    ...(data.cameraPosition && {
-      cameraPosition: Array.from(data.cameraPosition).map(v => v.toFixed(3))
-    }),
-    ...(data.basePosition && {
-      basePosition: Array.from(data.basePosition).map(v => v.toFixed(3))
-    }),
-    ...(data.finalPosition && {
-      finalPosition: Array.from(data.finalPosition).map(v => v.toFixed(3))
-    })
-  });
-};
-
 /**
  * Calculates the target position for a magazine based on various states.
  * @param {Object} params - Parameters for position calculation.
@@ -92,20 +75,7 @@ export const calculateMagazineTargetPosition = ({
 
   let targetPos = new THREE.Vector3();
 
-  // Add debug logging for input parameters
-  const debugInfo = {
-    magazine,
-    isFocused: focusedMagazine === magazine,
-    isPortrait,
-    page,
-    cameraPosition: camera.position.toArray(),
-    dragOffset,
-    viewingRightPage
-  };
-
   if (focusedMagazine === magazine) {
-    logPosition(`Calculating focused position for ${magazine}`, debugInfo);
-
     // Position the magazine in front of the camera
     targetPos.copy(camera.position);
 
@@ -122,38 +92,26 @@ export const calculateMagazineTargetPosition = ({
     if (isPortrait) {
       const horizontalOffset = viewingRightPage ? -geometryWidth / 4.75 : geometryWidth / 4.75;
       targetPos.addScaledVector(right, horizontalOffset);
-      
-      logPosition(`Portrait mode adjustments for ${magazine}`, {
-        horizontalOffset,
-        finalPosition: targetPos.toArray(),
-        viewingRightPage
-      });
     } else {
       const targetOffset = delayedPage < 1 ? -geometryWidth / 4.75 : 0;
       targetPos.addScaledVector(right, targetOffset);
-      
-      logPosition(`Landscape mode adjustments for ${magazine}`, {
-        targetOffset,
-        finalPosition: targetPos.toArray(),
-        delayedPage
-      });
     }
 
     if (layoutPosition && layoutPosition.length === 3) {
       const [offsetX, offsetY, offsetZ] = layoutPosition;
       targetPos.add(new THREE.Vector3(-offsetX, -offsetY, -offsetZ));
-      
-      logPosition(`Applied layout position for ${magazine}`, {
-        layoutOffsets: [offsetX, offsetY, offsetZ],
-        finalPosition: targetPos.toArray()
-      });
     }
   } else {
-    logPosition(`Calculating unfocused position for ${magazine}`, debugInfo);
-    
     const basePos = new THREE.Vector3();
 
     switch (magazine) {
+      case 'engineer':
+        basePos.set(
+          isPortrait ? -0.65 + (page > 0 ? 0.65 : 0) : -2.5 - (dragOffset > 0 ? 1 : 0) + (page > 0 ? 0.65 : 0),
+          isPortrait ? 2 : 0,
+          isPortrait ? 3.5 : 4.5 - (dragOffset > 0 ? 1 : 0)
+        );
+        break;
       case 'vague':
         basePos.set(
           isPortrait ? -0.65 + (page > 0 ? 0.65 : 0) : -0.5 + (page > 0 ? 0.65 : 0),
@@ -168,13 +126,7 @@ export const calculateMagazineTargetPosition = ({
           isPortrait ? 3.5 : 4.5 - (dragOffset > 0 ? 1 : 0)
         );
         break;
-      case 'engineer':
-        basePos.set(
-          isPortrait ? -0.65 + (page > 0 ? 0.65 : 0) : -2.5 - (dragOffset > 0 ? 1 : 0) + (page > 0 ? 0.65 : 0),
-          isPortrait ? 2 : 0,
-          isPortrait ? 3.5 : 4.5 - (dragOffset > 0 ? 1 : 0)
-        );
-        break;
+  
       default:
         basePos.set(0, 0, 0);
     }
@@ -187,13 +139,6 @@ export const calculateMagazineTargetPosition = ({
     }
 
     targetPos.copy(basePos);
-
-    logPosition(`Final position for ${magazine}`, {
-      basePosition: basePos.toArray(),
-      finalPosition: targetPos.toArray(),
-      dragOffset,
-      isPortrait
-    });
   }
 
   return targetPos;
@@ -221,18 +166,14 @@ export const performLerp = (current, target, lerpFactor) => {
  * @returns {number} The new horizontal offset.
  */
 export const calculateHorizontalTransition = (position, right, currentOffset, targetOffset, lerpFactor = 0.03) => {
-
   // Lerp the horizontal offset
   const newOffset = THREE.MathUtils.lerp(currentOffset, targetOffset, lerpFactor);
   
   // Calculate the difference in offset
   const offsetDelta = newOffset - currentOffset;
   
-
-
   // Apply the offset change to the position
   position.addScaledVector(right, offsetDelta);
-  
   
   return newOffset;
 };
