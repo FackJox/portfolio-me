@@ -2,7 +2,7 @@
 import { atom, useAtom } from "jotai";
 import { Magazine } from "./Magazine";
 import { VagueButton, EngineerButton, SmackButton } from "../Buttons";
-import React, { useState, useMemo, useLayoutEffect, useRef } from "react";
+import React, { useState, useMemo, useLayoutEffect, useRef, useEffect } from "react";
 import { useThree, useFrame } from "@react-three/fiber";
 import { animated } from "@react-spring/three";
 import { useGesture } from "@use-gesture/react";
@@ -93,27 +93,63 @@ export const Library = (props) => {
   const [currentMiddleMagazine, setMiddleMagazine] = useAtom(styleMagazineAtom);
   const [magazineViewStates] = useAtom(magazineViewingStatesAtom);
   
-  // Add throttle time ref
-  const lastLogTime = useRef(0);
-  const LOG_THROTTLE = 500; // ms between logs
+  // Add initialization tracking
+  const isInitializedRef = useRef(false);
+  const isMountedRef = useRef(false);
+  const initializationCountRef = useRef(0);
 
-  const throttledLog = (message, data) => {
+  // Detailed logging helper
+  const logPositionDetails = (prefix, data) => {
     const now = Date.now();
-    if (now - lastLogTime.current > LOG_THROTTLE) {
-      console.log(`[Library] ${message}:`, data);
-      lastLogTime.current = now;
-    }
+    console.log(`[Library ${now}] ${prefix}:`, {
+      ...data,
+      initCount: initializationCountRef.current,
+      isMounted: isMountedRef.current,
+      isInitialized: isInitializedRef.current,
+      // Ensure arrays are properly stringified
+      ...(data.cameraPosition && { 
+        cameraPosition: Array.from(data.cameraPosition).map(v => v.toFixed(3))
+      }),
+      ...(data.vaguePosition && { 
+        vaguePosition: Array.from(data.vaguePosition).map(v => v.toFixed(3))
+      }),
+      ...(data.smackPosition && { 
+        smackPosition: Array.from(data.smackPosition).map(v => v.toFixed(3))
+      }),
+      ...(data.engineerPosition && { 
+        engineerPosition: Array.from(data.engineerPosition).map(v => v.toFixed(3))
+      })
+    });
   };
 
+  useEffect(() => {
+    isMountedRef.current = true;
+    logPositionDetails('Initial Mount', {
+      cameraPosition: camera.position.toArray()
+    });
+
+    return () => {
+      isMountedRef.current = false;
+      logPositionDetails('Component Unmounting', {});
+    };
+  }, []);
+
   useLayoutEffect(() => {
-    // Handle window resize
     const handleResize = () => {
+      if (!isMountedRef.current) return;
+      
       const windowWidth = window.innerWidth;
-      const newIsPortrait = windowWidth <= 768; // Adjust threshold as needed
+      const newIsPortrait = windowWidth <= 768;
       setIsPortrait(newIsPortrait);
+      
+      logPositionDetails('Layout Update', {
+        windowWidth,
+        isPortrait: newIsPortrait,
+        cameraPosition: camera.position.toArray()
+      });
     };
 
-    handleResize(); // Initial check
+    handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -143,7 +179,7 @@ export const Library = (props) => {
     const calculatedIndex = (index + 3) % 3; // Ensure positive index
     const middleMagazine = magazineOrder[calculatedIndex];
 
-    throttledLog('Carousel State', {
+    logPositionDetails('Carousel State', {
       dragOffset: newOffset,
       wrappedOffset,
       index,
@@ -166,7 +202,7 @@ export const Library = (props) => {
         setIsDragging(true);
         dragStartRef.current = dragOffset;
         velocityRef.current = 0;
-        throttledLog('Drag Start', {
+        logPositionDetails('Drag Start', {
           dragStartOffset: dragStartRef.current
         });
       },
@@ -184,7 +220,7 @@ export const Library = (props) => {
           const newOffset = dragStartRef.current + movement;
           targetOffsetRef.current = newOffset;
           
-          throttledLog('Dragging', {
+          logPositionDetails('Dragging', {
             movement,
             velocity,
             newOffset,
@@ -199,7 +235,7 @@ export const Library = (props) => {
             const snapOffset = Math.round(projectedOffset / spacing) * spacing;
             targetOffsetRef.current = snapOffset;
             
-            throttledLog('Drag End', {
+            logPositionDetails('Drag End', {
               momentum,
               projectedOffset,
               snapOffset
@@ -215,7 +251,16 @@ export const Library = (props) => {
 
   // Calculate target positions for all magazines
   const targetPositions = useMemo(() => {
-    return {
+    initializationCountRef.current++;
+    
+    if (!isMountedRef.current) {
+      logPositionDetails('Skipping premature initialization', {
+        cameraPosition: camera.position.toArray()
+      });
+      return {};
+    }
+
+    const positions = {
       [magazines.vague]: calculateMagazineTargetPosition({
         isPortrait,
         dragOffset,
@@ -250,7 +295,22 @@ export const Library = (props) => {
         camera
       }),
     };
+
+    logPositionDetails('Target Positions Calculated', {
+      isPortrait,
+      cameraPosition: camera.position.toArray(),
+      vaguePosition: positions[magazines.vague].toArray(),
+      smackPosition: positions[magazines.smack].toArray(),
+      engineerPosition: positions[magazines.engineer].toArray(),
+    });
+
+    return positions;
   }, [isPortrait, dragOffset, focusedMagazine, vaguePage, smackPage, engineerPage, camera, magazineViewStates]);
+
+  // Only render magazines if properly initialized
+  if (!isMountedRef.current || Object.keys(targetPositions).length === 0) {
+    return null;
+  }
 
   return (
     <group {...props} ref={groupRef}>

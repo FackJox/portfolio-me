@@ -45,6 +45,23 @@ export const handlePageViewTransition = ({
   return { newPage: currentPage, newViewingRightPage: isViewingRightPage };
 };
 
+const logPosition = (prefix, data) => {
+  const now = Date.now();
+  console.log(`[PositionHelper ${now}] ${prefix}:`, {
+    ...data,
+    // Ensure arrays are properly stringified
+    ...(data.cameraPosition && {
+      cameraPosition: Array.from(data.cameraPosition).map(v => v.toFixed(3))
+    }),
+    ...(data.basePosition && {
+      basePosition: Array.from(data.basePosition).map(v => v.toFixed(3))
+    }),
+    ...(data.finalPosition && {
+      finalPosition: Array.from(data.finalPosition).map(v => v.toFixed(3))
+    })
+  });
+};
+
 /**
  * Calculates the target position for a magazine based on various states.
  * @param {Object} params - Parameters for position calculation.
@@ -75,8 +92,19 @@ export const calculateMagazineTargetPosition = ({
 
   let targetPos = new THREE.Vector3();
 
+  // Add debug logging for input parameters
+  const debugInfo = {
+    magazine,
+    isFocused: focusedMagazine === magazine,
+    isPortrait,
+    page,
+    cameraPosition: camera.position.toArray(),
+    dragOffset,
+    viewingRightPage
+  };
+
   if (focusedMagazine === magazine) {
- 
+    logPosition(`Calculating focused position for ${magazine}`, debugInfo);
 
     // Position the magazine in front of the camera
     targetPos.copy(camera.position);
@@ -92,30 +120,38 @@ export const calculateMagazineTargetPosition = ({
       .normalize();
 
     if (isPortrait) {
-      // Portrait mode - handle right/left page view
       const horizontalOffset = viewingRightPage ? -geometryWidth / 4.75 : geometryWidth / 4.75;
-      
-  
-
-      // Apply the offset
       targetPos.addScaledVector(right, horizontalOffset);
       
-  
+      logPosition(`Portrait mode adjustments for ${magazine}`, {
+        horizontalOffset,
+        finalPosition: targetPos.toArray(),
+        viewingRightPage
+      });
     } else {
-      // Landscape mode - smooth transition
       const targetOffset = delayedPage < 1 ? -geometryWidth / 4.75 : 0;
       targetPos.addScaledVector(right, targetOffset);
+      
+      logPosition(`Landscape mode adjustments for ${magazine}`, {
+        targetOffset,
+        finalPosition: targetPos.toArray(),
+        delayedPage
+      });
     }
 
-    // Apply layout-specific offset
     if (layoutPosition && layoutPosition.length === 3) {
       const [offsetX, offsetY, offsetZ] = layoutPosition;
-  
       targetPos.add(new THREE.Vector3(-offsetX, -offsetY, -offsetZ));
+      
+      logPosition(`Applied layout position for ${magazine}`, {
+        layoutOffsets: [offsetX, offsetY, offsetZ],
+        finalPosition: targetPos.toArray()
+      });
     }
   } else {
+    logPosition(`Calculating unfocused position for ${magazine}`, debugInfo);
+    
     const basePos = new THREE.Vector3();
-  
 
     switch (magazine) {
       case 'vague':
@@ -128,7 +164,6 @@ export const calculateMagazineTargetPosition = ({
       case 'smack':
         basePos.set(
           isPortrait ? -0.65 + (page > 0 ? 0.65 : 0) : 1.5 + (dragOffset > 0 ? 1 : 0) + (page > 0 ? 0.65 : 0),
-
           isPortrait ? -2 : 0,
           isPortrait ? 3.5 : 4.5 - (dragOffset > 0 ? 1 : 0)
         );
@@ -136,7 +171,6 @@ export const calculateMagazineTargetPosition = ({
       case 'engineer':
         basePos.set(
           isPortrait ? -0.65 + (page > 0 ? 0.65 : 0) : -2.5 - (dragOffset > 0 ? 1 : 0) + (page > 0 ? 0.65 : 0),
-
           isPortrait ? 2 : 0,
           isPortrait ? 3.5 : 4.5 - (dragOffset > 0 ? 1 : 0)
         );
@@ -153,6 +187,13 @@ export const calculateMagazineTargetPosition = ({
     }
 
     targetPos.copy(basePos);
+
+    logPosition(`Final position for ${magazine}`, {
+      basePosition: basePos.toArray(),
+      finalPosition: targetPos.toArray(),
+      dragOffset,
+      isPortrait
+    });
   }
 
   return targetPos;
