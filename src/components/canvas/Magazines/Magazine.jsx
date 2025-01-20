@@ -1,11 +1,13 @@
-import { atom, useAtom } from "jotai";
-import { useEffect, useState, useRef } from "react";
+// portfolio-me/src/components/canvas/Magazines/Magazine.jsx
+import { useAtom } from "jotai";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { Page } from "./Page";
 import { Float, useCursor, useTexture } from "@react-three/drei";
-import { useFrame, useThree } from "@react-three/fiber";
+import { useFrame } from "@react-three/fiber";
 import { useGesture } from "@use-gesture/react";
 import * as THREE from "three";
-import { styleMagazineAtom } from "./Library";
+import { styleMagazineAtom } from '@/helpers/atoms';
+import { performLerp } from "@/helpers/positionHelper"; // Import LERP helper
 
 export const Magazine = ({
   pictures,
@@ -15,13 +17,12 @@ export const Magazine = ({
   isPortrait,
   layoutPosition,
   Button,
+  targetPosition, // Receive target position
+  camera,
   ...props
 }) => {
   
-
-  // ------------------------------
   // Atoms & State
-  // ------------------------------
   const [page, setPage] = useAtom(pageAtom);
   const [delayedPage, setDelayedPage] = useState(page);
   const [focusedMagazine, setFocusedMagazine] = useAtom(focusedMagazineAtom);
@@ -31,86 +32,52 @@ export const Magazine = ({
   const [horizontalOffsetTarget, setHorizontalOffsetTarget] = useState(0);
   const horizontalOffsetRef = useRef(0);
 
-  // ------------------------------
   // Refs
-  // ------------------------------
   const groupRef = useRef();
   const floatRef = useRef();
   const floatNullifyRef = useRef();
 
-  // For storing original transform:
+  // Initial transforms
   const initialPositionRef = useRef(null);
   const initialQuaternionRef = useRef(null);
-  const previousViewingRightPageRef = useRef(false); // Store previous state
+  const previousViewingRightPageRef = useRef(false);
 
-  // ------------------------------
-  // R3F Hooks
-  // ------------------------------
-  const { camera, size } = useThree();
-
-  // useEffect(() => {
-  //   console.log(`Magazine ${magazine} position:`, layoutPosition);
-  // }, [layoutPosition, magazine, camera.position]);
-
-
-  // Change pointer if hovered & not focused
+  // useCursor
   useCursor(highlighted && focusedMagazine !== magazine);
 
-  // Set initial right page view when focusing/unfocusing
-  useEffect(() => {
-    if (focusedMagazine === magazine) {
-      // When focusing, set page to 1 if it's 0
-      if (page === 0) {
-        setPage(1);
-        setViewingRightPage(false);
-      } else {
-        // Restore previous viewing state
-        setViewingRightPage(previousViewingRightPageRef.current);
-      }
-    } else if (focusedMagazine !== magazine && previousViewingRightPageRef.current !== viewingRightPage) {
-      // Store the current state when unfocusing
-      previousViewingRightPageRef.current = viewingRightPage;
+  // Pages setup and texture preloads
+  const pages = useMemo(() => {
+    const pagesArray = [
+      { front: "01Front", back: pictures[0] },
+    ];
+    for (let i = 1; i < pictures.length - 1; i += 2) {
+      pagesArray.push({
+        front: pictures[i % pictures.length],
+        back: pictures[(i + 1) % pictures.length],
+      });
     }
-  }, [focusedMagazine, magazine]);
-
-  // ------------------------------
-  // Pages setup
-  // ------------------------------
-  // Build pages array
-  const pages = [
-    { front: "01Front", back: pictures[0] },
-  ];
-  for (let i = 1; i < pictures.length - 1; i += 2) {
-    pages.push({
-      front: pictures[i % pictures.length],
-      back: pictures[(i + 1) % pictures.length],
+    pagesArray.push({
+      front: pictures[pictures.length - 1],
+      back: "01Front",
     });
-  }
-  // Last page
-  pages.push({
-    front: pictures[pictures.length - 1],
-    back: "01Front",
-  });
+    return pagesArray;
+  }, [pictures]);
 
+  useEffect(() => {
+    pages.forEach((p) => {
+      useTexture.preload(`/textures/${magazine}/${p.front}.png`);
+      useTexture.preload(`/textures/${magazine}/${p.back}.png`);
+      useTexture.preload(`/textures/book-cover-roughness.png`);
+    });
+  }, [pages, magazine]);
 
-  // Preload textures
-  pages.forEach((p) => {
-    useTexture.preload(`/textures/${magazine}/${p.front}.png`);
-    useTexture.preload(`/textures/${magazine}/${p.back}.png`);
-    useTexture.preload(`/textures/book-cover-roughness.png`);
-  });
-
-  // ------------------------------
   // Audio effect on page change
-  // ------------------------------
   useEffect(() => {
     const audio = new Audio("/audios/page-flip-01a.mp3");
     audio.play();
   }, [page]);
 
-  // ------------------------------
   // Gestures (swipe vs click)
-  // ------------------------------
   const handleSwipeOrClick = (deltaX, deltaY, e) => {
     console.log("page", page)
 
@@ -118,8 +85,8 @@ export const Magazine = ({
 
     const totalMovement = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
     const isMiddleMagazine = isPortrait 
-      ? Math.abs(layoutPosition[1]) < 0.3  // Check Y position in portrait
-      : Math.abs(layoutPosition[0]) < 0.3; // Check X position in landscape
+      ? Math.abs(layoutPosition.y) < 0.3  // Check Y position in portrait
+      : Math.abs(layoutPosition.x) < 0.3; // Check X position in landscape
 
     if (totalMovement < 5) {
       // Tiny movement => treat as click to focus/unfocus
@@ -182,9 +149,7 @@ export const Magazine = ({
     { eventOptions: { passive: false } }
   );
 
-  // ------------------------------
-  // Delayed flip (one page at a time)
-  // ------------------------------
+  // Delayed flip logic
   useEffect(() => {
     let timeout;
     const animatePageFlip = () => {
@@ -199,121 +164,50 @@ export const Magazine = ({
     return () => clearTimeout(timeout);
   }, [page]);
 
-  // ------------------------------
   // Store initial transforms
-  // ------------------------------
   useEffect(() => {
     if (!groupRef.current) return;
     initialPositionRef.current = groupRef.current.position.clone();
     initialQuaternionRef.current = groupRef.current.quaternion.clone();
   }, [camera]);
 
-  // Focus/unfocus animation
-  useFrame(() => {
-    if (!groupRef.current || !initialPositionRef.current) return;
-
-    if (focusedMagazine === magazine) {
-      const geometryWidth = 3;
-      const zDist = 2.6;
-      
-      const newPos = new THREE.Vector3().copy(camera.position);
-      const forward = new THREE.Vector3(-0.003, 0.0, -1)
-        .applyQuaternion(camera.quaternion)
-        .normalize();
-      
-      newPos.addScaledVector(forward, zDist);
-
-      const right = new THREE.Vector3(1, 0, 0)
-        .applyQuaternion(camera.quaternion)
-        .normalize();
-
-      if (isPortrait) {
-        // Portrait mode offset
-        const horizontalOffset = viewingRightPage ? -geometryWidth / 4.75 : geometryWidth / 4.75;
-        newPos.addScaledVector(right, horizontalOffset);
-      } else {
-        // Landscape mode - smooth transition
-        // Update target based on page
-        const targetOffset = delayedPage < 1 ? -geometryWidth / 4.75 : 0;
-        setHorizontalOffsetTarget(targetOffset);
-        
-        // Lerp the actual offset
-        horizontalOffsetRef.current = THREE.MathUtils.lerp(
-          horizontalOffsetRef.current,
-          horizontalOffsetTarget,
-          0.1
-        );
-        
-        newPos.addScaledVector(right, horizontalOffsetRef.current);
-      }
-
-      // Apply layout-specific offset
-      if (layoutPosition) {
-        const [offsetX, offsetY, offsetZ] = layoutPosition;
-        const layoutOffset = new THREE.Vector3(
-          -offsetX,
-          -offsetY,
-          -offsetZ
-        );
-        newPos.add(layoutOffset);
-      }
-
-      // Use different lerp speeds for horizontal and other movements
-      const currentPos = groupRef.current.position.clone();
-      const horizontalLerpFactor = 0.03; // Slower horizontal movement
-      const normalLerpFactor = 0.1; // Original speed for other movements
-
-      // Separate horizontal and vertical movements for both portrait and landscape
-      const horizontalDelta = new THREE.Vector3(
-        newPos.x - currentPos.x,
-        0,
-        0
-      );
-      const otherDelta = new THREE.Vector3(
-        0,
-        newPos.y - currentPos.y,
-        newPos.z - currentPos.z
-      );
-
-      // Apply different lerp speeds
-      currentPos.add(horizontalDelta.multiplyScalar(horizontalLerpFactor));
-      currentPos.add(otherDelta.multiplyScalar(normalLerpFactor));
-      groupRef.current.position.copy(currentPos);
-
-      // Quaternion lerp remains the same speed
-      groupRef.current.quaternion.slerp(camera.quaternion, 0.1);
-    } else {
-      // Unfocused => back to original transform
-      groupRef.current.position.lerp(initialPositionRef.current, 0.1);
-      groupRef.current.quaternion.slerp(initialQuaternionRef.current, 0.1);
-    }
-  });
-
-  // ------------------------------
   // Float nullification
-  // ------------------------------
   useFrame(() => {
     if (!floatRef.current || !floatNullifyRef.current) return;
 
-    // `floatRef.current` is a THREE.Group in your version of drei
     const floatGroup = floatRef.current;
 
-    // If focused, invert the Float's transform
     if (focusedMagazine === magazine) {
       floatNullifyRef.current.matrix
         .copy(floatGroup.matrix)
         .invert();
       floatNullifyRef.current.matrixAutoUpdate = false;
     } else {
-      // Not focused => identity matrix
       floatNullifyRef.current.matrix.identity();
       floatNullifyRef.current.matrixAutoUpdate = true;
     }
   });
 
-  // ------------------------------
+  // Lerp towards target position
+  useFrame(() => {
+    if (!groupRef.current || !targetPosition) return;
+
+    // Lerp position
+    performLerp(groupRef.current.position, targetPosition, 0.1);
+
+    // Lerp quaternion if focused
+    if (focusedMagazine === magazine) {
+      groupRef.current.quaternion.slerp(camera.quaternion, 0.1);
+    } else {
+      // Unfocused - back to original transform
+      if (initialPositionRef.current && initialQuaternionRef.current) {
+        performLerp(groupRef.current.position, initialPositionRef.current, 0.1);
+        groupRef.current.quaternion.slerp(initialQuaternionRef.current, 0.1);
+      }
+    }
+  });
+
   // Render
-  // ------------------------------
   return (
     <group ref={groupRef} {...props}>
       {/* Transparent bounding box to detect pointer events */}

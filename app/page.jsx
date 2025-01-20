@@ -4,7 +4,7 @@ import dynamic from 'next/dynamic'
 import { Suspense, useState, useEffect } from 'react'
 import { useAtom } from 'jotai'
 import { motion, AnimatePresence } from 'framer-motion'
-import { styleMagazineAtom } from '@/components/canvas/Magazines/Library'
+import { styleMagazineAtom } from '@/helpers/atoms';
 
 // Direct imports for UI components
 import { SmackHeader, SmackButtons, SmackCTA, SmackTopBar } from '@/components/dom/SmackUI'
@@ -90,20 +90,12 @@ const picturesVague = [
   "03Contents",
   "04Editorial",
   "05Editorial",
-  "06Vague",
-  "07Vague",
-  "08Vague",
-  "09Vague",
-  "10Vague",
-  "11Vague",
-  "12Vague",
-  "13Vague",
-  "14Vague",
-  "15Vague",
-  "16Vague",
-  "17Vague",
-  "18Vague",
-  "19Vague",
+  "06Timeline",
+  "07Timeline",
+  "08About",
+  "09About",
+  "10Contributers",
+  "11Contributers",
 ];
 
 const PreloadComponents = ({ children }) => {

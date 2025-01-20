@@ -1,4 +1,4 @@
-// Library.js
+// portfolio-me/src/components/canvas/Magazines/Library.jsx
 import { atom, useAtom } from "jotai";
 import { Magazine } from "./Magazine";
 import { VagueButton, EngineerButton, SmackButton } from "../Buttons";
@@ -7,17 +7,14 @@ import { useThree, useFrame } from "@react-three/fiber";
 import { animated } from "@react-spring/three";
 import { useGesture } from "@use-gesture/react";
 import * as THREE from "three";
-
-// Atoms for page states
-const smackAtom = atom(0);
-const vagueAtom = atom(0);
-const engineerAtom = atom(0);
-
-// Atom to track the focused magazine
-export const focusedMagazineAtom = atom(null);
-
-// Atom to track which magazine is in the middle
-export const styleMagazineAtom = atom("vague"); // Default to vague on first render
+import { 
+  smackAtom, 
+  vagueAtom, 
+  engineerAtom, 
+  focusedMagazineAtom, 
+  styleMagazineAtom 
+} from '@/helpers/atoms';
+import { calculateMagazineTargetPosition } from "@/helpers/positionHelper"; // Import helper
 
 const picturesSmack = [
   "02Contents",
@@ -83,7 +80,7 @@ const magazines = {
 };
 
 export const Library = (props) => {
-  const { viewport } = useThree();
+  const { viewport, camera } = useThree(); // Access camera
   const [isPortrait, setIsPortrait] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState(0);
@@ -94,94 +91,35 @@ export const Library = (props) => {
   const [focusedMagazine, setFocusedMagazine] = useAtom(focusedMagazineAtom);
   
   useLayoutEffect(() => {
-    // Get the actual window width in pixels
-    const windowWidth = window.innerWidth;
-    const newIsPortrait = windowWidth <= 768; // 1024px threshold for portrait mode
-    console.log('Window width in pixels:', windowWidth);
-    console.log('Is portrait:', newIsPortrait);
-    setIsPortrait(newIsPortrait);
-  }, [viewport.width, viewport.height, isPortrait]);
+    // Handle window resize
+    const handleResize = () => {
+      const windowWidth = window.innerWidth;
+      const newIsPortrait = windowWidth <= 768; // Adjust threshold as needed
+      setIsPortrait(newIsPortrait);
+    };
+
+    handleResize(); // Initial check
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const [smackPage] = useAtom(smackAtom);
   const [vaguePage] = useAtom(vagueAtom);
   const [engineerPage] = useAtom(engineerAtom);
-
-  // Default positions serve as the center points for the carousel
-  const defaultPositions = useMemo(
-    () => ({
-      [magazines.vague]: isPortrait
-        ? [-0.65 + (vaguePage > 0 ? 0.65 : 0), 2, 3.5]      // Portrait: top
-        : [-0.5 + (vaguePage > 0 ? 0.65 : 0), -0, 4.5 - (vaguePage > 0 ? 1 : 0)],    // Landscape: left
-      [magazines.smack]: isPortrait 
-        ? [-0.65 + (smackPage > 0 ? 0.65 : 0), -2, 3.5]     // Portrait: bottom
-        : [-2.5- (vaguePage > 0 ? 1 : 0) + (smackPage > 0 ? 0.65 : 0), -0, 4.5 - (vaguePage > 0 ? 1 : 0)],     // Landscape: middle
-      [magazines.engineer]: isPortrait 
-        ? [-0.65 + (engineerPage > 0 ? 0.65 : 0), 0, 3.5]     // Portrait: middle
-        : [1.5 + (vaguePage > 0 ? 1 : 0) + (engineerPage > 0 ? 0.65 : 0), -0, 4.5 - (vaguePage > 0 ? 1 : 0)],  // Landscape: right
-    }),
-    [isPortrait, smackPage, vaguePage, engineerPage]
-  );
-
-  // Calculate positions with drag offset and wrapping
-  const positions = useMemo(() => {
-    const isOpenedVague = vaguePage > 0;
-    const isOpenedSmack = smackPage > 0;
-    const isOpenedEngineer = engineerPage > 0;
-
-    const spacing = 2.2;
-    const totalSpacing = spacing * 3;
-
-    const wrapOffset = (offset) => {
-      const normalizedOffset = ((offset % totalSpacing) + totalSpacing * 1.5) % totalSpacing - totalSpacing / 2;
-      return normalizedOffset;
-    };
-
-    const getBaseIndex = (magazineName) => {
-      return magazineName === magazines.vague ? 0 :
-             magazineName === magazines.engineer ? 1 : 2;
-    };
-
-    const calculatePosition = (magazineName, isOpened) => {
-      const basePosition = defaultPositions[magazineName];
-      const index = getBaseIndex(magazineName);
-      
-      const magazineOffset = dragOffset + (index * spacing);
-      const wrappedOffset = wrapOffset(magazineOffset);
-      
-      // Only apply z adjustment in portrait mode
-      const zAdjustment = !isOpened && isPortrait ? (() => {
-        const distanceFromCenter = Math.abs(wrappedOffset);
-        const transitionRange = spacing / 2;
-        const lerpFactor = 1 - Math.min(distanceFromCenter / transitionRange, 1);
-        return lerpFactor * 2;
-      })() : 0;
-      
-      return [
-        basePosition[0],
-        isPortrait ? wrappedOffset : basePosition[1],
-        basePosition[2] + zAdjustment
-      ];
-    };
-
-    return {
-      [magazines.vague]: calculatePosition(magazines.vague, isOpenedVague),
-      [magazines.smack]: calculatePosition(magazines.smack, isOpenedSmack),
-      [magazines.engineer]: calculatePosition(magazines.engineer, isOpenedEngineer),
-    };
-  }, [defaultPositions, dragOffset, isPortrait, smackPage, vaguePage, engineerPage]);
-
+  const [currentMiddleMagazine, setMiddleMagazine] = useAtom(styleMagazineAtom);
+  
   // Handle drag gestures
   const bind = useGesture(
     {
       onDragStart: ({ event }) => {
-        if (focusedMagazine || !isPortrait) return;
+        if (focusedMagazine) return; // Disable drag when a magazine is focused
         event.stopPropagation();
         setIsDragging(true);
         dragStartRef.current = dragOffset;
         velocityRef.current = 0;
       },
       onDrag: ({ event, movement: [dx, dy], velocity: [vx, vy], last }) => {
-        if (focusedMagazine || !isPortrait) return;
+        if (focusedMagazine) return;
         event.stopPropagation();
         
         const totalMovement = Math.sqrt(dx * dx + dy * dy);
@@ -210,9 +148,9 @@ export const Library = (props) => {
     { drag: { filterTaps: true } }
   );
 
-  // Smooth animation - only in portrait mode
+  // Smoothly update dragOffset and determine middle magazine
   useFrame((_, delta) => {
-    if (!isPortrait) return;
+    if (!isPortrait) return; // Only apply dragging in portrait mode
 
     const lerpFactor = isDragging ? 0.4 : 0.1;
     const newOffset = THREE.MathUtils.lerp(
@@ -226,16 +164,54 @@ export const Library = (props) => {
     const spacing = 2.2;
     const wrappedOffset = ((newOffset % (spacing * 3)) + spacing * 4.5) % (spacing * 3) - spacing * 1.5;
     
-    const index = Math.round(wrappedOffset / spacing);
+    const index = Math.round(wrappedOffset / spacing) % 3;
     const magazineOrder = [magazines.vague, magazines.smack, magazines.engineer];
-    const middleMagazine = magazineOrder[((index % 3) + 3) % 3];
+    const calculatedIndex = (index + 3) % 3; // Ensure positive index
+    const middleMagazine = magazineOrder[calculatedIndex];
     
     if (middleMagazine !== currentMiddleMagazine) {
       setMiddleMagazine(middleMagazine);
     }
   });
 
-  const [currentMiddleMagazine, setMiddleMagazine] = useAtom(styleMagazineAtom);
+  // Calculate target positions for all magazines
+  const targetPositions = useMemo(() => {
+    return {
+      [magazines.vague]: calculateMagazineTargetPosition({
+        isPortrait,
+        dragOffset,
+        focusedMagazine,
+        magazine: magazines.vague,
+        page: vaguePage,
+        delayedPage: vaguePage, // If you have a separate delayedPage, pass it accordingly
+        layoutPosition: null, // Pass actual layout position if needed
+        viewingRightPage: false, // Update based on your logic
+        camera
+      }),
+      [magazines.smack]: calculateMagazineTargetPosition({
+        isPortrait,
+        dragOffset,
+        focusedMagazine,
+        magazine: magazines.smack,
+        page: smackPage,
+        delayedPage: smackPage,
+        layoutPosition: null,
+        viewingRightPage: false,
+        camera
+      }),
+      [magazines.engineer]: calculateMagazineTargetPosition({
+        isPortrait,
+        dragOffset,
+        focusedMagazine,
+        magazine: magazines.engineer,
+        page: engineerPage,
+        delayedPage: engineerPage,
+        layoutPosition: null,
+        viewingRightPage: false,
+        camera
+      }),
+    };
+  }, [isPortrait, dragOffset, focusedMagazine, vaguePage, smackPage, engineerPage, camera]);
 
   return (
     <group {...props} ref={groupRef}>
@@ -251,35 +227,33 @@ export const Library = (props) => {
       {/* Magazines */}
       {Object.entries({
         [magazines.smack]: {
-          position: positions[magazines.smack],
           pictures: picturesSmack,
           atom: smackAtom,
           Button: SmackButton
         },
         [magazines.vague]: {
-          position: positions[magazines.vague],
           pictures: picturesVague,
           atom: vagueAtom,
           Button: VagueButton
         },
         [magazines.engineer]: {
-          position: positions[magazines.engineer],
           pictures: picturesEngineer,
           atom: engineerAtom,
           Button: EngineerButton
         },
       }).map(([magazineName, config]) => (
-        <animated.group key={magazineName} position={config.position}>
-          <Magazine
-            pictures={config.pictures}
-            pageAtom={config.atom}
-            magazine={magazineName}
-            focusedMagazineAtom={focusedMagazineAtom}
-            isPortrait={isPortrait}
-            layoutPosition={positions[magazineName]}
-            Button={config.Button}
-          />
-        </animated.group>
+        <Magazine
+          key={magazineName}
+          pictures={config.pictures}
+          pageAtom={config.atom}
+          magazine={magazineName}
+          focusedMagazineAtom={focusedMagazineAtom}
+          isPortrait={isPortrait}
+          layoutPosition={targetPositions[magazineName]} // Pass calculated position
+          Button={config.Button}
+          targetPosition={targetPositions[magazineName]} // Pass target position prop
+          camera={camera} // Pass camera if needed in Magazine.jsx
+        />
       ))}
     </group>
   );
