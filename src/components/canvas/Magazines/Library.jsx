@@ -1,6 +1,7 @@
 // Library.js
 import { atom, useAtom } from "jotai";
 import { Magazine } from "./Magazine";
+import { VagueButton, EngineerButton, SmackButton } from "../Buttons";
 import React, { useState, useMemo, useLayoutEffect, useRef } from "react";
 import { useThree, useFrame } from "@react-three/fiber";
 import { animated } from "@react-spring/three";
@@ -123,14 +124,9 @@ export const Library = (props) => {
 
   // Calculate positions with drag offset and wrapping
   const positions = useMemo(() => {
-    // In landscape mode, just use default positions
-    if (!isPortrait) {
-      return {
-        [magazines.vague]: defaultPositions[magazines.vague],
-        [magazines.smack]: defaultPositions[magazines.smack],
-        [magazines.engineer]: defaultPositions[magazines.engineer],
-      };
-    }
+    const isOpenedVague = vaguePage > 0;
+    const isOpenedSmack = smackPage > 0;
+    const isOpenedEngineer = engineerPage > 0;
 
     const spacing = 2.2;
     const totalSpacing = spacing * 3;
@@ -145,16 +141,12 @@ export const Library = (props) => {
              magazineName === magazines.engineer ? 1 : 2;
     };
 
-    const calculatePosition = (magazineName) => {
+    const calculatePosition = (magazineName, isOpened) => {
       const basePosition = defaultPositions[magazineName];
       const index = getBaseIndex(magazineName);
       
       const magazineOffset = dragOffset + (index * spacing);
       const wrappedOffset = wrapOffset(magazineOffset);
-      
-      const isOpened = magazineName === magazines.vague ? vaguePage > 0 :
-                      magazineName === magazines.engineer ? engineerPage > 0 :
-                      smackPage > 0;
       
       // Only apply z adjustment in portrait mode
       const zAdjustment = !isOpened && isPortrait ? (() => {
@@ -172,9 +164,9 @@ export const Library = (props) => {
     };
 
     return {
-      [magazines.vague]: calculatePosition(magazines.vague),
-      [magazines.smack]: calculatePosition(magazines.smack),
-      [magazines.engineer]: calculatePosition(magazines.engineer),
+      [magazines.vague]: calculatePosition(magazines.vague, isOpenedVague),
+      [magazines.smack]: calculatePosition(magazines.smack, isOpenedSmack),
+      [magazines.engineer]: calculatePosition(magazines.engineer, isOpenedEngineer),
     };
   }, [defaultPositions, dragOffset, isPortrait, smackPage, vaguePage, engineerPage]);
 
@@ -262,16 +254,19 @@ export const Library = (props) => {
           position: positions[magazines.smack],
           pictures: picturesSmack,
           atom: smackAtom,
+          Button: SmackButton
         },
         [magazines.vague]: {
           position: positions[magazines.vague],
           pictures: picturesVague,
           atom: vagueAtom,
+          Button: VagueButton
         },
         [magazines.engineer]: {
           position: positions[magazines.engineer],
           pictures: picturesEngineer,
           atom: engineerAtom,
+          Button: EngineerButton
         },
       }).map(([magazineName, config]) => (
         <animated.group key={magazineName} position={config.position}>
@@ -282,6 +277,7 @@ export const Library = (props) => {
             focusedMagazineAtom={focusedMagazineAtom}
             isPortrait={isPortrait}
             layoutPosition={positions[magazineName]}
+            Button={config.Button}
           />
         </animated.group>
       ))}

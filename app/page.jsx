@@ -11,6 +11,10 @@ import { SmackHeader, SmackButtons, SmackCTA, SmackTopBar } from '@/components/d
 import { EngineerHeader, EngineerButtons, EngineerCTA, EngineerTopBar } from '@/components/dom/EngineerUI'
 import { VagueHeader, VagueButtons, VagueCTA, VagueTopBar } from '@/components/dom/VagueUI'
 
+const Buttons = dynamic(() => import('@/components/canvas/Buttons').then((mod) => mod.Buttons), {
+  ssr: false,
+})
+
 // Keep dynamic imports for canvas components
 const Library = dynamic(() => import('@/components/canvas/Magazines/Library').then((mod) => mod.Library), {
   ssr: false,
@@ -223,8 +227,7 @@ export default function Page() {
           <View className='absolute w-full inset-0 flex items-center justify-center'>
             <Suspense fallback={null}>
               <Library position={[0, 0, 0]} />
-              <Common
-              />
+              <Common />
             </Suspense>
           </View>
         </motion.div>

@@ -14,6 +14,7 @@ export const Magazine = ({
   focusedMagazineAtom,
   isPortrait,
   layoutPosition,
+  Button,
   ...props
 }) => {
   
@@ -363,6 +364,10 @@ export const Magazine = ({
                   {...pageData}
                 />
               ))}
+            </group>
+            {/* Add Button below the magazine */}
+            <group position={[0.65, -1.05, 0]}>
+              <Button />
             </group>
           </group>
         </Float>
