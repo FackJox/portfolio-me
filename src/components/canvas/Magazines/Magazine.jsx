@@ -21,6 +21,7 @@ export const Magazine = ({
   camera,
   ...props
 }) => {
+
   
   // Atoms & State
   const [page, setPage] = useAtom(pageAtom);
@@ -29,8 +30,7 @@ export const Magazine = ({
   const [, setStyleMagazine] = useAtom(styleMagazineAtom);
   const [highlighted, setHighlighted] = useState(false);
   const [viewingRightPage, setViewingRightPage] = useAtom(magazineViewingStateAtom(magazine));
-  const [horizontalOffsetTarget, setHorizontalOffsetTarget] = useState(0);
-  const horizontalOffsetRef = useRef(0);
+
 
   // Refs
   const groupRef = useRef();
@@ -84,7 +84,7 @@ export const Magazine = ({
   // Audio effect on page change
   useEffect(() => {
     const audio = new Audio("/audios/page-flip-01a.mp3");
-    audio.play();
+    // audio.play();
   }, [page]);
 
   // Gestures (swipe vs click)
@@ -156,12 +156,36 @@ export const Magazine = ({
     return () => clearTimeout(timeout);
   }, [page]);
 
-  // Store initial transforms
+  // Set initial position on mount
   useEffect(() => {
-    if (!groupRef.current) return;
-    initialPositionRef.current = groupRef.current.position.clone();
+    if (!groupRef.current || !targetPosition) return;
+    // Set initial position directly
+    groupRef.current.position.copy(targetPosition);
+    initialPositionRef.current = targetPosition.clone();
     initialQuaternionRef.current = groupRef.current.quaternion.clone();
-  }, [camera]);
+  }, []); // Empty deps array to only run on mount
+
+  // Store initial transforms when target changes
+  useEffect(() => {
+    if (!groupRef.current || !targetPosition) return;
+    initialPositionRef.current = targetPosition.clone();
+    initialQuaternionRef.current = groupRef.current.quaternion.clone();
+  }, [targetPosition]);
+
+  // Lerp towards target position
+  useFrame((_, delta) => {
+    if (!groupRef.current || !targetPosition) return;
+
+    // If focused, lerp to camera-relative position
+    if (focusedMagazine === magazine) {
+      performLerp(groupRef.current.position, targetPosition, 0.1);
+      groupRef.current.quaternion.slerp(camera.quaternion, 0.1);
+    } 
+    // If not focused, lerp to target position
+    else {
+      performLerp(groupRef.current.position, targetPosition, 0.1);
+    }
+  });
 
   // Float nullification
   useFrame(() => {
@@ -177,25 +201,6 @@ export const Magazine = ({
     } else {
       floatNullifyRef.current.matrix.identity();
       floatNullifyRef.current.matrixAutoUpdate = true;
-    }
-  });
-
-  // Lerp towards target position
-  useFrame(() => {
-    if (!groupRef.current || !targetPosition) return;
-
-    // Lerp position
-    performLerp(groupRef.current.position, targetPosition, 0.1);
-
-    // Lerp quaternion if focused
-    if (focusedMagazine === magazine) {
-      groupRef.current.quaternion.slerp(camera.quaternion, 0.1);
-    } else {
-      // Unfocused - back to original transform
-      if (initialPositionRef.current && initialQuaternionRef.current) {
-        performLerp(groupRef.current.position, initialPositionRef.current, 0.1);
-        groupRef.current.quaternion.slerp(initialQuaternionRef.current, 0.1);
-      }
     }
   });
 

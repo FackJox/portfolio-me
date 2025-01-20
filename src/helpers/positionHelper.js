@@ -76,14 +76,7 @@ export const calculateMagazineTargetPosition = ({
   let targetPos = new THREE.Vector3();
 
   if (focusedMagazine === magazine) {
-    console.log('Magazine Focus State:', {
-      magazine,
-      isPortrait,
-      page,
-      viewingRightPage,
-      focusedMagazine,
-      delayedPage
-    });
+ 
 
     // Position the magazine in front of the camera
     targetPos.copy(camera.position);
@@ -102,25 +95,12 @@ export const calculateMagazineTargetPosition = ({
       // Portrait mode - handle right/left page view
       const horizontalOffset = viewingRightPage ? -geometryWidth / 4.75 : geometryWidth / 4.75;
       
-      // Debug the exact calculation
-      console.log('Portrait Mode Calculation:', {
-        viewingRightPage,
-        horizontalOffset,
-        geometryWidth,
-        division: geometryWidth / 4.75,
-        negation: -geometryWidth / 4.75,
-        rightVector: right.clone(),
-        positionBefore: targetPos.clone()
-      });
+  
 
       // Apply the offset
       targetPos.addScaledVector(right, horizontalOffset);
       
-      console.log('After Horizontal Offset:', {
-        horizontalOffset,
-        finalPosition: targetPos.clone(),
-        rightVectorUsed: right.clone()
-      });
+  
     } else {
       // Landscape mode - smooth transition
       const targetOffset = delayedPage < 1 ? -geometryWidth / 4.75 : 0;
@@ -130,40 +110,34 @@ export const calculateMagazineTargetPosition = ({
     // Apply layout-specific offset
     if (layoutPosition && layoutPosition.length === 3) {
       const [offsetX, offsetY, offsetZ] = layoutPosition;
-      console.log('Layout Offset:', { 
-        offsetX, 
-        offsetY, 
-        offsetZ,
-        positionBefore: targetPos.clone() 
-      });
+  
       targetPos.add(new THREE.Vector3(-offsetX, -offsetY, -offsetZ));
-      console.log('Final Position:', targetPos.clone());
     }
   } else {
-    // Not focused - calculate based on carousel drag offset
-    const spacing = 2.2;
-
-    let basePos = new THREE.Vector3();
+    const basePos = new THREE.Vector3();
+  
 
     switch (magazine) {
       case 'vague':
         basePos.set(
           isPortrait ? -0.65 + (page > 0 ? 0.65 : 0) : -0.5 + (page > 0 ? 0.65 : 0),
-          isPortrait ? 2 : 0,
+          isPortrait ? 0 : 0,
           isPortrait ? 3.5 : 4.5 - (page > 0 ? 1 : 0)
         );
         break;
       case 'smack':
         basePos.set(
-          isPortrait ? -0.65 + (page > 0 ? 0.65 : 0) : -2.5 - (dragOffset > 0 ? 1 : 0) + (page > 0 ? 0.65 : 0),
+          isPortrait ? -0.65 + (page > 0 ? 0.65 : 0) : 1.5 + (dragOffset > 0 ? 1 : 0) + (page > 0 ? 0.65 : 0),
+
           isPortrait ? -2 : 0,
           isPortrait ? 3.5 : 4.5 - (dragOffset > 0 ? 1 : 0)
         );
         break;
       case 'engineer':
         basePos.set(
-          isPortrait ? -0.65 + (page > 0 ? 0.65 : 0) : 1.5 + (dragOffset > 0 ? 1 : 0) + (page > 0 ? 0.65 : 0),
-          isPortrait ? 0 : 0,
+          isPortrait ? -0.65 + (page > 0 ? 0.65 : 0) : -2.5 - (dragOffset > 0 ? 1 : 0) + (page > 0 ? 0.65 : 0),
+
+          isPortrait ? 2 : 0,
           isPortrait ? 3.5 : 4.5 - (dragOffset > 0 ? 1 : 0)
         );
         break;
@@ -206,12 +180,6 @@ export const performLerp = (current, target, lerpFactor) => {
  * @returns {number} The new horizontal offset.
  */
 export const calculateHorizontalTransition = (position, right, currentOffset, targetOffset, lerpFactor = 0.03) => {
-  console.log('Horizontal Transition:', {
-    currentOffset,
-    targetOffset,
-    lerpFactor,
-    positionBefore: position.clone()
-  });
 
   // Lerp the horizontal offset
   const newOffset = THREE.MathUtils.lerp(currentOffset, targetOffset, lerpFactor);
@@ -219,16 +187,11 @@ export const calculateHorizontalTransition = (position, right, currentOffset, ta
   // Calculate the difference in offset
   const offsetDelta = newOffset - currentOffset;
   
-  console.log('Transition Calculation:', {
-    newOffset,
-    offsetDelta,
-    rightVector: right.clone()
-  });
+
 
   // Apply the offset change to the position
   position.addScaledVector(right, offsetDelta);
   
-  console.log('Position After Transition:', position.clone());
   
   return newOffset;
 };

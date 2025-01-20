@@ -93,6 +93,18 @@ export const Library = (props) => {
   const [currentMiddleMagazine, setMiddleMagazine] = useAtom(styleMagazineAtom);
   const [magazineViewStates] = useAtom(magazineViewingStatesAtom);
   
+  // Add throttle time ref
+  const lastLogTime = useRef(0);
+  const LOG_THROTTLE = 500; // ms between logs
+
+  const throttledLog = (message, data) => {
+    const now = Date.now();
+    if (now - lastLogTime.current > LOG_THROTTLE) {
+      console.log(`[Library] ${message}:`, data);
+      lastLogTime.current = now;
+    }
+  };
+
   useLayoutEffect(() => {
     // Handle window resize
     const handleResize = () => {
@@ -110,46 +122,6 @@ export const Library = (props) => {
   const [vaguePage] = useAtom(vagueAtom);
   const [engineerPage] = useAtom(engineerAtom);
   
-  // Handle drag gestures
-  const bind = useGesture(
-    {
-      onDragStart: ({ event }) => {
-        if (focusedMagazine) return; // Disable drag when a magazine is focused
-        event.stopPropagation();
-        setIsDragging(true);
-        dragStartRef.current = dragOffset;
-        velocityRef.current = 0;
-      },
-      onDrag: ({ event, movement: [dx, dy], velocity: [vx, vy], last }) => {
-        if (focusedMagazine) return;
-        event.stopPropagation();
-        
-        const totalMovement = Math.sqrt(dx * dx + dy * dy);
-        
-        if (totalMovement > 5) {
-          const movement = isPortrait ? -dy * 0.005 : dx * 0.005;
-          const velocity = isPortrait ? -vy : vx;
-          velocityRef.current = velocity;
-          
-          const newOffset = dragStartRef.current + movement;
-          targetOffsetRef.current = newOffset;
-          
-          if (last) {
-            setIsDragging(false);
-            const momentum = velocity * 0.5;
-            const projectedOffset = newOffset + momentum;
-            const spacing = 2.2;
-            const snapOffset = Math.round(projectedOffset / spacing) * spacing;
-            targetOffsetRef.current = snapOffset;
-          }
-        } else if (last) {
-          setIsDragging(false);
-        }
-      },
-    },
-    { drag: { filterTaps: true } }
-  );
-
   // Smoothly update dragOffset and determine middle magazine
   useFrame((_, delta) => {
     if (!isPortrait) return; // Only apply dragging in portrait mode
@@ -170,11 +142,76 @@ export const Library = (props) => {
     const magazineOrder = [magazines.vague, magazines.smack, magazines.engineer];
     const calculatedIndex = (index + 3) % 3; // Ensure positive index
     const middleMagazine = magazineOrder[calculatedIndex];
+
+    throttledLog('Carousel State', {
+      dragOffset: newOffset,
+      wrappedOffset,
+      index,
+      calculatedIndex,
+      middleMagazine,
+      isDragging
+    });
     
     if (middleMagazine !== currentMiddleMagazine) {
       setMiddleMagazine(middleMagazine);
     }
   });
+
+  // Handle drag gestures
+  const bind = useGesture(
+    {
+      onDragStart: ({ event }) => {
+        if (focusedMagazine) return; // Disable drag when a magazine is focused
+        event.stopPropagation();
+        setIsDragging(true);
+        dragStartRef.current = dragOffset;
+        velocityRef.current = 0;
+        throttledLog('Drag Start', {
+          dragStartOffset: dragStartRef.current
+        });
+      },
+      onDrag: ({ event, movement: [dx, dy], velocity: [vx, vy], last }) => {
+        if (focusedMagazine) return;
+        event.stopPropagation();
+        
+        const totalMovement = Math.sqrt(dx * dx + dy * dy);
+        
+        if (totalMovement > 5) {
+          const movement = isPortrait ? -dy * 0.005 : dx * 0.005;
+          const velocity = isPortrait ? -vy : vx;
+          velocityRef.current = velocity;
+          
+          const newOffset = dragStartRef.current + movement;
+          targetOffsetRef.current = newOffset;
+          
+          throttledLog('Dragging', {
+            movement,
+            velocity,
+            newOffset,
+            isPortrait
+          });
+          
+          if (last) {
+            setIsDragging(false);
+            const momentum = velocity * 0.5;
+            const projectedOffset = newOffset + momentum;
+            const spacing = 2.2;
+            const snapOffset = Math.round(projectedOffset / spacing) * spacing;
+            targetOffsetRef.current = snapOffset;
+            
+            throttledLog('Drag End', {
+              momentum,
+              projectedOffset,
+              snapOffset
+            });
+          }
+        } else if (last) {
+          setIsDragging(false);
+        }
+      },
+    },
+    { drag: { filterTaps: true } }
+  );
 
   // Calculate target positions for all magazines
   const targetPositions = useMemo(() => {
