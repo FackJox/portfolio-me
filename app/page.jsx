@@ -220,7 +220,7 @@ export default function Page() {
         </motion.div>
 
         <motion.div layout className='relative w-full flex-1'>
-          <View className='absolute inset-0 flex items-center justify-center'>
+          <View className='absolute w-full inset-0 flex items-center justify-center'>
             <Suspense fallback={null}>
               <Library position={[0, 0, 0]} />
               <Common

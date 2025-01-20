@@ -40,7 +40,6 @@ export const Magazine = ({
   // For storing original transform:
   const initialPositionRef = useRef(null);
   const initialQuaternionRef = useRef(null);
-  const initialCameraQuaternionRef = useRef(null);
   const previousViewingRightPageRef = useRef(false); // Store previous state
 
   // ------------------------------

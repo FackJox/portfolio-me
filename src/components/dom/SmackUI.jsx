@@ -1,6 +1,6 @@
 export const SmackHeader = () => {
   return (
-    <div className='w-full flex items-center justify-center pt-3 pb-2 bg-[#0E0504]'>
+    <div className='w-full flex items-center justify-center pt-3 pb-2 '>
       <h1 className='font-[YoungSerif] text-[#FABE7F] text-3xl sm:text-4xl md:text-5xl tracking-[-0.04em] text-center align-middle whitespace-nowrap'>
         JACK FOXCROFT
       </h1>
@@ -10,15 +10,15 @@ export const SmackHeader = () => {
 
 export const SmackButtons = () => {
   return (
-    <div className='w-full flex items-center justify-center bg-[#0E0504]'>
+    <div className='w-full flex items-center justify-center '>
       <div className='w-full mx-5 flex border-t-2 border-b-2 border-[#FABE7F]'>
-        <button className='flex-1 py-1.5 font-[lemon-regular] bg-[#0E0504] text-[#FABE7F] text-xl sm:text-2xl md:text-3xl tracking-[0.04em] text-center align-middle'>
+        <button className='flex-1 py-1.5 font-[lemon-regular]  text-[#FABE7F] text-xl sm:text-2xl md:text-3xl tracking-[0.04em] text-center align-middle'>
           MENU
         </button>
-        <div className='flex bg-[#0E0504] items-center flex-shrink-0'>
+        <div className='flex  items-center flex-shrink-0'>
           <div className='h-[50%] w-[1px] bg-[#F5E4F8] relative mx-4'></div>
         </div>
-        <button className='flex-1 py-1.5 text-[#F5E4F8] bg-[#0E0504] text-xl sm:text-2xl md:text-3xl tracking-[0.04em] text-center align-middle'>
+        <button className='flex-1 py-1.5 text-[#F5E4F8]  text-xl sm:text-2xl md:text-3xl tracking-[0.04em] text-center align-middle'>
           <span className='font-[lemon-regular]'>CREATI</span>
           <span className='font-[lemon-wide]'>VE</span>
         </button>
@@ -40,7 +40,7 @@ export const SmackCTA = () => {
 
 export const SmackTopBar = () => {
   return (
-    <div className='w-full h-10 flex items-center justify-between pt-6 pb-6 pl-6 pr-8 bg-[#0E0504] border-b-[1px] border-[#FABE7F]'>
+    <div className='w-full h-10 flex items-center justify-between pt-6 pb-6 pl-6 pr-8  border-b-[1px] border-[#FABE7F]'>
       <h1 className='font-[YoungSerif] text-[#FABE7F] text-3xl tracking-[-0.04em] whitespace-nowrap'>
         Jack Foxcroft
       </h1>

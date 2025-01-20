@@ -1,6 +1,6 @@
 export const VagueHeader = () => {
   return (
-    <div className='w-full flex items-center justify-center pt-4 pb-3 bg-[#2C272F]'>
+    <div className='w-full flex items-center justify-center pt-4 pb-3 '>
       <h1 className='font-[Vogue] text-[#F7F6F7] text-4xl sm:text-5xl md:text-6xl tracking-[-0.07em] text-center align-middle whitespace-nowrap'>
         JACK FOXCROFT
       </h1>
@@ -10,7 +10,7 @@ export const VagueHeader = () => {
 
 export const VagueButtons = () => {
   return (
-    <div className='w-full flex items-center justify-center bg-[#2C272F]'>
+    <div className='w-full flex items-center justify-center '>
       <div className='w-full mx-5 flex border-t-[1px] border-b-[1px] border-[#FFFFFF]'>
         <button className='flex-1 py-2 font-[HKGrotesk-SemiBold] text-[#F7F6F7] text-xl sm:text-2xl md:text-2xl tracking-[-0.12em] text-center align-middle'>
           MENU
@@ -30,7 +30,7 @@ export const VagueCTA = () => {
   return (
     <div className='w-full flex items-center justify-center'>
       <div className='w-full mx-5'>
-        <button className='w-full py-6 border-t-[1px] border-[#FFFFFF] text-xl sm:text-2xl md:text-2xl bg-[#2C272F] font-[HKGrotesk-Regular] tracking-[-0.12em] text-[#F7F6F7]'>
+        <button className='w-full py-6 border-t-[1px] border-[#FFFFFF] text-xl sm:text-2xl md:text-2xl  font-[HKGrotesk-Regular] tracking-[-0.12em] text-[#F7F6F7]'>
           CONNECT.
         </button>
       </div>
@@ -40,7 +40,7 @@ export const VagueCTA = () => {
 
 export const VagueTopBar = () => {
   return (
-    <div className='w-full h-10 flex items-center justify-between pt-6 pb-6  pl-6 pr-8 bg-[#2C272F] border-b-[1px]'>
+    <div className='w-full h-10 flex items-center justify-between pt-6 pb-6  pl-6 pr-8 border-b-[1px]'>
       <h1 className='font-[Vogue] text-[#F7F6F7] text-[2.5rem] tracking-[-0.07em] whitespace-nowrap'>
         Jack Foxcroft
       </h1>
