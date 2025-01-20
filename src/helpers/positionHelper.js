@@ -2,6 +2,50 @@
 import * as THREE from 'three';
 
 /**
+ * Handles the page viewing state transitions based on swipe direction
+ * @param {Object} params - Parameters for state transition
+ * @param {number} params.deltaX - Horizontal swipe delta
+ * @param {boolean} params.isViewingRightPage - Current right page viewing state
+ * @param {number} params.currentPage - Current page number
+ * @param {number} params.maxPages - Maximum number of pages
+ * @returns {Object} New state { newPage, newViewingRightPage }
+ */
+export const handlePageViewTransition = ({
+  deltaX,
+  isViewingRightPage,
+  currentPage,
+  maxPages
+}) => {
+  // Going backward (swipe right)
+  if (deltaX > 50) {
+    if (isViewingRightPage) {
+      // If on right page, shift focus to left page
+      return { newPage: currentPage, newViewingRightPage: false };
+    } else {
+      // If on left page and not at the start, turn page backward
+      if (currentPage > 0) {
+        return { newPage: currentPage - 1, newViewingRightPage: true };
+      }
+    }
+  } 
+  // Going forward (swipe left)
+  else if (deltaX < -50) {
+    if (!isViewingRightPage) {
+      // If on left page, shift focus to right page
+      return { newPage: currentPage, newViewingRightPage: true };
+    } else {
+      // If on right page and not at the end, turn page forward
+      if (currentPage < maxPages) {
+        return { newPage: currentPage + 1, newViewingRightPage: false };
+      }
+    }
+  }
+
+  // No change if conditions aren't met
+  return { newPage: currentPage, newViewingRightPage: isViewingRightPage };
+};
+
+/**
  * Calculates the target position for a magazine based on various states.
  * @param {Object} params - Parameters for position calculation.
  * @param {boolean} params.isPortrait - Whether the layout is in portrait mode.
@@ -32,6 +76,15 @@ export const calculateMagazineTargetPosition = ({
   let targetPos = new THREE.Vector3();
 
   if (focusedMagazine === magazine) {
+    console.log('Magazine Focus State:', {
+      magazine,
+      isPortrait,
+      page,
+      viewingRightPage,
+      focusedMagazine,
+      delayedPage
+    });
+
     // Position the magazine in front of the camera
     targetPos.copy(camera.position);
 
@@ -46,9 +99,28 @@ export const calculateMagazineTargetPosition = ({
       .normalize();
 
     if (isPortrait) {
-      // Portrait mode offset
+      // Portrait mode - handle right/left page view
       const horizontalOffset = viewingRightPage ? -geometryWidth / 4.75 : geometryWidth / 4.75;
+      
+      // Debug the exact calculation
+      console.log('Portrait Mode Calculation:', {
+        viewingRightPage,
+        horizontalOffset,
+        geometryWidth,
+        division: geometryWidth / 4.75,
+        negation: -geometryWidth / 4.75,
+        rightVector: right.clone(),
+        positionBefore: targetPos.clone()
+      });
+
+      // Apply the offset
       targetPos.addScaledVector(right, horizontalOffset);
+      
+      console.log('After Horizontal Offset:', {
+        horizontalOffset,
+        finalPosition: targetPos.clone(),
+        rightVectorUsed: right.clone()
+      });
     } else {
       // Landscape mode - smooth transition
       const targetOffset = delayedPage < 1 ? -geometryWidth / 4.75 : 0;
@@ -58,7 +130,14 @@ export const calculateMagazineTargetPosition = ({
     // Apply layout-specific offset
     if (layoutPosition && layoutPosition.length === 3) {
       const [offsetX, offsetY, offsetZ] = layoutPosition;
+      console.log('Layout Offset:', { 
+        offsetX, 
+        offsetY, 
+        offsetZ,
+        positionBefore: targetPos.clone() 
+      });
       targetPos.add(new THREE.Vector3(-offsetX, -offsetY, -offsetZ));
+      console.log('Final Position:', targetPos.clone());
     }
   } else {
     // Not focused - calculate based on carousel drag offset
@@ -115,4 +194,41 @@ export const calculateMagazineTargetPosition = ({
 export const performLerp = (current, target, lerpFactor) => {
   current.lerp(target, lerpFactor);
   return current;
+};
+
+/**
+ * Calculates smooth horizontal transitions for page views.
+ * @param {THREE.Vector3} position - Current position vector.
+ * @param {THREE.Vector3} right - Right direction vector.
+ * @param {number} currentOffset - Current horizontal offset.
+ * @param {number} targetOffset - Target horizontal offset.
+ * @param {number} lerpFactor - Lerp factor for smooth transition.
+ * @returns {number} The new horizontal offset.
+ */
+export const calculateHorizontalTransition = (position, right, currentOffset, targetOffset, lerpFactor = 0.03) => {
+  console.log('Horizontal Transition:', {
+    currentOffset,
+    targetOffset,
+    lerpFactor,
+    positionBefore: position.clone()
+  });
+
+  // Lerp the horizontal offset
+  const newOffset = THREE.MathUtils.lerp(currentOffset, targetOffset, lerpFactor);
+  
+  // Calculate the difference in offset
+  const offsetDelta = newOffset - currentOffset;
+  
+  console.log('Transition Calculation:', {
+    newOffset,
+    offsetDelta,
+    rightVector: right.clone()
+  });
+
+  // Apply the offset change to the position
+  position.addScaledVector(right, offsetDelta);
+  
+  console.log('Position After Transition:', position.clone());
+  
+  return newOffset;
 };

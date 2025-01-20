@@ -12,7 +12,8 @@ import {
   vagueAtom, 
   engineerAtom, 
   focusedMagazineAtom, 
-  styleMagazineAtom 
+  styleMagazineAtom,
+  magazineViewingStatesAtom
 } from '@/helpers/atoms';
 import { calculateMagazineTargetPosition } from "@/helpers/positionHelper"; // Import helper
 
@@ -89,6 +90,8 @@ export const Library = (props) => {
   const targetOffsetRef = useRef(0);
   const groupRef = useRef();
   const [focusedMagazine, setFocusedMagazine] = useAtom(focusedMagazineAtom);
+  const [currentMiddleMagazine, setMiddleMagazine] = useAtom(styleMagazineAtom);
+  const [magazineViewStates] = useAtom(magazineViewingStatesAtom);
   
   useLayoutEffect(() => {
     // Handle window resize
@@ -106,7 +109,6 @@ export const Library = (props) => {
   const [smackPage] = useAtom(smackAtom);
   const [vaguePage] = useAtom(vagueAtom);
   const [engineerPage] = useAtom(engineerAtom);
-  const [currentMiddleMagazine, setMiddleMagazine] = useAtom(styleMagazineAtom);
   
   // Handle drag gestures
   const bind = useGesture(
@@ -183,9 +185,9 @@ export const Library = (props) => {
         focusedMagazine,
         magazine: magazines.vague,
         page: vaguePage,
-        delayedPage: vaguePage, // If you have a separate delayedPage, pass it accordingly
-        layoutPosition: null, // Pass actual layout position if needed
-        viewingRightPage: false, // Update based on your logic
+        delayedPage: vaguePage,
+        layoutPosition: null,
+        viewingRightPage: magazineViewStates.vague,
         camera
       }),
       [magazines.smack]: calculateMagazineTargetPosition({
@@ -196,7 +198,7 @@ export const Library = (props) => {
         page: smackPage,
         delayedPage: smackPage,
         layoutPosition: null,
-        viewingRightPage: false,
+        viewingRightPage: magazineViewStates.smack,
         camera
       }),
       [magazines.engineer]: calculateMagazineTargetPosition({
@@ -207,11 +209,11 @@ export const Library = (props) => {
         page: engineerPage,
         delayedPage: engineerPage,
         layoutPosition: null,
-        viewingRightPage: false,
+        viewingRightPage: magazineViewStates.engineer,
         camera
       }),
     };
-  }, [isPortrait, dragOffset, focusedMagazine, vaguePage, smackPage, engineerPage, camera]);
+  }, [isPortrait, dragOffset, focusedMagazine, vaguePage, smackPage, engineerPage, camera, magazineViewStates]);
 
   return (
     <group {...props} ref={groupRef}>
@@ -249,10 +251,10 @@ export const Library = (props) => {
           magazine={magazineName}
           focusedMagazineAtom={focusedMagazineAtom}
           isPortrait={isPortrait}
-          layoutPosition={targetPositions[magazineName]} // Pass calculated position
+          layoutPosition={targetPositions[magazineName]}
           Button={config.Button}
-          targetPosition={targetPositions[magazineName]} // Pass target position prop
-          camera={camera} // Pass camera if needed in Magazine.jsx
+          targetPosition={targetPositions[magazineName]}
+          camera={camera}
         />
       ))}
     </group>

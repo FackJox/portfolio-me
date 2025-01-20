@@ -6,8 +6,8 @@ import { Float, useCursor, useTexture } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { useGesture } from "@use-gesture/react";
 import * as THREE from "three";
-import { styleMagazineAtom } from '@/helpers/atoms';
-import { performLerp } from "@/helpers/positionHelper"; // Import LERP helper
+import { styleMagazineAtom, magazineViewingStateAtom } from '@/helpers/atoms';
+import { performLerp, handlePageViewTransition } from "@/helpers/positionHelper";
 
 export const Magazine = ({
   pictures,
@@ -17,7 +17,7 @@ export const Magazine = ({
   isPortrait,
   layoutPosition,
   Button,
-  targetPosition, // Receive target position
+  targetPosition,
   camera,
   ...props
 }) => {
@@ -28,7 +28,7 @@ export const Magazine = ({
   const [focusedMagazine, setFocusedMagazine] = useAtom(focusedMagazineAtom);
   const [, setStyleMagazine] = useAtom(styleMagazineAtom);
   const [highlighted, setHighlighted] = useState(false);
-  const [viewingRightPage, setViewingRightPage] = useState(false);
+  const [viewingRightPage, setViewingRightPage] = useAtom(magazineViewingStateAtom(magazine));
   const [horizontalOffsetTarget, setHorizontalOffsetTarget] = useState(0);
   const horizontalOffsetRef = useRef(0);
 
@@ -41,6 +41,16 @@ export const Magazine = ({
   const initialPositionRef = useRef(null);
   const initialQuaternionRef = useRef(null);
   const previousViewingRightPageRef = useRef(false);
+
+  // Add effect to open first page when focused in portrait mode
+  useEffect(() => {
+    if (focusedMagazine === magazine && isPortrait) {
+      setPage(1);  // Set to 1 to open the first page
+      setViewingRightPage(false);
+    } else if (focusedMagazine !== magazine) {
+      setPage(0);  // Close the magazine when unfocused
+    }
+  }, [focusedMagazine, magazine, isPortrait]);
 
   // useCursor
   useCursor(highlighted && focusedMagazine !== magazine);
@@ -79,8 +89,6 @@ export const Magazine = ({
 
   // Gestures (swipe vs click)
   const handleSwipeOrClick = (deltaX, deltaY, e) => {
-    console.log("page", page)
-
     if (focusedMagazine && focusedMagazine !== magazine) return;
 
     const totalMovement = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
@@ -101,31 +109,15 @@ export const Magazine = ({
       // Horizontal swipe => page turn or view shift
       if (Math.abs(deltaX) > Math.abs(deltaY)) {
         if (isPortrait) {
-          if (deltaX > 50) {
-            // Swipe right (going backward)
-            if (viewingRightPage) {
-              // If on right page, shift focus to left page
-              setViewingRightPage(false);
-            } else {
-              // If on left page and not at the start, turn page backward
-              if (page > 0) {
-                setPage(page - 1);
-                setViewingRightPage(true); // Focus on right page after turning back
-              }
-            }
-          } else if (deltaX < -50) {
-            // Swipe left (going forward)
-            if (!viewingRightPage) {
-              // If on left page, shift focus to right page
-              setViewingRightPage(true);
-            } else {
-              // If on right page and not at the end, turn page forward
-              if (page < pages.length) {
-                setPage(page + 1);
-                setViewingRightPage(false); // Focus on left page after turning
-              }
-            }
-          }
+          const { newPage, newViewingRightPage } = handlePageViewTransition({
+            deltaX,
+            isViewingRightPage: viewingRightPage,
+            currentPage: page,
+            maxPages: pages.length
+          });
+          
+          setPage(newPage);
+          setViewingRightPage(newViewingRightPage);
         } else {
           // Regular landscape mode behavior
           if (deltaX > 50) {
