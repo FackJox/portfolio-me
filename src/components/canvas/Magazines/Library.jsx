@@ -234,19 +234,22 @@ export const Library = (props) => {
         camera,
         focusedMagazine,
         magazine: magazines.vague,
-        layoutPosition: null
+        layoutPosition: null,
+        isPortrait
       }),
       [magazines.smack]: calculateFocusPosition({
         camera,
         focusedMagazine,
         magazine: magazines.smack,
-        layoutPosition: null
+        layoutPosition: null,
+        isPortrait
       }),
       [magazines.engineer]: calculateFocusPosition({
         camera,
         focusedMagazine,
         magazine: magazines.engineer,
-        layoutPosition: null
+        layoutPosition: null,
+        isPortrait
       }),
     };
 

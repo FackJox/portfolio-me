@@ -87,9 +87,9 @@ export const calculatePageViewOffset = ({
   
   // Calculate target horizontal offset based on view mode
   if (isPortrait) {
-    targetOffset = viewingRightPage ? -geometryWidth / 4.8 : geometryWidth / 4.8;
+    targetOffset = viewingRightPage ? -geometryWidth / 3.8 : geometryWidth / 3.8;
   } else {
-    targetOffset = delayedPage < 1 ? -geometryWidth / 4.8 : 0;
+    targetOffset = delayedPage < 1 ? -geometryWidth / 3.8 : 0;
   }
 
   // Lerp the horizontal offset
@@ -120,7 +120,7 @@ export const calculateFocusPosition = ({
   isPortrait
 }) => {
   // Different z-distances for portrait and landscape
-  const zDist = isPortrait ? 2.6 : 2.7;
+  const zDist = isPortrait ? 2.8 : 2.7;
   let targetPos = new THREE.Vector3();
 
   if (focusedMagazine === magazine) {
