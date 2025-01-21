@@ -5,7 +5,7 @@ import { Suspense, useState, useEffect } from 'react'
 import { useAtom } from 'jotai'
 import { motion, AnimatePresence } from 'framer-motion'
 import { styleMagazineAtom } from '@/helpers/atoms';
-import { textureCache, getTexturePath, getRoughnessPath } from '@/helpers/textureLoader'
+import { textureCache, getTexturePath, getRoughnessPath, picturesSmack, picturesEngineer, picturesVague } from '@/helpers/textureLoader'
 import { useDeviceOrientation, getLayoutConfig } from '@/helpers/deviceHelper'
 import { layoutAnimations, backgroundTransitions } from '@/helpers/animationConfigs'
 
@@ -39,67 +39,6 @@ const View = dynamic(() => import('@/components/canvas/View').then((mod) => mod.
   ),
 })
 const Common = dynamic(() => import('@/components/canvas/View').then((mod) => mod.Common), { ssr: false })
-
-// Magazine textures to preload
-const picturesSmack = [
-  "01Front",
-  "02Contents",
-  "03Contents",
-  "04Editorial",
-  "05Editorial",
-  "06Graphics",
-  "07Graphics",
-  "08Scout",
-  "09Scout",
-  "10Bunker",
-  "11Bunker",
-  "12AI",
-  "13AI",
-  "14Sandro",
-  "15Sandro",
-  "16Tarot",
-  "17Tarot",
-  "18Tarot",
-  "19Tarot",
-  "20Events",
-  "21Events",
-];
-
-const picturesEngineer = [
-  "01Front",
-  "02Contents",
-  "03Contents",
-  "04Editorial",
-  "05Editorial",
-  "06DigitalTwins",
-  "07DigitalTwins",
-  "08DigitalTwins",
-  "09DigitalTwins",
-  "10WindTurbines",
-  "11WindTurbines",
-  "12HPC",
-  "13HPC",
-  "14Modelling",
-  "15Modelling",
-  "16Transformation",
-  "17Transformation",
-  "18Transformation",
-  "19Transformation",
-];
-
-const picturesVague = [
-  "01Front",
-  "02Contents",
-  "03Contents",
-  "04Editorial",
-  "05Editorial",
-  "06Timeline",
-  "07Timeline",
-  "08About",
-  "09About",
-  "10Contributers",
-  "11Contributers",
-];
 
 const PreloadComponents = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true)

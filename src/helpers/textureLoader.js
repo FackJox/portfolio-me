@@ -1,6 +1,67 @@
 import { TextureLoader } from 'three';
 import { SRGBColorSpace } from 'three';
 
+// Magazine textures to preload
+export const picturesSmack = [
+  "01Front",
+  "02Contents",
+  "03Contents",
+  "04Editorial",
+  "05Editorial",
+  "06Graphics",
+  "07Graphics",
+  "08Scout",
+  "09Scout",
+  "10Bunker",
+  "11Bunker",
+  "12AI",
+  "13AI",
+  "14Sandro",
+  "15Sandro",
+  "16Tarot",
+  "17Tarot",
+  "18Tarot",
+  "19Tarot",
+  "20Events",
+  "21Events",
+];
+
+export const picturesEngineer = [
+  "01Front",
+  "02Contents",
+  "03Contents",
+  "04Editorial",
+  "05Editorial",
+  "06DigitalTwins",
+  "07DigitalTwins",
+  "08DigitalTwins",
+  "09DigitalTwins",
+  "10WindTurbines",
+  "11WindTurbines",
+  "12HPC",
+  "13HPC",
+  "14Modelling",
+  "15Modelling",
+  "16Transformation",
+  "17Transformation",
+  "18Transformation",
+  "19Transformation",
+];
+
+export const picturesVague = [
+  "01Front",
+  "02Contents",
+  "03Contents",
+  "04Editorial",
+  "05Editorial",
+  "06Timeline",
+  "07Timeline",
+  "08About",
+  "09About",
+  "10Contributers",
+  "11Contributers",
+];
+
 // Texture path helpers
 export const getTexturePath = (magazine, page) => `/textures/${magazine}/${page}.png`
 export const getRoughnessPath = () => '/textures/book-cover-roughness.png'
