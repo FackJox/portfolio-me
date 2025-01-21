@@ -195,6 +195,11 @@ export const updateMagazineCarousel = ({
 }) => {
   if (!magazineRef) return;
 
+  // Initialize needsJump ref if it doesn't exist
+  if (!magazineRef.needsJump) {
+    magazineRef.needsJump = true;
+  }
+
   // Update dragOffset without lerping for portrait mode
   if (isPortrait && targetOffsetRef) {
     dragOffset = targetOffsetRef.current;
@@ -213,37 +218,64 @@ export const updateMagazineCarousel = ({
     setPage(1);
   }
 
-  // Rest of the existing carousel positioning logic
   const spacing = 2;
   let finalPosition = new THREE.Vector3();
 
   if (focusedMagazine !== magazine) {
-    // Calculate carousel position
     const getBaseIndex = (mag) => {
       switch (mag) {
-        case 'engineer': return 0;
-        case 'vague': return 1;
+        case 'engineer': return 1;
+        case 'vague': return 0;
         case 'smack': return 2;
         default: return 0;
       }
     };
 
-    const baseIndex = getBaseIndex(magazine);
-    const normalizedOffset = Math.round(dragOffset / spacing);
-    const wrappedIndex = ((baseIndex - normalizedOffset) % 3 + 3) % 3;
-
     if (isPortrait) {
-      // Portrait mode positioning
-      const yPositions = [2, 0, -2];
-      const yPos = yPositions[wrappedIndex];
-      const isWrapping = Math.abs(normalizedOffset - dragOffset / spacing) > 0.1;
-      const wrapPos = isWrapping ? (dragOffset > 0 ? -6 : 6) : yPos;
+      // Portrait mode positioning with instant wrapping
+      const baseIndex = getBaseIndex(magazine);
+      const totalSpacing = spacing * 3;
+      const magazineOffset = dragOffset + (baseIndex * spacing);
       
+      // Wrap the offset instantly
+      const wrapOffset = (offset, total) => {
+        return ((offset % total) + total * 1.5) % total - total / 2;
+      };
+      
+      const wrappedOffset = wrapOffset(magazineOffset, totalSpacing);
+      
+      // Calculate target position exactly as specified
       finalPosition.set(
         -0.65 + (page > 0 ? 0.65 : 0),
-        wrapPos,
-        3.5 + Math.abs(wrapPos) * 0.1
+        wrappedOffset,
+        3.5
       );
+      
+      // Check if we're wrapping around
+      const isWrapping = Math.abs(magazineRef.position.y - wrappedOffset) > spacing * 1.2;
+      
+      if (isWrapping) {
+        const currentY = magazineRef.position.y;
+        const direction = wrappedOffset > currentY ? 1 : -1;
+        
+        // If we need to jump, do the initial jump
+        if (magazineRef.needsJump) {
+          magazineRef.position.set(
+            finalPosition.x,
+            wrappedOffset + (direction * spacing),
+            finalPosition.z
+          );
+          magazineRef.needsJump = false;
+        } else {
+          // After jump, interpolate to final position
+          magazineRef.position.lerp(finalPosition, lerpFactor);
+        }
+      } else {
+        // Reset needsJump when not wrapping
+        magazineRef.needsJump = true;
+        // Smooth interpolation for adjacent positions
+        magazineRef.position.lerp(finalPosition, lerpFactor);
+      }
     } else {
       // Landscape mode positioning
       switch (magazine) {
@@ -257,10 +289,9 @@ export const updateMagazineCarousel = ({
           finalPosition.set(1.5 + (dragOffset > 0 ? 1 : 0) + (page > 0 ? 0.65 : 0), 0, 4.5 - (dragOffset > 0 ? 1 : 0));
           break;
       }
+      // Apply lerping only in landscape mode
+      magazineRef.position.lerp(finalPosition, lerpFactor);
     }
-
-    // Apply final position
-    magazineRef.position.lerp(finalPosition, lerpFactor);
   } else {
     // When focused, lerp to target position
     magazineRef.position.lerp(targetPosition, lerpFactor);
