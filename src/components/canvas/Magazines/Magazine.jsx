@@ -279,11 +279,17 @@ export const Magazine = ({
 
   return (
     <group ref={groupRef} userData={{ magazine }}>
+      {/* Invisible bounding box for interaction */}
       <mesh
-        geometry={new THREE.BoxGeometry(2.5, 1.5, 1)}
+        position={[page === 0 ? 0.65 : 0, 0, 0]}
+        geometry={new THREE.BoxGeometry(
+          page === 0 ? 1.25 : 2.5, // Width: smaller when closed
+          page === 0 ? 1.5 : 1.5, // Height: smaller when closed
+          page === 0 ? 1 : 1 // Depth: smaller when closed
+        )}
         material={new THREE.MeshBasicMaterial({
           transparent: true,
-          opacity: 0,
+          opacity: 0.5,
         })}
         onPointerEnter={(e) => {
           e.stopPropagation();
@@ -298,38 +304,39 @@ export const Magazine = ({
         }}
         {...bind()}
         pointerEvents={focusedMagazine && focusedMagazine !== magazine ? "none" : "auto"}
+      />
+      
+      {/* Magazine content */}
+      <Float
+        ref={floatRef}
+        {...getFloatConfig(isPortrait)}
+        enabled={focusedMagazine !== magazine}
       >
-        <Float
-          ref={floatRef}
-          {...getFloatConfig(isPortrait)}
-          enabled={focusedMagazine !== magazine}
-        >
-          <group ref={floatNullifyRef}>
-            <group rotation={[0, -Math.PI / 2, 0]}>
-              {pages.map((pageData, idx) => (
-                <Page
-                  key={idx}
-                  page={delayedPage}
-                  number={idx}
-                  magazine={magazine}
-                  opened={delayedPage > idx}
-                  magazineClosed={delayedPage === 0 || delayedPage === pages.length}
-                  pages={pages}
-                  setPage={setPage}
-                  highlighted={highlighted}
-                  isFocused={focusedMagazine === magazine}
-                  {...pageData}
-                />
-              ))}
-            </group>
-            {!isPortrait && (
-              <group position={[getButtonPosition(isPortrait).x, getButtonPosition(isPortrait).y, getButtonPosition(isPortrait).z]}>
-                <Button />
-              </group>
-            )}
+        <group ref={floatNullifyRef}>
+          <group rotation={[0, -Math.PI / 2, 0]}>
+            {pages.map((pageData, idx) => (
+              <Page
+                key={idx}
+                page={delayedPage}
+                number={idx}
+                magazine={magazine}
+                opened={delayedPage > idx}
+                magazineClosed={delayedPage === 0 || delayedPage === pages.length}
+                pages={pages}
+                setPage={setPage}
+                highlighted={highlighted}
+                isFocused={focusedMagazine === magazine}
+                {...pageData}
+              />
+            ))}
           </group>
-        </Float>
-      </mesh>
+          {!isPortrait && (
+            <group position={[getButtonPosition(isPortrait).x, getButtonPosition(isPortrait).y, getButtonPosition(isPortrait).z]}>
+              <Button />
+            </group>
+          )}
+        </group>
+      </Float>
     </group>
   );
 };
