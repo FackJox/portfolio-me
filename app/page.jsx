@@ -14,9 +14,6 @@ import { SmackHeader, SmackButtons, SmackCTA, SmackTopBar } from '@/components/d
 import { EngineerHeader, EngineerButtons, EngineerCTA, EngineerTopBar } from '@/components/dom/EngineerUI'
 import { VagueHeader, VagueButtons, VagueCTA, VagueTopBar } from '@/components/dom/VagueUI'
 
-const Buttons = dynamic(() => import('@/components/canvas/Buttons').then((mod) => mod.Buttons), {
-  ssr: false,
-})
 
 // Keep dynamic imports for canvas components
 const Library = dynamic(() => import('@/components/canvas/Magazines/Library').then((mod) => mod.Library), {

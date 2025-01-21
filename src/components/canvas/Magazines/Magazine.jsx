@@ -53,6 +53,8 @@ export const Magazine = ({
         setPage(lastPageRef.current);
         setViewingRightPage(lastViewingStateRef.current);
       }
+      // Update style magazine when focused
+      setStyleMagazine(magazine);
     } else if (focusedMagazine !== magazine) {
       // Only store state if we're not already closing (page !== 0)
       // and we haven't already stored a state (lastPageRef.current === 1)
