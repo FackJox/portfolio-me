@@ -15,7 +15,7 @@ import {
   styleMagazineAtom,
   magazineViewingStatesAtom
 } from '@/helpers/atoms';
-import { calculateFocusPosition, updateMagazineCarousel } from "@/helpers/positionHelper";
+import { calculateFocusPosition, updateMagazineCarousel, calculateMiddleMagazine } from "@/helpers/positionHelper";
 
 const picturesSmack = [
   "02Contents",
@@ -171,6 +171,14 @@ export const Library = (props) => {
         setPage
       });
     });
+
+    // Calculate and update middle magazine if needed
+    if (isPortrait && setMiddleMagazine && currentMiddleMagazine) {
+      const middleMagazine = calculateMiddleMagazine(dragOffset, isPortrait);
+      if (middleMagazine !== currentMiddleMagazine) {
+        setMiddleMagazine(middleMagazine);
+      }
+    }
   });
 
   // Handle drag gestures
@@ -194,7 +202,7 @@ export const Library = (props) => {
           
           if (last) {
             setIsDragging(false);
-            const spacing = 2;
+            const spacing = isPortrait ? 2.5 : 2;
             
             // Calculate the nearest snap position
             const currentPosition = Math.round(dragStartRef.current / spacing);
@@ -210,7 +218,7 @@ export const Library = (props) => {
           } else {
             // During drag, snap to the nearest position
             const newOffset = dragStartRef.current + movement;
-            const spacing = 2;
+            const spacing = isPortrait ? 2.5 : 2;
             targetOffsetRef.current = Math.round(newOffset / spacing) * spacing;
           }
         } else if (last) {

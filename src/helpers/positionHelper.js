@@ -150,10 +150,11 @@ export const calculateFocusPosition = ({
 /**
  * Calculates which magazine should be in the middle position based on carousel offset
  * @param {number} targetOffset - The current carousel offset
+ * @param {boolean} isPortrait - Whether the view is in portrait mode
  * @returns {string} The ID of the magazine that should be in the middle ('engineer', 'vague', or 'smack')
  */
-export const calculateMiddleMagazine = (targetOffset) => {
-  const spacing = 2;
+export const calculateMiddleMagazine = (targetOffset, isPortrait) => {
+  const spacing = isPortrait ? 2.5 : 2;
   const wrappedOffset = ((targetOffset % (spacing * 3)) + spacing * 4.5) % (spacing * 3) - spacing * 1.5;
   const index = Math.round(wrappedOffset / spacing) % 3;
   const magazineOrder = ['engineer', 'vague', 'smack'];
@@ -207,7 +208,7 @@ export const updateMagazineCarousel = ({
 
   // Calculate and update middle magazine if needed
   if (isPortrait && setMiddleMagazine && currentMiddleMagazine) {
-    const middleMagazine = calculateMiddleMagazine(dragOffset);
+    const middleMagazine = calculateMiddleMagazine(dragOffset, isPortrait);
     if (middleMagazine !== currentMiddleMagazine) {
       setMiddleMagazine(middleMagazine);
     }
@@ -218,7 +219,7 @@ export const updateMagazineCarousel = ({
     setPage(1);
   }
 
-  const spacing = 2;
+  const spacing = isPortrait ? 2.5 : 2;
   let finalPosition = new THREE.Vector3();
 
   if (focusedMagazine !== magazine) {
@@ -250,9 +251,14 @@ export const updateMagazineCarousel = ({
         wrappedOffset,
         3.5
       );
+
+      // Bring current middle magazine closer to camera
+      if (currentMiddleMagazine === magazine) {
+        finalPosition.z -= -2.5;
+      }
       
       // Check if we're wrapping around
-      const isWrapping = Math.abs(magazineRef.position.y - wrappedOffset) > spacing * 1.2;
+      const isWrapping = Math.abs(magazineRef.position.y - wrappedOffset) > spacing * 1.5;
       
       if (isWrapping) {
         const currentY = magazineRef.position.y;
