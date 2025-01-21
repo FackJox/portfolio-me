@@ -36,28 +36,42 @@ export const Magazine = ({
   const groupRef = useRef();
   const floatRef = useRef();
   const floatNullifyRef = useRef();
+  const lastPageRef = useRef(1);  // Store last viewed page
+  const lastViewingStateRef = useRef(false);  // Store last viewing state
 
   // Initial transforms
   const initialPositionRef = useRef(null);
   const initialQuaternionRef = useRef(null);
   const previousViewingRightPageRef = useRef(false);
 
-  // Add effect to open first page when focused in portrait mode
+  // Focus/unfocus logic
   useEffect(() => {
-    if (focusedMagazine === magazine && isPortrait) {
-      // Only set to page 1 if we're not in the process of closing
+    if (focusedMagazine === magazine) {
+      // When focusing, check if we should restore state
       if (page === 0) {
-        setPage(1);  // Set to 1 to open the first page
-        setViewingRightPage(false);
+        setPage(lastPageRef.current);
+        setViewingRightPage(lastViewingStateRef.current);
       }
     } else if (focusedMagazine !== magazine) {
-      // Only close the magazine if we're not in a page transition
-      if (page !== 0) {
-        setPage(0);  // Close the magazine when unfocused
-        setViewingRightPage(false);
+      // Only store state if we're not already closing (page !== 0)
+      // and we haven't already stored a state (lastPageRef.current === 1)
+      if (page !== 0 && lastPageRef.current === 1) {
+        lastPageRef.current = page;
+        lastViewingStateRef.current = viewingRightPage;
       }
+      // Set initial page when unfocused
+      setPage(0);
+      setViewingRightPage(false);
     }
-  }, [focusedMagazine, magazine, isPortrait]);
+  }, [focusedMagazine, magazine]);
+
+  // Only update stored state when explicitly changing pages
+  useEffect(() => {
+    if (focusedMagazine === magazine && page > 0) {
+      lastPageRef.current = page;
+      lastViewingStateRef.current = viewingRightPage;
+    }
+  }, [page, viewingRightPage, focusedMagazine]);
 
   // useCursor
   useCursor(highlighted && focusedMagazine !== magazine);
@@ -112,36 +126,40 @@ export const Magazine = ({
       if (!isPortrait || isMiddleMagazine) {
         setFocusedMagazine((prev) => (prev === magazine ? null : magazine));
       }
-    } else {
+    } else if (Math.abs(deltaX) > Math.abs(deltaY)) {
       // Horizontal swipe => page turn or view shift
-      if (Math.abs(deltaX) > Math.abs(deltaY)) {
-        if (isPortrait) {
-          console.log('Handling swipe with pages:', {
-            currentPage: page,
-            maxPages: pages.length,
-            isViewingRightPage: viewingRightPage
-          });
-          
-          const { newPage, newViewingRightPage } = handlePageViewTransition({
-            deltaX,
-            isViewingRightPage: viewingRightPage,
-            currentPage: page,
-            maxPages: pages.length
-          });
-          
-          setPage(newPage);
-          setViewingRightPage(newViewingRightPage);
-        } else {
-          // Regular landscape mode behavior
-          if (deltaX > 50) {
-            setPage((p) => Math.max(p - 1, 0));
-          } else if (deltaX < -50) {
+      // Check if we're about to close from the last page
+      if (page === pages.length - 1 && deltaX < -50) {
+        lastPageRef.current = page;
+        lastViewingStateRef.current = viewingRightPage;
+      }
+
+      if (isPortrait) {
+        const result = handlePageViewTransition({
+          deltaX,
+          isViewingRightPage: viewingRightPage,
+          currentPage: page,
+          maxPages: pages.length
+        });
+        
+        setPage(result.newPage);
+        setViewingRightPage(result.newViewingRightPage);
+      } else {
+        // Regular landscape mode behavior with last page swipe handling
+        if (deltaX > 50) {
+          setPage((p) => Math.max(p - 1, 0));
+        } else if (deltaX < -50) {
+          if (page === pages.length - 1) {
+            // Last page swipe left behavior
+            setPage(0); // Close the magazine
+            setFocusedMagazine(null); // Unfocus
+          } else {
             setPage((p) => Math.min(p + 1, pages.length - 1));
           }
         }
       }
-      // vertical swipes ignored
     }
+    // vertical swipes ignored
   };
 
   const bind = useGesture(
@@ -187,16 +205,10 @@ export const Magazine = ({
 
   // Lerp towards target position
   useFrame((_, delta) => {
+    if (!groupRef.current) return;
+    
     // Calculate horizontal offset if focused
     if (focusedMagazine === magazine) {
-      console.log('Magazine State:', {
-        magazine,
-        page,
-        delayedPage,
-        viewingRightPage,
-        isPortrait
-      });
-
       const right = new THREE.Vector3(1, 0, 0)
         .applyQuaternion(camera.quaternion)
         .normalize();
@@ -204,16 +216,10 @@ export const Magazine = ({
       // If magazine is closing (transitioning from any page to 0), offset to center and unfocus
       if (page === 0) {
         const centerOffset = isPortrait ? 0.65 : -0.65;
-        console.log('Closing Magazine - Applying Offset:', {
-          centerOffset,
-          isPortrait,
-          currentPosition: groupRef.current.position.toArray()
-        });
         groupRef.current.position.addScaledVector(right, centerOffset * delta * 5);
         // Unfocus the magazine after it's closed
         setFocusedMagazine(null);
       } else {
-        console.log('Normal Page View - Calculating Offset');
         calculatePageViewOffset({
           position: groupRef.current.position,
           right,
@@ -248,13 +254,8 @@ export const Magazine = ({
     }
   });
 
-  // Render
   return (
-    <group 
-      ref={groupRef}
-      userData={{ magazine }}
-    >
-      {/* Transparent bounding box to detect pointer events */}
+    <group ref={groupRef} userData={{ magazine }}>
       <mesh
         geometry={new THREE.BoxGeometry(2.5, 1.5, 1)}
         material={new THREE.MeshBasicMaterial({
@@ -271,11 +272,8 @@ export const Magazine = ({
           setHighlighted(false);
         }}
         {...bind()}
-        pointerEvents={
-          focusedMagazine && focusedMagazine !== magazine ? "none" : "auto"
-        }
+        pointerEvents={focusedMagazine && focusedMagazine !== magazine ? "none" : "auto"}
       >
-        {/* Use Float; store its ref in floatRef */}
         <Float
           ref={floatRef}
           floatIntensity={0.5}
@@ -283,9 +281,7 @@ export const Magazine = ({
           rotationIntensity={2}
           enabled={focusedMagazine !== magazine}
         >
-          {/* This group will invert the Float transform if focused */}
           <group ref={floatNullifyRef}>
-            {/* Finally, rotate pages -90deg and render them */}
             <group rotation={[0, -Math.PI / 2, 0]}>
               {pages.map((pageData, idx) => (
                 <Page
@@ -303,7 +299,6 @@ export const Magazine = ({
                 />
               ))}
             </group>
-            {/* Add Button below the magazine */}
             <group position={[0.65, -1.05, 0]}>
               <Button />
             </group>

@@ -16,58 +16,40 @@ export const handlePageViewTransition = ({
   currentPage,
   maxPages
 }) => {
-  console.log('Page Transition - Input:', {
-    deltaX,
-    isViewingRightPage,
-    currentPage,
-    maxPages,
-    isLastPage: currentPage === maxPages - 1,
-    isFirstPage: currentPage === 1
-  });
+ 
 
   // Going backward (swipe right)
   if (deltaX > 50) {
-    console.log('Swiping right');
     if (isViewingRightPage) {
-      console.log('On right page -> shifting to left');
       return { newPage: currentPage, newViewingRightPage: false };
     } else {
-      console.log('On left page');
       // If on left page and at page 1, close the magazine
       if (currentPage === 1) {
-        console.log('At page 1 -> closing magazine');
         return { newPage: 0, newViewingRightPage: false };
       }
       // If on left page and not at the start, turn page backward
       else if (currentPage > 0) {
-        console.log('Not at start -> turning page backward');
         return { newPage: currentPage - 1, newViewingRightPage: true };
       }
     }
   } 
   // Going forward (swipe left)
   else if (deltaX < -50) {
-    console.log('Swiping left');
     // Check if we're on the last page
     if (currentPage === maxPages - 1 && isViewingRightPage) {
-      console.log('At last page and on right side -> closing magazine');
       return { newPage: 0, newViewingRightPage: false };
     }
     if (!isViewingRightPage) {
-      console.log('On left page -> shifting to right');
       return { newPage: currentPage, newViewingRightPage: true };
     } else {
-      console.log('On right page');
       // If on right page and not at the end, turn page forward
       if (currentPage < maxPages - 1) {
-        console.log('Not at end -> turning page forward');
         return { newPage: currentPage + 1, newViewingRightPage: false };
       }
     }
   }
 
   // No change if conditions aren't met
-  console.log('No transition triggered');
   return { newPage: currentPage, newViewingRightPage: isViewingRightPage };
 };
 
@@ -105,9 +87,9 @@ export const calculatePageViewOffset = ({
   
   // Calculate target horizontal offset based on view mode
   if (isPortrait) {
-    targetOffset = viewingRightPage ? -geometryWidth / 4.75 : geometryWidth / 4.75;
+    targetOffset = viewingRightPage ? -geometryWidth / 4.8 : geometryWidth / 4.8;
   } else {
-    targetOffset = delayedPage < 1 ? -geometryWidth / 4.75 : 0;
+    targetOffset = delayedPage < 1 ? -geometryWidth / 4.8 : 0;
   }
 
   // Lerp the horizontal offset
@@ -127,22 +109,29 @@ export const calculatePageViewOffset = ({
  * @param {string} params.focusedMagazine - Currently focused magazine ID
  * @param {string} params.magazine - Magazine ID to calculate position for
  * @param {number[]} [params.layoutPosition] - Optional layout position offset [x, y, z]
+ * @param {boolean} params.isPortrait - Whether the view is in portrait mode
  * @returns {THREE.Vector3} The calculated focus position
  */
 export const calculateFocusPosition = ({
   camera,
   focusedMagazine,
   magazine,
-  layoutPosition
+  layoutPosition,
+  isPortrait
 }) => {
-  const zDist = 2.6;
+  // Different z-distances for portrait and landscape
+  const zDist = isPortrait ? 2.6 : 2.7;
   let targetPos = new THREE.Vector3();
 
   if (focusedMagazine === magazine) {
     // Position the magazine in front of the camera
     targetPos.copy(camera.position);
 
-    const forward = new THREE.Vector3(-0.003, 0.0, -1)
+    const forward = new THREE.Vector3(
+      isPortrait ? -0.003 : -0.15, // Different x-offset for portrait/landscape
+      0.0,
+      -1
+    )
       .applyQuaternion(camera.quaternion)
       .normalize();
 
