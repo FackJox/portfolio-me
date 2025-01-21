@@ -112,12 +112,31 @@ export const Library = (props) => {
       const windowWidth = window.innerWidth;
       const newIsPortrait = windowWidth <= 768;
       setIsPortrait(newIsPortrait);
+
+      // Initialize dragOffset and targetOffset on resize/mount
+      if (!newIsPortrait) {
+        dragStartRef.current = 0;
+        targetOffsetRef.current = 0;
+        setDragOffset(0);
+      }
     };
 
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Initialize state on mount
+  useEffect(() => {
+    if (!isMountedRef.current) {
+      isMountedRef.current = true;
+      if (!isPortrait) {
+        dragStartRef.current = 0;
+        targetOffsetRef.current = 0;
+        setDragOffset(0);
+      }
+    }
+  }, [isPortrait]);
 
   const [smackPage, setSmackPage] = useAtom(smackAtom);
   const [vaguePage, setVaguePage] = useAtom(vagueAtom);

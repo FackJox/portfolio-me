@@ -295,12 +295,17 @@ export const updateMagazineCarousel = ({
           finalPosition.set(1.5 + (dragOffset > 0 ? 1 : 0) + (page > 0 ? 0.65 : 0), 0, 4.5 - (dragOffset > 0 ? 1 : 0));
           break;
       }
-      // Apply lerping only in landscape mode
-      magazineRef.position.lerp(finalPosition, lerpFactor);
     }
   } else {
     // When focused, lerp to target position
-    magazineRef.position.lerp(targetPosition, lerpFactor);
+    finalPosition.copy(targetPosition);
+  }
+
+  // Apply position with lerping
+  if (magazineRef.position) {
+    magazineRef.position.lerp(finalPosition, lerpFactor);
+  } else {
+    magazineRef.position = finalPosition.clone();
   }
 };
 
