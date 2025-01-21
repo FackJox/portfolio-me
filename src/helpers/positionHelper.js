@@ -16,37 +16,74 @@ export const handlePageViewTransition = ({
   currentPage,
   maxPages
 }) => {
+  console.log('Page Transition - Input:', {
+    deltaX,
+    isViewingRightPage,
+    currentPage,
+    maxPages,
+    isLastPage: currentPage === maxPages - 1,
+    isFirstPage: currentPage === 1
+  });
+
   // Going backward (swipe right)
   if (deltaX > 50) {
+    console.log('Swiping right');
     if (isViewingRightPage) {
-      // If on right page, shift focus to left page
+      console.log('On right page -> shifting to left');
       return { newPage: currentPage, newViewingRightPage: false };
     } else {
+      console.log('On left page');
+      // If on left page and at page 1, close the magazine
+      if (currentPage === 1) {
+        console.log('At page 1 -> closing magazine');
+        return { newPage: 0, newViewingRightPage: false };
+      }
       // If on left page and not at the start, turn page backward
-      if (currentPage > 0) {
+      else if (currentPage > 0) {
+        console.log('Not at start -> turning page backward');
         return { newPage: currentPage - 1, newViewingRightPage: true };
       }
     }
   } 
   // Going forward (swipe left)
   else if (deltaX < -50) {
+    console.log('Swiping left');
+    // Check if we're on the last page
+    if (currentPage === maxPages - 1 && isViewingRightPage) {
+      console.log('At last page and on right side -> closing magazine');
+      return { newPage: 0, newViewingRightPage: false };
+    }
     if (!isViewingRightPage) {
-      // If on left page, shift focus to right page
+      console.log('On left page -> shifting to right');
       return { newPage: currentPage, newViewingRightPage: true };
     } else {
+      console.log('On right page');
       // If on right page and not at the end, turn page forward
-      if (currentPage < maxPages) {
+      if (currentPage < maxPages - 1) {
+        console.log('Not at end -> turning page forward');
         return { newPage: currentPage + 1, newViewingRightPage: false };
       }
     }
   }
 
   // No change if conditions aren't met
+  console.log('No transition triggered');
   return { newPage: currentPage, newViewingRightPage: isViewingRightPage };
 };
 
 /**
  * Calculates the horizontal offset for page viewing transitions
+ * @param {Object} params - Parameters for offset calculation
+ * @param {THREE.Vector3} params.position - Current position vector
+ * @param {THREE.Vector3} params.right - Right direction vector
+ * @param {number} params.currentOffset - Current horizontal offset
+ * @param {number} params.targetOffset - Target horizontal offset
+ * @param {boolean} params.isPortrait - Whether the view is in portrait mode
+ * @param {boolean} params.viewingRightPage - Whether viewing the right page
+ * @param {number} params.page - Current page number
+ * @param {number} params.delayedPage - Delayed page number for animations
+ * @param {number} [params.lerpFactor=0.03] - Linear interpolation factor
+ * @returns {number} The new horizontal offset
  */
 export const calculatePageViewOffset = ({
   position,
@@ -60,6 +97,11 @@ export const calculatePageViewOffset = ({
   lerpFactor = 0.03
 }) => {
   const geometryWidth = 3;
+  
+  // If page is 0, we're closing, so don't apply any offset
+  if (page === 0) {
+    return currentOffset;
+  }
   
   // Calculate target horizontal offset based on view mode
   if (isPortrait) {
@@ -80,6 +122,12 @@ export const calculatePageViewOffset = ({
 
 /**
  * Calculates the focus position of a magazine relative to the camera
+ * @param {Object} params - Parameters for focus position calculation
+ * @param {THREE.Camera} params.camera - The camera object
+ * @param {string} params.focusedMagazine - Currently focused magazine ID
+ * @param {string} params.magazine - Magazine ID to calculate position for
+ * @param {number[]} [params.layoutPosition] - Optional layout position offset [x, y, z]
+ * @returns {THREE.Vector3} The calculated focus position
  */
 export const calculateFocusPosition = ({
   camera,
@@ -110,6 +158,11 @@ export const calculateFocusPosition = ({
   return targetPos;
 };
 
+/**
+ * Calculates which magazine should be in the middle position based on carousel offset
+ * @param {number} targetOffset - The current carousel offset
+ * @returns {string} The ID of the magazine that should be in the middle ('engineer', 'vague', or 'smack')
+ */
 export const calculateMiddleMagazine = (targetOffset) => {
   const spacing = 2;
   const wrappedOffset = ((targetOffset % (spacing * 3)) + spacing * 4.5) % (spacing * 3) - spacing * 1.5;
@@ -121,6 +174,20 @@ export const calculateMiddleMagazine = (targetOffset) => {
 
 /**
  * Updates magazine position and rotation in the carousel or focused state
+ * @param {Object} params - Parameters for magazine position update
+ * @param {THREE.Object3D} params.magazineRef - Reference to the magazine mesh
+ * @param {THREE.Vector3} params.targetPosition - Target position for focused state
+ * @param {THREE.Camera} params.camera - The camera object
+ * @param {string} params.focusedMagazine - Currently focused magazine ID
+ * @param {string} params.magazine - Magazine ID being updated
+ * @param {boolean} params.isPortrait - Whether the view is in portrait mode
+ * @param {number} params.dragOffset - Current drag offset
+ * @param {number} params.page - Current page number
+ * @param {React.MutableRefObject} params.targetOffsetRef - Reference to target offset
+ * @param {string} params.currentMiddleMagazine - Currently middle magazine ID
+ * @param {Function} params.setMiddleMagazine - Function to update middle magazine
+ * @param {Function} params.setPage - Function to update page number
+ * @param {number} [params.lerpFactor=0.1] - Linear interpolation factor
  */
 export const updateMagazineCarousel = ({
   magazineRef,
@@ -134,6 +201,7 @@ export const updateMagazineCarousel = ({
   targetOffsetRef,
   currentMiddleMagazine,
   setMiddleMagazine,
+  setPage,
   lerpFactor = 0.1
 }) => {
   if (!magazineRef) return;
@@ -149,6 +217,11 @@ export const updateMagazineCarousel = ({
     if (middleMagazine !== currentMiddleMagazine) {
       setMiddleMagazine(middleMagazine);
     }
+  }
+
+  // Automatically open to page 1 when focused in both portrait and landscape modes
+  if (focusedMagazine === magazine && setPage && page === 0) {
+    setPage(1);
   }
 
   // Rest of the existing carousel positioning logic
@@ -206,11 +279,11 @@ export const updateMagazineCarousel = ({
 };
 
 /**
- * Performs linear interpolation between two vectors.
- * @param {THREE.Vector3} current - Current position.
- * @param {THREE.Vector3} target - Target position.
- * @param {number} lerpFactor - Lerp factor.
- * @returns {THREE.Vector3} The new position.
+ * Performs linear interpolation between two vectors
+ * @param {THREE.Vector3} current - Current position vector
+ * @param {THREE.Vector3} target - Target position vector
+ * @param {number} lerpFactor - Linear interpolation factor (0-1)
+ * @returns {THREE.Vector3} The interpolated position vector
  */
 export const performLerp = (current, target, lerpFactor) => {
   current.lerp(target, lerpFactor);

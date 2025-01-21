@@ -45,10 +45,17 @@ export const Magazine = ({
   // Add effect to open first page when focused in portrait mode
   useEffect(() => {
     if (focusedMagazine === magazine && isPortrait) {
-      setPage(1);  // Set to 1 to open the first page
-      setViewingRightPage(false);
+      // Only set to page 1 if we're not in the process of closing
+      if (page === 0) {
+        setPage(1);  // Set to 1 to open the first page
+        setViewingRightPage(false);
+      }
     } else if (focusedMagazine !== magazine) {
-      setPage(0);  // Close the magazine when unfocused
+      // Only close the magazine if we're not in a page transition
+      if (page !== 0) {
+        setPage(0);  // Close the magazine when unfocused
+        setViewingRightPage(false);
+      }
     }
   }, [focusedMagazine, magazine, isPortrait]);
 
@@ -109,6 +116,12 @@ export const Magazine = ({
       // Horizontal swipe => page turn or view shift
       if (Math.abs(deltaX) > Math.abs(deltaY)) {
         if (isPortrait) {
+          console.log('Handling swipe with pages:', {
+            currentPage: page,
+            maxPages: pages.length,
+            isViewingRightPage: viewingRightPage
+          });
+          
           const { newPage, newViewingRightPage } = handlePageViewTransition({
             deltaX,
             isViewingRightPage: viewingRightPage,
@@ -123,7 +136,7 @@ export const Magazine = ({
           if (deltaX > 50) {
             setPage((p) => Math.max(p - 1, 0));
           } else if (deltaX < -50) {
-            setPage((p) => Math.min(p + 1, pages.length));
+            setPage((p) => Math.min(p + 1, pages.length - 1));
           }
         }
       }
@@ -176,21 +189,43 @@ export const Magazine = ({
   useFrame((_, delta) => {
     // Calculate horizontal offset if focused
     if (focusedMagazine === magazine) {
+      console.log('Magazine State:', {
+        magazine,
+        page,
+        delayedPage,
+        viewingRightPage,
+        isPortrait
+      });
+
       const right = new THREE.Vector3(1, 0, 0)
         .applyQuaternion(camera.quaternion)
         .normalize();
 
-      calculatePageViewOffset({
-        position: groupRef.current.position,
-        right,
-        currentOffset: previousViewingRightPageRef.current ? 1.5 : -1.5,
-        targetOffset: viewingRightPage ? 1.5 : -1.5,
-        isPortrait,
-        viewingRightPage,
-        page,
-        delayedPage,
-        lerpFactor: 0.03
-      });
+      // If magazine is closing (transitioning from any page to 0), offset to center and unfocus
+      if (page === 0) {
+        const centerOffset = isPortrait ? 0.65 : -0.65;
+        console.log('Closing Magazine - Applying Offset:', {
+          centerOffset,
+          isPortrait,
+          currentPosition: groupRef.current.position.toArray()
+        });
+        groupRef.current.position.addScaledVector(right, centerOffset * delta * 5);
+        // Unfocus the magazine after it's closed
+        setFocusedMagazine(null);
+      } else {
+        console.log('Normal Page View - Calculating Offset');
+        calculatePageViewOffset({
+          position: groupRef.current.position,
+          right,
+          currentOffset: previousViewingRightPageRef.current ? 1.5 : -1.5,
+          targetOffset: viewingRightPage ? 1.5 : -1.5,
+          isPortrait,
+          viewingRightPage,
+          page,
+          delayedPage,
+          lerpFactor: 0.03
+        });
+      }
 
       previousViewingRightPageRef.current = viewingRightPage;
     }

@@ -119,11 +119,11 @@ export const Library = (props) => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const [smackPage] = useAtom(smackAtom);
-  const [vaguePage] = useAtom(vagueAtom);
-  const [engineerPage] = useAtom(engineerAtom);
+  const [smackPage, setSmackPage] = useAtom(smackAtom);
+  const [vaguePage, setVaguePage] = useAtom(vagueAtom);
+  const [engineerPage, setEngineerPage] = useAtom(engineerAtom);
   
-  // Smoothly update dragOffset and determine middle magazine
+  // Smoothly update dragOffset
   useFrame((_, delta) => {
     // Update dragOffset without lerping for portrait mode
     if (isPortrait) {
@@ -136,21 +136,24 @@ export const Library = (props) => {
         magazineRef: groupRef.current?.children.find(child => 
           child.userData?.magazine === magazines.smack
         ),
-        page: smackPage
+        page: smackPage,
+        setPage: (page) => setSmackPage(page)
       },
       [magazines.vague]: {
         magazineRef: groupRef.current?.children.find(child => 
           child.userData?.magazine === magazines.vague
         ),
-        page: vaguePage
+        page: vaguePage,
+        setPage: (page) => setVaguePage(page)
       },
       [magazines.engineer]: {
         magazineRef: groupRef.current?.children.find(child => 
           child.userData?.magazine === magazines.engineer
         ),
-        page: engineerPage
+        page: engineerPage,
+        setPage: (page) => setEngineerPage(page)
       }
-    }).forEach(([magazine, { magazineRef, page }]) => {
+    }).forEach(([magazine, { magazineRef, page, setPage }]) => {
       if (!magazineRef) return;
       
       updateMagazineCarousel({
@@ -164,7 +167,8 @@ export const Library = (props) => {
         page,
         targetOffsetRef,
         currentMiddleMagazine,
-        setMiddleMagazine
+        setMiddleMagazine,
+        setPage
       });
     });
   });
