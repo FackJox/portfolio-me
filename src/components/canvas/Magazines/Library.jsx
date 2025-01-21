@@ -15,7 +15,7 @@ import {
   styleMagazineAtom,
   magazineViewingStatesAtom
 } from '@/helpers/atoms';
-import { calculateMagazineTargetPosition } from "@/helpers/positionHelper";
+import { calculateFocusPosition } from "@/helpers/positionHelper";
 
 const picturesSmack = [
   "02Contents",
@@ -200,38 +200,23 @@ export const Library = (props) => {
     }
 
     const positions = {
-      [magazines.vague]: calculateMagazineTargetPosition({
-        isPortrait,
-        dragOffset,
+      [magazines.vague]: calculateFocusPosition({
+        camera,
         focusedMagazine,
         magazine: magazines.vague,
-        page: vaguePage,
-        delayedPage: vaguePage,
-        layoutPosition: null,
-        viewingRightPage: magazineViewStates.vague,
-        camera
+        layoutPosition: null
       }),
-      [magazines.smack]: calculateMagazineTargetPosition({
-        isPortrait,
-        dragOffset,
+      [magazines.smack]: calculateFocusPosition({
+        camera,
         focusedMagazine,
         magazine: magazines.smack,
-        page: smackPage,
-        delayedPage: smackPage,
-        layoutPosition: null,
-        viewingRightPage: magazineViewStates.smack,
-        camera
+        layoutPosition: null
       }),
-      [magazines.engineer]: calculateMagazineTargetPosition({
-        isPortrait,
-        dragOffset,
+      [magazines.engineer]: calculateFocusPosition({
+        camera,
         focusedMagazine,
         magazine: magazines.engineer,
-        page: engineerPage,
-        delayedPage: engineerPage,
-        layoutPosition: null,
-        viewingRightPage: magazineViewStates.engineer,
-        camera
+        layoutPosition: null
       }),
     };
 

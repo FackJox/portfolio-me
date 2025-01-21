@@ -7,7 +7,7 @@ import { useFrame } from "@react-three/fiber";
 import { useGesture } from "@use-gesture/react";
 import * as THREE from "three";
 import { styleMagazineAtom, magazineViewingStateAtom } from '@/helpers/atoms';
-import { performLerp, handlePageViewTransition } from "@/helpers/positionHelper";
+import { performLerp, handlePageViewTransition, updateMagazineCarousel, calculatePageViewOffset } from "@/helpers/positionHelper";
 
 export const Magazine = ({
   pictures,
@@ -174,16 +174,37 @@ export const Magazine = ({
 
   // Lerp towards target position
   useFrame((_, delta) => {
-    if (!groupRef.current || !targetPosition) return;
+    updateMagazineCarousel({
+      magazineRef: groupRef.current,
+      targetPosition,
+      camera,
+      focusedMagazine,
+      magazine,
+      isPortrait,
+      dragOffset: 0,
+      page,
+      lerpFactor: 0.1
+    });
 
-    // If focused, lerp to camera-relative position
+    // Calculate horizontal offset if focused
     if (focusedMagazine === magazine) {
-      performLerp(groupRef.current.position, targetPosition, 0.1);
-      groupRef.current.quaternion.slerp(camera.quaternion, 0.1);
-    } 
-    // If not focused, lerp to target position
-    else {
-      performLerp(groupRef.current.position, targetPosition, 0.1);
+      const right = new THREE.Vector3(1, 0, 0)
+        .applyQuaternion(camera.quaternion)
+        .normalize();
+
+      calculatePageViewOffset({
+        position: groupRef.current.position,
+        right,
+        currentOffset: previousViewingRightPageRef.current ? -1.5 : 1.5,
+        targetOffset: 0,
+        isPortrait,
+        viewingRightPage,
+        page,
+        delayedPage,
+        lerpFactor: 0.03
+      });
+
+      previousViewingRightPageRef.current = viewingRightPage;
     }
   });
 

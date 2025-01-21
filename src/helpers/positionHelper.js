@@ -46,33 +46,48 @@ export const handlePageViewTransition = ({
 };
 
 /**
- * Calculates the target position for a magazine based on various states.
- * @param {Object} params - Parameters for position calculation.
- * @param {boolean} params.isPortrait - Whether the layout is in portrait mode.
- * @param {number} params.dragOffset - Current drag offset.
- * @param {string|null} params.focusedMagazine - The currently focused magazine.
- * @param {string} params.magazine - The magazine name.
- * @param {number} params.page - Current page.
- * @param {number} params.delayedPage - Delayed page for animation.
- * @param {Array} params.layoutPosition - Current layout position [offsetX, offsetY, offsetZ].
- * @param {boolean} params.viewingRightPage - Whether viewing the right page.
- * @param {THREE.Camera} params.camera - The current camera object.
- * @returns {THREE.Vector3} The target position vector.
+ * Calculates the horizontal offset for page viewing transitions
  */
-export const calculateMagazineTargetPosition = ({
+export const calculatePageViewOffset = ({
+  position,
+  right,
+  currentOffset,
+  targetOffset,
   isPortrait,
-  dragOffset,
-  focusedMagazine,
-  magazine,
+  viewingRightPage,
   page,
   delayedPage,
-  layoutPosition,
-  viewingRightPage,
-  camera
+  lerpFactor = 0.03
 }) => {
   const geometryWidth = 3;
-  const zDist = 2.6;
+  
+  // Calculate target horizontal offset based on view mode
+  if (isPortrait) {
+    targetOffset = viewingRightPage ? -geometryWidth / 4.75 : geometryWidth / 4.75;
+  } else {
+    targetOffset = delayedPage < 1 ? -geometryWidth / 4.75 : 0;
+  }
 
+  // Lerp the horizontal offset
+  const newOffset = THREE.MathUtils.lerp(currentOffset, targetOffset, lerpFactor);
+  
+  // Calculate and apply the offset change
+  const offsetDelta = newOffset - currentOffset;
+  position.addScaledVector(right, offsetDelta);
+  
+  return newOffset;
+};
+
+/**
+ * Calculates the focus position of a magazine relative to the camera
+ */
+export const calculateFocusPosition = ({
+  camera,
+  focusedMagazine,
+  magazine,
+  layoutPosition
+}) => {
+  const zDist = 2.6;
   let targetPos = new THREE.Vector3();
 
   if (focusedMagazine === magazine) {
@@ -85,28 +100,37 @@ export const calculateMagazineTargetPosition = ({
 
     targetPos.addScaledVector(forward, zDist);
 
-    const right = new THREE.Vector3(1, 0, 0)
-      .applyQuaternion(camera.quaternion)
-      .normalize();
-
-    if (isPortrait) {
-      const horizontalOffset = viewingRightPage ? -geometryWidth / 4.75 : geometryWidth / 4.75;
-      targetPos.addScaledVector(right, horizontalOffset);
-    } else {
-      const targetOffset = delayedPage < 1 ? -geometryWidth / 4.75 : 0;
-      targetPos.addScaledVector(right, targetOffset);
-    }
-
+    // Apply layout position offset if provided
     if (layoutPosition && layoutPosition.length === 3) {
       const [offsetX, offsetY, offsetZ] = layoutPosition;
       targetPos.add(new THREE.Vector3(-offsetX, -offsetY, -offsetZ));
     }
-  } else {
-    const spacing = 2;
-    const totalSpacing = spacing * 3;
-    const basePos = new THREE.Vector3();
+  }
 
-    // Calculate the base position index for each magazine (0, 1, or 2)
+  return targetPos;
+};
+
+/**
+ * Updates magazine position and rotation in the carousel or focused state
+ */
+export const updateMagazineCarousel = ({
+  magazineRef,
+  targetPosition,
+  camera,
+  focusedMagazine,
+  magazine,
+  isPortrait,
+  dragOffset,
+  page,
+  lerpFactor = 0.1
+}) => {
+  if (!magazineRef || !targetPosition) return;
+
+  const spacing = 2;
+  let finalPosition = new THREE.Vector3();
+
+  if (focusedMagazine !== magazine) {
+    // Calculate carousel position
     const getBaseIndex = (mag) => {
       switch (mag) {
         case 'engineer': return 0;
@@ -116,50 +140,44 @@ export const calculateMagazineTargetPosition = ({
       }
     };
 
-    // Calculate the wrapped position based on dragOffset
     const baseIndex = getBaseIndex(magazine);
     const normalizedOffset = Math.round(dragOffset / spacing);
     const wrappedIndex = ((baseIndex - normalizedOffset) % 3 + 3) % 3;
 
     if (isPortrait) {
-      // In portrait mode, set y positions based on wrappedIndex
-      const yPositions = [2, 0, -2]; // Top, middle, bottom
-      
-      // Calculate the actual y position including wrapping
+      // Portrait mode positioning
+      const yPositions = [2, 0, -2];
       const yPos = yPositions[wrappedIndex];
       const isWrapping = Math.abs(normalizedOffset - dragOffset / spacing) > 0.1;
-      
-      // If wrapping and moving up, enter from bottom. If moving down, enter from top.
       const wrapPos = isWrapping ? (dragOffset > 0 ? -6 : 6) : yPos;
       
-      basePos.set(
+      finalPosition.set(
         -0.65 + (page > 0 ? 0.65 : 0),
         wrapPos,
-        3.5
+        3.5 + Math.abs(wrapPos) * 0.1
       );
-
-      // Adjust z-position based on y position for better visual layering
-      const zOffset = Math.abs(wrapPos) * 0.1;
-      basePos.z += zOffset;
     } else {
-      // In landscape mode, maintain original x-based positioning
+      // Landscape mode positioning
       switch (magazine) {
         case 'engineer':
-          basePos.set(-2.5 - (dragOffset > 0 ? 1 : 0) + (page > 0 ? 0.65 : 0), 0, 4.5 - (dragOffset > 0 ? 1 : 0));
+          finalPosition.set(-2.5 - (dragOffset > 0 ? 1 : 0) + (page > 0 ? 0.65 : 0), 0, 4.5 - (dragOffset > 0 ? 1 : 0));
           break;
         case 'vague':
-          basePos.set(-0.5 + (page > 0 ? 0.65 : 0), 0, 4.5 - (page > 0 ? 1 : 0));
+          finalPosition.set(-0.5 + (page > 0 ? 0.65 : 0), 0, 4.5 - (page > 0 ? 1 : 0));
           break;
         case 'smack':
-          basePos.set(1.5 + (dragOffset > 0 ? 1 : 0) + (page > 0 ? 0.65 : 0), 0, 4.5 - (dragOffset > 0 ? 1 : 0));
+          finalPosition.set(1.5 + (dragOffset > 0 ? 1 : 0) + (page > 0 ? 0.65 : 0), 0, 4.5 - (dragOffset > 0 ? 1 : 0));
           break;
       }
     }
 
-    targetPos.copy(basePos);
+    // Apply final position
+    magazineRef.position.lerp(finalPosition, lerpFactor);
+  } else {
+    // When focused, lerp to target position
+    magazineRef.position.lerp(targetPosition, lerpFactor);
+    magazineRef.quaternion.slerp(camera.quaternion, lerpFactor);
   }
-
-  return targetPos;
 };
 
 /**
@@ -172,26 +190,4 @@ export const calculateMagazineTargetPosition = ({
 export const performLerp = (current, target, lerpFactor) => {
   current.lerp(target, lerpFactor);
   return current;
-};
-
-/**
- * Calculates smooth horizontal transitions for page views.
- * @param {THREE.Vector3} position - Current position vector.
- * @param {THREE.Vector3} right - Right direction vector.
- * @param {number} currentOffset - Current horizontal offset.
- * @param {number} targetOffset - Target horizontal offset.
- * @param {number} lerpFactor - Lerp factor for smooth transition.
- * @returns {number} The new horizontal offset.
- */
-export const calculateHorizontalTransition = (position, right, currentOffset, targetOffset, lerpFactor = 0.03) => {
-  // Lerp the horizontal offset
-  const newOffset = THREE.MathUtils.lerp(currentOffset, targetOffset, lerpFactor);
-  
-  // Calculate the difference in offset
-  const offsetDelta = newOffset - currentOffset;
-  
-  // Apply the offset change to the position
-  position.addScaledVector(right, offsetDelta);
-  
-  return newOffset;
 };
