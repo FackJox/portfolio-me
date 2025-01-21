@@ -110,6 +110,15 @@ export const calculateFocusPosition = ({
   return targetPos;
 };
 
+export const calculateMiddleMagazine = (targetOffset) => {
+  const spacing = 2;
+  const wrappedOffset = ((targetOffset % (spacing * 3)) + spacing * 4.5) % (spacing * 3) - spacing * 1.5;
+  const index = Math.round(wrappedOffset / spacing) % 3;
+  const magazineOrder = ['engineer', 'vague', 'smack'];
+  const calculatedIndex = (index + 1) % 3;
+  return magazineOrder[calculatedIndex];
+};
+
 /**
  * Updates magazine position and rotation in the carousel or focused state
  */
@@ -122,10 +131,27 @@ export const updateMagazineCarousel = ({
   isPortrait,
   dragOffset,
   page,
+  targetOffsetRef,
+  currentMiddleMagazine,
+  setMiddleMagazine,
   lerpFactor = 0.1
 }) => {
-  if (!magazineRef || !targetPosition) return;
+  if (!magazineRef) return;
 
+  // Update dragOffset without lerping for portrait mode
+  if (isPortrait && targetOffsetRef) {
+    dragOffset = targetOffsetRef.current;
+  }
+
+  // Calculate and update middle magazine if needed
+  if (isPortrait && setMiddleMagazine && currentMiddleMagazine) {
+    const middleMagazine = calculateMiddleMagazine(dragOffset);
+    if (middleMagazine !== currentMiddleMagazine) {
+      setMiddleMagazine(middleMagazine);
+    }
+  }
+
+  // Rest of the existing carousel positioning logic
   const spacing = 2;
   let finalPosition = new THREE.Vector3();
 
@@ -176,7 +202,6 @@ export const updateMagazineCarousel = ({
   } else {
     // When focused, lerp to target position
     magazineRef.position.lerp(targetPosition, lerpFactor);
-    magazineRef.quaternion.slerp(camera.quaternion, lerpFactor);
   }
 };
 

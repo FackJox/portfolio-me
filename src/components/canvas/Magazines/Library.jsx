@@ -15,7 +15,7 @@ import {
   styleMagazineAtom,
   magazineViewingStatesAtom
 } from '@/helpers/atoms';
-import { calculateFocusPosition } from "@/helpers/positionHelper";
+import { calculateFocusPosition, updateMagazineCarousel } from "@/helpers/positionHelper";
 
 const picturesSmack = [
   "02Contents",
@@ -125,22 +125,48 @@ export const Library = (props) => {
   
   // Smoothly update dragOffset and determine middle magazine
   useFrame((_, delta) => {
-    if (!isPortrait) return;
-    
-    // Immediately set the dragOffset without lerping
-    setDragOffset(targetOffsetRef.current);
-
-    const spacing = 2;
-    const wrappedOffset = ((targetOffsetRef.current % (spacing * 3)) + spacing * 4.5) % (spacing * 3) - spacing * 1.5;
-    
-    const index = Math.round(wrappedOffset / spacing) % 3;
-    const magazineOrder = [magazines.engineer, magazines.vague, magazines.smack];
-    const calculatedIndex = (index + 1) % 3;
-    const middleMagazine = magazineOrder[calculatedIndex];
-    
-    if (middleMagazine !== currentMiddleMagazine) {
-      setMiddleMagazine(middleMagazine);
+    // Update dragOffset without lerping for portrait mode
+    if (isPortrait) {
+      setDragOffset(targetOffsetRef.current);
     }
+
+    // Calculate target positions for each magazine
+    Object.entries({
+      [magazines.smack]: {
+        magazineRef: groupRef.current?.children.find(child => 
+          child.userData?.magazine === magazines.smack
+        ),
+        page: smackPage
+      },
+      [magazines.vague]: {
+        magazineRef: groupRef.current?.children.find(child => 
+          child.userData?.magazine === magazines.vague
+        ),
+        page: vaguePage
+      },
+      [magazines.engineer]: {
+        magazineRef: groupRef.current?.children.find(child => 
+          child.userData?.magazine === magazines.engineer
+        ),
+        page: engineerPage
+      }
+    }).forEach(([magazine, { magazineRef, page }]) => {
+      if (!magazineRef) return;
+      
+      updateMagazineCarousel({
+        magazineRef,
+        targetPosition: targetPositions[magazine],
+        camera,
+        focusedMagazine,
+        magazine,
+        isPortrait,
+        dragOffset: targetOffsetRef.current,
+        page,
+        targetOffsetRef,
+        currentMiddleMagazine,
+        setMiddleMagazine
+      });
+    });
   });
 
   // Handle drag gestures

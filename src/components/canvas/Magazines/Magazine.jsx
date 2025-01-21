@@ -174,18 +174,6 @@ export const Magazine = ({
 
   // Lerp towards target position
   useFrame((_, delta) => {
-    updateMagazineCarousel({
-      magazineRef: groupRef.current,
-      targetPosition,
-      camera,
-      focusedMagazine,
-      magazine,
-      isPortrait,
-      dragOffset: 0,
-      page,
-      lerpFactor: 0.1
-    });
-
     // Calculate horizontal offset if focused
     if (focusedMagazine === magazine) {
       const right = new THREE.Vector3(1, 0, 0)
@@ -195,8 +183,8 @@ export const Magazine = ({
       calculatePageViewOffset({
         position: groupRef.current.position,
         right,
-        currentOffset: previousViewingRightPageRef.current ? -1.5 : 1.5,
-        targetOffset: 0,
+        currentOffset: previousViewingRightPageRef.current ? 1.5 : -1.5,
+        targetOffset: viewingRightPage ? 1.5 : -1.5,
         isPortrait,
         viewingRightPage,
         page,
@@ -227,7 +215,10 @@ export const Magazine = ({
 
   // Render
   return (
-    <group ref={groupRef} {...props}>
+    <group 
+      ref={groupRef}
+      userData={{ magazine }}
+    >
       {/* Transparent bounding box to detect pointer events */}
       <mesh
         geometry={new THREE.BoxGeometry(2.5, 1.5, 1)}
