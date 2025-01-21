@@ -7,7 +7,7 @@ import { useFrame } from "@react-three/fiber";
 import { useGesture } from "@use-gesture/react";
 import * as THREE from "three";
 import { styleMagazineAtom, magazineViewingStateAtom } from '@/helpers/atoms';
-import { performLerp, handlePageViewTransition, updateMagazineCarousel, calculatePageViewOffset, getFloatConfig, getButtonPosition, isMiddleMagazine } from "@/helpers/positionHelper";
+import { performLerp, handlePageViewTransition, updateMagazineCarousel, calculatePageViewOffset, getFloatConfig, getButtonPosition, isMiddleMagazine, hoverMagazine } from "@/helpers/positionHelper";
 import { useDeviceOrientation } from '@/helpers/deviceHelper'
 
 export const Magazine = ({
@@ -32,6 +32,7 @@ export const Magazine = ({
   const [viewingRightPage, setViewingRightPage] = useAtom(magazineViewingStateAtom(magazine));
   const [isDragging, setIsDragging] = useState(false);
   const dragStartTimeRef = useRef(0);
+  const isHoveredRef = useRef(false);
 
   // Refs
   const groupRef = useRef();
@@ -247,6 +248,16 @@ export const Magazine = ({
 
       previousViewingRightPageRef.current = viewingRightPage;
     }
+
+    // Apply hover effect
+    if (!isPortrait && !focusedMagazine) {
+      hoverMagazine({
+        position: groupRef.current.position,
+        isHovered: isHoveredRef.current,
+        magazine,
+        isPortrait
+      });
+    }
   });
 
   // Float nullification
@@ -278,10 +289,12 @@ export const Magazine = ({
           e.stopPropagation();
           setHighlighted(true);
           setStyleMagazine(magazine);
+          isHoveredRef.current = true;
         }}
         onPointerLeave={(e) => {
           e.stopPropagation();
           setHighlighted(false);
+          isHoveredRef.current = false;
         }}
         {...bind()}
         pointerEvents={focusedMagazine && focusedMagazine !== magazine ? "none" : "auto"}

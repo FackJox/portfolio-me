@@ -35,6 +35,7 @@ const SPACING_CONFIG = {
     total: 6, // magazine * 3
     threshold: 20,
     dragSensitivity: 0.01,
+    zOffset: 2.5, // z-offset for hover effect
     positions: {
       engineer: {
         x: -2.5,
@@ -464,4 +465,29 @@ export const isMiddleMagazine = ({ position, isPortrait }) => {
     return Math.abs(position.y) < 0.3;
   }
   return Math.abs(position.x) < 0.3;
+};
+
+/**
+ * Applies hover effect to magazine position
+ * @param {Object} params - Hover parameters
+ * @param {THREE.Vector3} params.position - Magazine position
+ * @param {boolean} params.isHovered - Whether magazine is hovered
+ * @param {string} params.magazine - Magazine ID
+ * @param {boolean} params.isPortrait - Whether in portrait mode
+ * @returns {THREE.Vector3} Updated position with hover effect
+ */
+export const hoverMagazine = ({ position, isHovered, magazine, isPortrait }) => {
+  const config = getSpacingConfig(isPortrait);
+  
+  if (!isPortrait) {
+    const magazineConfig = config.positions[magazine];
+    if (magazineConfig) {
+      const targetZ = magazineConfig.z + (isHovered ? config.zOffset : 0);
+      const targetPosition = position.clone();
+      targetPosition.z = targetZ;
+      performLerp(position, targetPosition, 0.1);
+    }
+  }
+  
+  return position;
 };
