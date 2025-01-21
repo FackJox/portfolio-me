@@ -6,6 +6,8 @@ import { useAtom } from 'jotai'
 import { motion, AnimatePresence } from 'framer-motion'
 import { styleMagazineAtom } from '@/helpers/atoms';
 import { textureCache, getTexturePath, getRoughnessPath } from '@/helpers/textureLoader'
+import { useDeviceOrientation, getLayoutConfig } from '@/helpers/deviceHelper'
+import { layoutAnimations, backgroundTransitions } from '@/helpers/animationConfigs'
 
 // Direct imports for UI components
 import { SmackHeader, SmackButtons, SmackCTA, SmackTopBar } from '@/components/dom/SmackUI'
@@ -156,38 +158,24 @@ const PreloadComponents = ({ children }) => {
 
 export default function Page() {
   const [styleMagazine] = useAtom(styleMagazineAtom)
-  const [isPortrait, setIsPortrait] = useState(true)
-
-  useEffect(() => {
-    const handleResize = () => {
-      const windowWidth = window.innerWidth;
-      const windowHeight = window.innerHeight;
-      setIsPortrait(windowWidth < windowHeight);
-    };
-
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  const isPortrait = useDeviceOrientation();
+  const layout = getLayoutConfig(isPortrait);
 
   return (
     <PreloadComponents>
       <motion.div
         className='relative flex min-h-[100dvh] w-full flex-col items-center'
         animate={{
-          backgroundColor: styleMagazine === 'smack' ? '#0E0504' : styleMagazine === 'vague' ? '#2C272F' : '#200B5F',
+          backgroundColor: backgroundTransitions.colors[styleMagazine],
         }}
-        transition={{ duration: 0.4, ease: 'easeInOut' }}
+        transition={{ duration: backgroundTransitions.duration, ease: backgroundTransitions.ease }}
       >
         {/* TopBar for landscape */}
-        <motion.div layout className={isPortrait ? 'hidden' : 'block w-full'}>
+        <motion.div layout className={layout.showTopBar ? 'block w-full' : 'hidden'}>
           <AnimatePresence mode='wait'>
             <motion.div
               key={`top-${styleMagazine}`}
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              transition={{ duration: 0.4 }}
+              {...layoutAnimations.topBar}
             >
               {styleMagazine === 'smack' && <SmackTopBar />}
               {styleMagazine === 'engineer' && <EngineerTopBar />}
@@ -196,16 +184,13 @@ export default function Page() {
           </AnimatePresence>
         </motion.div>
 
-        {/* Original UI for portrait */}
-        <motion.div layout className={isPortrait ? 'block w-full' : 'hidden'}>
+        {/* Header for portrait */}
+        <motion.div layout className={layout.showHeader ? 'block w-full' : 'hidden'}>
           <AnimatePresence mode='wait'>
             <motion.div 
               className='w-full' 
               key={`header-${styleMagazine}`}
-              initial={{ opacity: 0, rotateX: 90 }}
-              animate={{ opacity: 1, rotateX: 0 }}
-              exit={{ opacity: 0, rotateX: -90 }}
-              transition={{ duration: 0.4 }}
+              {...layoutAnimations.header}
             >
               {styleMagazine === 'smack' && <SmackHeader />}
               {styleMagazine === 'engineer' && <EngineerHeader />}
@@ -215,14 +200,11 @@ export default function Page() {
         </motion.div>
 
         {/* Buttons Section */}
-        <motion.div layout className={isPortrait ? 'block w-full' : 'hidden'}>
+        <motion.div layout className={layout.showButtons ? 'block w-full' : 'hidden'}>
           <AnimatePresence mode='wait'>
             <motion.div
               key={`buttons-${styleMagazine}`}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
-              transition={{ duration: 0.4, delay: 0.2 }}
+              {...layoutAnimations.buttons}
             >
               {styleMagazine === 'smack' && <SmackButtons />}
               {styleMagazine === 'engineer' && <EngineerButtons />}
@@ -240,14 +222,11 @@ export default function Page() {
           </View>
         </motion.div>
 
-        <motion.div layout className={isPortrait ? 'block w-full' : 'hidden'}>
+        <motion.div layout className={layout.showCTA ? 'block w-full' : 'hidden'}>
           <AnimatePresence mode='wait'>
             <motion.div
               key={`cta-${styleMagazine}`}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.4 }}
+              {...layoutAnimations.cta}
             >
               {styleMagazine === 'smack' && <SmackCTA />}
               {styleMagazine === 'engineer' && <EngineerCTA />}

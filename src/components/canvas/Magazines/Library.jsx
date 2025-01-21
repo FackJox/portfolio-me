@@ -16,6 +16,7 @@ import {
   magazineViewingStatesAtom
 } from '@/helpers/atoms';
 import { calculateFocusPosition, updateMagazineCarousel, calculateMiddleMagazine, getSpacingConfig } from "@/helpers/positionHelper";
+import { useDeviceOrientation } from '@/helpers/deviceHelper'
 
 const picturesSmack = [
   "02Contents",
@@ -82,10 +83,7 @@ const magazines = {
 
 export const Library = (props) => {
   const { viewport, camera } = useThree();
-  const [isPortrait, setIsPortrait] = useState(() => {
-    // Initialize isPortrait state with the correct value on mount
-    return window.innerWidth < window.innerHeight;
-  });
+  const isPortrait = useDeviceOrientation();
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState(0);
   const dragStartRef = useRef(0);
@@ -112,25 +110,6 @@ export const Library = (props) => {
       isMountedRef.current = false;
     };
   }, []);
-
-  useLayoutEffect(() => {
-    const handleResize = () => {
-      const windowWidth = window.innerWidth;
-      const windowHeight = window.innerHeight;
-      const newIsPortrait = windowWidth < windowHeight;
-      
-      if (newIsPortrait !== isPortrait) {
-        setIsPortrait(newIsPortrait);
-        dragStartRef.current = 0;
-        targetOffsetRef.current = 0;
-        setDragOffset(0);
-      }
-    };
-
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [isPortrait]);
 
   const [smackPage, setSmackPage] = useAtom(smackAtom);
   const [vaguePage, setVaguePage] = useAtom(vagueAtom);

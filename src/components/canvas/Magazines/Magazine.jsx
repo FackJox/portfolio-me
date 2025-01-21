@@ -8,20 +8,20 @@ import { useGesture } from "@use-gesture/react";
 import * as THREE from "three";
 import { styleMagazineAtom, magazineViewingStateAtom } from '@/helpers/atoms';
 import { performLerp, handlePageViewTransition, updateMagazineCarousel, calculatePageViewOffset, getFloatConfig, getButtonPosition, isMiddleMagazine } from "@/helpers/positionHelper";
+import { useDeviceOrientation } from '@/helpers/deviceHelper'
 
 export const Magazine = ({
   pictures,
   magazine,
   pageAtom,
   focusedMagazineAtom,
-  isPortrait,
   layoutPosition,
   Button,
   targetPosition,
   camera,
   ...props
 }) => {
-
+  const isPortrait = useDeviceOrientation();
   
   // Atoms & State
   const [page, setPage] = useAtom(pageAtom);
