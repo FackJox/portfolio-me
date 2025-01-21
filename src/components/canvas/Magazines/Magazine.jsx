@@ -289,7 +289,7 @@ export const Magazine = ({
         )}
         material={new THREE.MeshBasicMaterial({
           transparent: true,
-          opacity: 0.5,
+          opacity: 0,
         })}
         onPointerEnter={(e) => {
           e.stopPropagation();
