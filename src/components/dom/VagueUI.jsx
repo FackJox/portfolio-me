@@ -19,19 +19,19 @@ export const VagueButtons = () => {
           <div className='h-[50%] w-[1px] bg-[#FFFFFF] relative mx-4'></div>
         </div>
         <button className='flex-1 py-2 text-[#F7F6F7] font-[HKGrotesk-Regular] text-xl sm:text-2xl md:text-2xl tracking-[-0.12em] text-center align-middle'>
-          ABOUT
+          CONNECT
         </button>
       </div>
     </div>
   )
 }
 
-export const VagueCTA = () => {
+export const VagueLabel = () => {
   return (
     <div className='w-full flex items-center justify-center'>
       <div className='w-full mx-5'>
         <button className='w-full py-6 border-t-[1px] border-[#FFFFFF] text-xl sm:text-2xl md:text-2xl  font-[HKGrotesk-Regular] tracking-[-0.12em] text-[#F7F6F7]'>
-          CONNECT.
+          ABOUT
         </button>
       </div>
     </div>

@@ -19,19 +19,19 @@ export const EngineerButtons = () => {
           <div className='h-[50%] w-[1px] bg-[#F7F6F7] relative mx-4'></div>
         </div>
         <button className='flex-1 py-2 text-[#FFB79C] font-[HKGrotesk-SemiBold] text-xl sm:text-2xl md:text-2xl tracking-[-0.12em] text-center align-middle'>
-          TECHNICAL
+          CONNECT
         </button>
       </div>
     </div>
   )
 }
 
-export const EngineerCTA = () => {
+export const EngineerLabel = () => {
   return (
     <div className='w-full flex items-center justify-center'>
       <div className='w-full mx-5'>
         <button className='w-full py-6 border-t-[1px] border-[#F7F6F7] text-xl sm:text-2xl md:text-3xl  font-[HKGrotesk-Regular] tracking-[-0.12em] text-[#FFB79C]'>
-          CONNECT
+          TECHNICAL
         </button>
       </div>
     </div>

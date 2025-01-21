@@ -18,7 +18,19 @@ export const SmackButtons = () => {
         <div className='flex  items-center flex-shrink-0'>
           <div className='h-[50%] w-[1px] bg-[#F5E4F8] relative mx-4'></div>
         </div>
-        <button className='flex-1 py-1.5 text-[#F5E4F8]  text-xl sm:text-2xl md:text-3xl tracking-[0.04em] text-center align-middle'>
+        <button className='flex-1 py-1.5 font-[lemon-wide] text-[#F5E4F8]  text-xl sm:text-2xl md:text-3xl tracking-[0.04em] text-center align-middle'>
+          CONNECT
+        </button>
+      </div>
+    </div>
+  )
+}
+
+export const SmackLabel = () => {
+  return (
+    <div className='w-full flex items-center justify-center'>
+      <div className='w-full mx-5'>
+        <button className='w-full py-6 border-t-2 border-[#FABE7F] text-3xl sm:text-3xl md:text-3xl font-[lemon-wide] text-[#FABE7F]'>
           <span className='font-[lemon-regular]'>CREATI</span>
           <span className='font-[lemon-wide]'>VE</span>
         </button>
@@ -26,17 +38,6 @@ export const SmackButtons = () => {
     </div>
   )
 }
-
-export const SmackCTA = () => {
-  return (
-    <div className='w-full flex items-center justify-center'>
-      <div className='w-full mx-5'>
-        <button className='w-full py-6 border-t-2 border-[#FABE7F] text-3xl sm:text-3xl md:text-3xl font-[lemon-wide] text-[#FABE7F]'>CONNECT</button>
-      </div>
-    </div>
-  )
-}
-
 
 export const SmackTopBar = () => {
   return (

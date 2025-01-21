@@ -10,9 +10,9 @@ import { useDeviceOrientation, getLayoutConfig } from '@/helpers/deviceHelper'
 import { layoutAnimations, backgroundTransitions } from '@/helpers/animationConfigs'
 
 // Direct imports for UI components
-import { SmackHeader, SmackButtons, SmackCTA, SmackTopBar } from '@/components/dom/SmackUI'
-import { EngineerHeader, EngineerButtons, EngineerCTA, EngineerTopBar } from '@/components/dom/EngineerUI'
-import { VagueHeader, VagueButtons, VagueCTA, VagueTopBar } from '@/components/dom/VagueUI'
+import { SmackHeader, SmackButtons, SmackLabel, SmackTopBar } from '@/components/dom/SmackUI'
+import { EngineerHeader, EngineerButtons, EngineerLabel, EngineerTopBar } from '@/components/dom/EngineerUI'
+import { VagueHeader, VagueButtons, VagueLabel, VagueTopBar } from '@/components/dom/VagueUI'
 
 
 // Keep dynamic imports for canvas components
@@ -164,9 +164,9 @@ export default function Page() {
               key={`cta-${styleMagazine}`}
               {...layoutAnimations.cta}
             >
-              {styleMagazine === 'smack' && <SmackCTA />}
-              {styleMagazine === 'engineer' && <EngineerCTA />}
-              {styleMagazine === 'vague' && <VagueCTA />}
+              {styleMagazine === 'smack' && <SmackLabel />}
+              {styleMagazine === 'engineer' && <EngineerLabel />}
+              {styleMagazine === 'vague' && <VagueLabel />}
             </motion.div>
           </AnimatePresence>
         </motion.div>
