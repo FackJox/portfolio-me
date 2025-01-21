@@ -126,22 +126,16 @@ export const Library = (props) => {
   // Smoothly update dragOffset and determine middle magazine
   useFrame((_, delta) => {
     if (!isPortrait) return;
-
-    const lerpFactor = isDragging ? 0.4 : 0.1;
-    const newOffset = THREE.MathUtils.lerp(
-      dragOffset,
-      targetOffsetRef.current,
-      lerpFactor
-    );
     
-    setDragOffset(newOffset);
+    // Immediately set the dragOffset without lerping
+    setDragOffset(targetOffsetRef.current);
 
-    const spacing = 2.2;
-    const wrappedOffset = ((newOffset % (spacing * 3)) + spacing * 4.5) % (spacing * 3) - spacing * 1.5;
+    const spacing = 2;
+    const wrappedOffset = ((targetOffsetRef.current % (spacing * 3)) + spacing * 4.5) % (spacing * 3) - spacing * 1.5;
     
     const index = Math.round(wrappedOffset / spacing) % 3;
     const magazineOrder = [magazines.engineer, magazines.vague, magazines.smack];
-    const calculatedIndex = (index + 1) % 3;  // Shift by 1 to make vague the middle magazine initially
+    const calculatedIndex = (index + 1) % 3;
     const middleMagazine = magazineOrder[calculatedIndex];
     
     if (middleMagazine !== currentMiddleMagazine) {
@@ -156,30 +150,38 @@ export const Library = (props) => {
         if (focusedMagazine) return;
         event.stopPropagation();
         setIsDragging(true);
-        dragStartRef.current = dragOffset;
+        dragStartRef.current = targetOffsetRef.current;
         velocityRef.current = 0;
       },
-      onDrag: ({ event, movement: [dx, dy], velocity: [vx, vy], last }) => {
+      onDrag: ({ event, movement: [dx, dy], velocity: [vx, vy], delta: [deltaX, deltaY], last }) => {
         if (focusedMagazine) return;
         event.stopPropagation();
         
         const totalMovement = Math.sqrt(dx * dx + dy * dy);
         
         if (totalMovement > 5) {
-          const movement = isPortrait ? -dy * 0.005 : dx * 0.005;
-          const velocity = isPortrait ? -vy : vx;
-          velocityRef.current = velocity;
-          
-          const newOffset = dragStartRef.current + movement;
-          targetOffsetRef.current = newOffset;
+          const movement = isPortrait ? -dy * 0.01 : dx * 0.01;
           
           if (last) {
             setIsDragging(false);
-            const momentum = velocity * 0.5;
-            const projectedOffset = newOffset + momentum;
-            const spacing = 2.2;
-            const snapOffset = Math.round(projectedOffset / spacing) * spacing;
-            targetOffsetRef.current = snapOffset;
+            const spacing = 2;
+            
+            // Calculate the nearest snap position
+            const currentPosition = Math.round(dragStartRef.current / spacing);
+            
+            // Determine direction based on the total movement
+            const deltaMovement = isPortrait ? -dy : dx;
+            if (Math.abs(deltaMovement) > 20) { // Increased threshold for more deliberate movements
+              const targetPosition = currentPosition + (deltaMovement > 0 ? 1 : -1);
+              targetOffsetRef.current = targetPosition * spacing;
+            } else {
+              targetOffsetRef.current = currentPosition * spacing;
+            }
+          } else {
+            // During drag, snap to the nearest position
+            const newOffset = dragStartRef.current + movement;
+            const spacing = 2;
+            targetOffsetRef.current = Math.round(newOffset / spacing) * spacing;
           }
         } else if (last) {
           setIsDragging(false);

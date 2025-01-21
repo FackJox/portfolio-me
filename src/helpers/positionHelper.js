@@ -102,40 +102,58 @@ export const calculateMagazineTargetPosition = ({
       targetPos.add(new THREE.Vector3(-offsetX, -offsetY, -offsetZ));
     }
   } else {
+    const spacing = 2;
+    const totalSpacing = spacing * 3;
     const basePos = new THREE.Vector3();
 
-    switch (magazine) {
-      case 'engineer':
-        basePos.set(
-          isPortrait ? -0.65 + (page > 0 ? 0.65 : 0) : -2.5 - (dragOffset > 0 ? 1 : 0) + (page > 0 ? 0.65 : 0),
-          isPortrait ? 2 : 0,
-          isPortrait ? 3.5 : 4.5 - (dragOffset > 0 ? 1 : 0)
-        );
-        break;
-      case 'vague':
-        basePos.set(
-          isPortrait ? -0.65 + (page > 0 ? 0.65 : 0) : -0.5 + (page > 0 ? 0.65 : 0),
-          isPortrait ? 0 : 0,
-          isPortrait ? 3.5 : 4.5 - (page > 0 ? 1 : 0)
-        );
-        break;
-      case 'smack':
-        basePos.set(
-          isPortrait ? -0.65 + (page > 0 ? 0.65 : 0) : 1.5 + (dragOffset > 0 ? 1 : 0) + (page > 0 ? 0.65 : 0),
-          isPortrait ? -2 : 0,
-          isPortrait ? 3.5 : 4.5 - (dragOffset > 0 ? 1 : 0)
-        );
-        break;
-  
-      default:
-        basePos.set(0, 0, 0);
-    }
+    // Calculate the base position index for each magazine (0, 1, or 2)
+    const getBaseIndex = (mag) => {
+      switch (mag) {
+        case 'engineer': return 0;
+        case 'vague': return 1;
+        case 'smack': return 2;
+        default: return 0;
+      }
+    };
 
-    // Adjust based on dragOffset
+    // Calculate the wrapped position based on dragOffset
+    const baseIndex = getBaseIndex(magazine);
+    const normalizedOffset = Math.round(dragOffset / spacing);
+    const wrappedIndex = ((baseIndex - normalizedOffset) % 3 + 3) % 3;
+
     if (isPortrait) {
-      basePos.y += dragOffset;
+      // In portrait mode, set y positions based on wrappedIndex
+      const yPositions = [2, 0, -2]; // Top, middle, bottom
+      
+      // Calculate the actual y position including wrapping
+      const yPos = yPositions[wrappedIndex];
+      const isWrapping = Math.abs(normalizedOffset - dragOffset / spacing) > 0.1;
+      
+      // If wrapping and moving up, enter from bottom. If moving down, enter from top.
+      const wrapPos = isWrapping ? (dragOffset > 0 ? -6 : 6) : yPos;
+      
+      basePos.set(
+        -0.65 + (page > 0 ? 0.65 : 0),
+        wrapPos,
+        3.5
+      );
+
+      // Adjust z-position based on y position for better visual layering
+      const zOffset = Math.abs(wrapPos) * 0.1;
+      basePos.z += zOffset;
     } else {
-      basePos.x += dragOffset;
+      // In landscape mode, maintain original x-based positioning
+      switch (magazine) {
+        case 'engineer':
+          basePos.set(-2.5 - (dragOffset > 0 ? 1 : 0) + (page > 0 ? 0.65 : 0), 0, 4.5 - (dragOffset > 0 ? 1 : 0));
+          break;
+        case 'vague':
+          basePos.set(-0.5 + (page > 0 ? 0.65 : 0), 0, 4.5 - (page > 0 ? 1 : 0));
+          break;
+        case 'smack':
+          basePos.set(1.5 + (dragOffset > 0 ? 1 : 0) + (page > 0 ? 0.65 : 0), 0, 4.5 - (dragOffset > 0 ? 1 : 0));
+          break;
+      }
     }
 
     targetPos.copy(basePos);
