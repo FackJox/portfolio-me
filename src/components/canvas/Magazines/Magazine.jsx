@@ -299,9 +299,11 @@ export const Magazine = ({
                 />
               ))}
             </group>
-            <group position={[0.65, -1.05, 0]}>
-              <Button />
-            </group>
+            {!isPortrait && (
+              <group position={[0.65, -1.05, 0]}>
+                <Button />
+              </group>
+            )}
           </group>
         </Float>
       </mesh>
