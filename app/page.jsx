@@ -153,6 +153,19 @@ const PreloadComponents = ({ children }) => {
 
 export default function Page() {
   const [styleMagazine] = useAtom(styleMagazineAtom)
+  const [isPortrait, setIsPortrait] = useState(true)
+
+  useEffect(() => {
+    const handleResize = () => {
+      const windowWidth = window.innerWidth;
+      const windowHeight = window.innerHeight;
+      setIsPortrait(windowWidth < windowHeight);
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   return (
     <PreloadComponents>
@@ -163,8 +176,8 @@ export default function Page() {
         }}
         transition={{ duration: 0.4, ease: 'easeInOut' }}
       >
-        {/* TopBar for md and above */}
-        <motion.div layout className='hidden md:block w-full'>
+        {/* TopBar for landscape */}
+        <motion.div layout className={isPortrait ? 'hidden' : 'block w-full'}>
           <AnimatePresence mode='wait'>
             <motion.div
               key={`top-${styleMagazine}`}
@@ -180,8 +193,8 @@ export default function Page() {
           </AnimatePresence>
         </motion.div>
 
-        {/* Original UI for below md */}
-        <motion.div layout className='md:hidden w-full'>
+        {/* Original UI for portrait */}
+        <motion.div layout className={isPortrait ? 'block w-full' : 'hidden'}>
           <AnimatePresence mode='wait'>
             <motion.div 
               className='w-full' 
@@ -199,7 +212,7 @@ export default function Page() {
         </motion.div>
 
         {/* Buttons Section */}
-        <motion.div layout className='md:hidden w-full'>
+        <motion.div layout className={isPortrait ? 'block w-full' : 'hidden'}>
           <AnimatePresence mode='wait'>
             <motion.div
               key={`buttons-${styleMagazine}`}
@@ -224,7 +237,7 @@ export default function Page() {
           </View>
         </motion.div>
 
-        <motion.div layout className='w-full md:hidden'>
+        <motion.div layout className={isPortrait ? 'block w-full' : 'hidden'}>
           <AnimatePresence mode='wait'>
             <motion.div
               key={`cta-${styleMagazine}`}

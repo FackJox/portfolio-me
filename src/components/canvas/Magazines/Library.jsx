@@ -110,7 +110,9 @@ export const Library = (props) => {
       if (!isMountedRef.current) return;
       
       const windowWidth = window.innerWidth;
-      const newIsPortrait = windowWidth <= 768;
+      const windowHeight = window.innerHeight;
+      const newIsPortrait = windowWidth < windowHeight;
+      
       setIsPortrait(newIsPortrait);
 
       // Initialize dragOffset and targetOffset on resize/mount

@@ -4,6 +4,7 @@ import { forwardRef, Suspense, useImperativeHandle, useRef } from 'react'
 import { OrbitControls, PerspectiveCamera, Environment, View as ViewImpl } from '@react-three/drei'
 import { Three } from '@/helpers/components/Three'
 
+
 export const Common = ({ color }) => (
   <Suspense fallback={null}>
     {color && <color attach='background' args={[color]} />}
@@ -29,6 +30,7 @@ export const Common = ({ color }) => (
 			/> 
  
   </Suspense>
+
 )
 
 const View = forwardRef(({ children, orbit, ...props }, ref) => {
@@ -50,3 +52,4 @@ const View = forwardRef(({ children, orbit, ...props }, ref) => {
 View.displayName = 'View'
 
 export { View }
+
