@@ -82,7 +82,10 @@ const magazines = {
 
 export const Library = (props) => {
   const { viewport, camera } = useThree();
-  const [isPortrait, setIsPortrait] = useState(false);
+  const [isPortrait, setIsPortrait] = useState(() => {
+    // Initialize isPortrait state with the correct value on mount
+    return window.innerWidth < window.innerHeight;
+  });
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState(0);
   const dragStartRef = useRef(0);
@@ -94,12 +97,17 @@ export const Library = (props) => {
   const [magazineViewStates] = useAtom(magazineViewingStatesAtom);
   
   // Add initialization tracking
-  const isInitializedRef = useRef(false);
   const isMountedRef = useRef(false);
-  const initializationCountRef = useRef(0);
 
   useEffect(() => {
+    // Set mounted immediately
     isMountedRef.current = true;
+    
+    // Initialize middle magazine if not set
+    if (!currentMiddleMagazine) {
+      setMiddleMagazine(magazines.vague);
+    }
+    
     return () => {
       isMountedRef.current = false;
     };
@@ -107,16 +115,12 @@ export const Library = (props) => {
 
   useLayoutEffect(() => {
     const handleResize = () => {
-      if (!isMountedRef.current) return;
-      
       const windowWidth = window.innerWidth;
       const windowHeight = window.innerHeight;
       const newIsPortrait = windowWidth < windowHeight;
       
-      setIsPortrait(newIsPortrait);
-
-      // Initialize dragOffset and targetOffset on resize/mount
-      if (!newIsPortrait) {
+      if (newIsPortrait !== isPortrait) {
+        setIsPortrait(newIsPortrait);
         dragStartRef.current = 0;
         targetOffsetRef.current = 0;
         setDragOffset(0);
@@ -126,24 +130,46 @@ export const Library = (props) => {
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  // Initialize state on mount
-  useEffect(() => {
-    if (!isMountedRef.current) {
-      isMountedRef.current = true;
-      if (!isPortrait) {
-        dragStartRef.current = 0;
-        targetOffsetRef.current = 0;
-        setDragOffset(0);
-      }
-    }
   }, [isPortrait]);
 
   const [smackPage, setSmackPage] = useAtom(smackAtom);
   const [vaguePage, setVaguePage] = useAtom(vagueAtom);
   const [engineerPage, setEngineerPage] = useAtom(engineerAtom);
   
+  // Calculate target positions for all magazines
+  const targetPositions = useMemo(() => {
+    const positions = {
+      [magazines.vague]: calculateFocusPosition({
+        camera,
+        focusedMagazine,
+        magazine: magazines.vague,
+        layoutPosition: null,
+        isPortrait
+      }),
+      [magazines.smack]: calculateFocusPosition({
+        camera,
+        focusedMagazine,
+        magazine: magazines.smack,
+        layoutPosition: null,
+        isPortrait
+      }),
+      [magazines.engineer]: calculateFocusPosition({
+        camera,
+        focusedMagazine,
+        magazine: magazines.engineer,
+        layoutPosition: null,
+        isPortrait
+      }),
+    };
+
+    return positions;
+  }, [isPortrait, dragOffset, focusedMagazine, vaguePage, smackPage, engineerPage, camera, magazineViewStates]);
+
+  // Render magazines as soon as we have positions
+  if (!targetPositions || Object.keys(targetPositions).length === 0) {
+    return null;
+  }
+
   // Smoothly update dragOffset
   useFrame((_, delta) => {
     // Update dragOffset without lerping for portrait mode
@@ -248,46 +274,6 @@ export const Library = (props) => {
     },
     { drag: { filterTaps: true } }
   );
-
-  // Calculate target positions for all magazines
-  const targetPositions = useMemo(() => {
-    initializationCountRef.current++;
-    
-    if (!isMountedRef.current) {
-      return {};
-    }
-
-    const positions = {
-      [magazines.vague]: calculateFocusPosition({
-        camera,
-        focusedMagazine,
-        magazine: magazines.vague,
-        layoutPosition: null,
-        isPortrait
-      }),
-      [magazines.smack]: calculateFocusPosition({
-        camera,
-        focusedMagazine,
-        magazine: magazines.smack,
-        layoutPosition: null,
-        isPortrait
-      }),
-      [magazines.engineer]: calculateFocusPosition({
-        camera,
-        focusedMagazine,
-        magazine: magazines.engineer,
-        layoutPosition: null,
-        isPortrait
-      }),
-    };
-
-    return positions;
-  }, [isPortrait, dragOffset, focusedMagazine, vaguePage, smackPage, engineerPage, camera, magazineViewStates]);
-
-  // Only render magazines if properly initialized
-  if (!isMountedRef.current || Object.keys(targetPositions).length === 0) {
-    return null;
-  }
 
   return (
     <group {...props} ref={groupRef}>
