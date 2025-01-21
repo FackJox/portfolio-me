@@ -50,11 +50,6 @@ export const SmackTopBar = () => {
           MENU
         </button>
         <div className='h-6 w-[1px] bg-[#F5E4F8]'></div>
-        <button className='flex items-center text-[#F5E4F8] text-3xl '>
-          <span className='font-[lemon-regular]'>CREATI</span>
-          <span className='font-[lemon-wide]'>VE</span>
-        </button>
-        <div className='h-6 w-[1px] bg-[#F5E4F8]'></div>
         <button className='font-[lemon-wide] text-[#FABE7F] text-3xl '>
           CONNECT
         </button>

@@ -47,8 +47,6 @@ export const VagueTopBar = () => {
       <div className='flex items-center gap-8'>
         <button className='font-[HKGrotesk-Regular]  text-[#F7F6F7] text-xl tracking-[-0.12em]'>MENU</button>
         <div className='h-6 w-[1px] bg-[#F7F6F7]'></div>
-        <button className='font-[HKGrotesk-Regular] text-[#F7F6F7] text-xl tracking-[-0.12em]'>ABOUT</button>
-        <div className='h-6 w-[1px] bg-[#F7F6F7]'></div>
         <button className='font-[HKGrotesk-SemiBold] text-[#F7F6F7] text-2xl tracking-[-0.12em]'>CONNECT</button>
       </div>
     </div>

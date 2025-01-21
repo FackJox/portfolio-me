@@ -49,10 +49,6 @@ export const EngineerTopBar = () => {
           MENU
         </button>
         <div className='h-[24px] w-[1px] bg-[#F7F6F7]'></div>
-        <button className='font-[HKGrotesk-SemiBold] text-[#FFB79C] text-l tracking-[-0.12em]'>
-          TECHNICAL
-        </button>
-        <div className='h-[24px] w-[1px] bg-[#F7F6F7]'></div>
         <button className='font-[HKGrotesk-Bold] text-[#F4EEDC] text-xl tracking-[-0.12em]'>
           CONNECT
         </button>
