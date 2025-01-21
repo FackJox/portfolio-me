@@ -7,7 +7,7 @@ import { useFrame } from "@react-three/fiber";
 import { useGesture } from "@use-gesture/react";
 import * as THREE from "three";
 import { styleMagazineAtom, magazineViewingStateAtom } from '@/helpers/atoms';
-import { performLerp, handlePageViewTransition, updateMagazineCarousel, calculatePageViewOffset } from "@/helpers/positionHelper";
+import { performLerp, handlePageViewTransition, updateMagazineCarousel, calculatePageViewOffset, getFloatConfig, getButtonPosition, isMiddleMagazine } from "@/helpers/positionHelper";
 
 export const Magazine = ({
   pictures,
@@ -30,7 +30,8 @@ export const Magazine = ({
   const [, setStyleMagazine] = useAtom(styleMagazineAtom);
   const [highlighted, setHighlighted] = useState(false);
   const [viewingRightPage, setViewingRightPage] = useAtom(magazineViewingStateAtom(magazine));
-
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartTimeRef = useRef(0);
 
   // Refs
   const groupRef = useRef();
@@ -109,24 +110,43 @@ export const Magazine = ({
   }, [page]);
 
   // Gestures (swipe vs click)
+  const bind = useGesture(
+    {
+      onDragStart: ({ event }) => {
+        event.stopPropagation();
+        setIsDragging(true);
+        dragStartTimeRef.current = Date.now();
+      },
+      onDrag: ({ last, movement: [dx, dy], event }) => {
+        if (event.preventDefault) event.preventDefault();
+        if (last) {
+          const dragDuration = Date.now() - dragStartTimeRef.current;
+          const totalMovement = Math.sqrt(dx * dx + dy * dy);
+          const wasDragging = isDragging && (dragDuration > 150 || totalMovement > 10);
+          setIsDragging(false);
+          
+          if (!wasDragging) {
+            // Handle as click
+            const isInMiddle = isMiddleMagazine({ position: layoutPosition, isPortrait });
+            if (isInMiddle && focusedMagazine !== magazine) {
+              setFocusedMagazine(magazine);
+            } else if (focusedMagazine === magazine) {
+              setFocusedMagazine(null);
+            }
+          } else if (totalMovement > 5) { // Only handle as swipe if there was significant movement
+            // Handle as drag/swipe
+            handleSwipeOrClick(dx, dy, event);
+          }
+        }
+      },
+    },
+    { eventOptions: { passive: false } }
+  );
+
   const handleSwipeOrClick = (deltaX, deltaY, e) => {
     if (focusedMagazine && focusedMagazine !== magazine) return;
 
-    const totalMovement = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-    const isMiddleMagazine = isPortrait 
-      ? Math.abs(layoutPosition.y) < 0.3  // Check Y position in portrait
-      : Math.abs(layoutPosition.x) < 0.3; // Check X position in landscape
-
-    if (totalMovement < 5) {
-      // Tiny movement => treat as click to focus/unfocus
-      e.stopPropagation();
-      
-      // In landscape mode, allow focusing any magazine
-      // In portrait mode, only allow focusing the middle magazine
-      if (!isPortrait || isMiddleMagazine) {
-        setFocusedMagazine((prev) => (prev === magazine ? null : magazine));
-      }
-    } else if (Math.abs(deltaX) > Math.abs(deltaY)) {
+    if (Math.abs(deltaX) > Math.abs(deltaY)) {
       // Horizontal swipe => page turn or view shift
       // Check if we're about to close from the last page
       if (page === pages.length - 1 && deltaX < -50) {
@@ -161,16 +181,6 @@ export const Magazine = ({
     }
     // vertical swipes ignored
   };
-
-  const bind = useGesture(
-    {
-      onDrag: ({ last, movement: [dx, dy], event }) => {
-        if (event.preventDefault) event.preventDefault();
-        if (last) handleSwipeOrClick(dx, dy, event);
-      },
-    },
-    { eventOptions: { passive: false } }
-  );
 
   // Delayed flip logic
   useEffect(() => {
@@ -276,9 +286,7 @@ export const Magazine = ({
       >
         <Float
           ref={floatRef}
-          floatIntensity={0.5}
-          speed={0.7}
-          rotationIntensity={2}
+          {...getFloatConfig(isPortrait)}
           enabled={focusedMagazine !== magazine}
         >
           <group ref={floatNullifyRef}>
@@ -300,7 +308,7 @@ export const Magazine = ({
               ))}
             </group>
             {!isPortrait && (
-              <group position={[0.65, -1.05, 0]}>
+              <group position={[getButtonPosition(isPortrait).x, getButtonPosition(isPortrait).y, getButtonPosition(isPortrait).z]}>
                 <Button />
               </group>
             )}

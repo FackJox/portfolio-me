@@ -1,6 +1,88 @@
 // portfolio-me/src/utils/positionHelper.js
 import * as THREE from 'three';
 
+// Spacing configuration
+const SPACING_CONFIG = {
+  portrait: {
+    magazine: 2.5,
+    total: 7.5, // magazine * 3
+    threshold: 20, // movement threshold for swipe detection
+    dragSensitivity: 0.01, // multiplier for drag movement
+    positions: {
+      x: -0.65,
+      y: 0,
+      z: 3.5,
+      zOffset: -2.5, // z-offset for middle magazine
+      pageOpenOffset: 0.65 // x-offset when page is open
+    },
+    float: {
+      intensity: 0.5,
+      speed: 0.7,
+      rotationIntensity: 2
+    },
+    camera: {
+      zDistance: 2.8,
+      xOffset: -0.003
+    },
+    geometry: {
+      width: 3,
+      viewOffset: 3.8 // divisor for page view offset
+    },
+    dragThreshold: 5 // minimum movement to trigger drag
+  },
+  landscape: {
+    magazine: 2,
+    total: 6, // magazine * 3
+    threshold: 20,
+    dragSensitivity: 0.01,
+    positions: {
+      engineer: {
+        x: -2.5,
+        z: 4.5,
+        dragOffset: 1
+      },
+      vague: {
+        x: -0.5,
+        z: 4.5,
+        pageOffset: 1
+      },
+      smack: {
+        x: 1.5,
+        z: 4.5,
+        dragOffset: 1
+      },
+      button: {
+        x: 0.65,
+        y: -1.05,
+        z: 0
+      }
+    },
+    float: {
+      intensity: 0.5,
+      speed: 0.7,
+      rotationIntensity: 2
+    },
+    camera: {
+      zDistance: 2.7,
+      xOffset: -0.15
+    },
+    geometry: {
+      width: 3,
+      viewOffset: 3.8
+    },
+    dragThreshold: 5
+  }
+};
+
+/**
+ * Gets the appropriate spacing configuration based on view mode
+ * @param {boolean} isPortrait - Whether the view is in portrait mode
+ * @returns {Object} The spacing configuration
+ */
+export const getSpacingConfig = (isPortrait) => {
+  return isPortrait ? SPACING_CONFIG.portrait : SPACING_CONFIG.landscape;
+};
+
 /**
  * Handles the page viewing state transitions based on swipe direction
  * @param {Object} params - Parameters for state transition
@@ -154,8 +236,8 @@ export const calculateFocusPosition = ({
  * @returns {string} The ID of the magazine that should be in the middle ('engineer', 'vague', or 'smack')
  */
 export const calculateMiddleMagazine = (targetOffset, isPortrait) => {
-  const spacing = isPortrait ? 2.5 : 2;
-  const wrappedOffset = ((targetOffset % (spacing * 3)) + spacing * 4.5) % (spacing * 3) - spacing * 1.5;
+  const { magazine: spacing, total: totalSpacing } = getSpacingConfig(isPortrait);
+  const wrappedOffset = ((targetOffset % totalSpacing) + spacing * 4.5) % totalSpacing - spacing * 1.5;
   const index = Math.round(wrappedOffset / spacing) % 3;
   const magazineOrder = ['engineer', 'vague', 'smack'];
   const calculatedIndex = (index + 1) % 3;
@@ -219,7 +301,7 @@ export const updateMagazineCarousel = ({
     setPage(1);
   }
 
-  const spacing = isPortrait ? 2.5 : 2;
+  const { magazine: spacing, total: totalSpacing } = getSpacingConfig(isPortrait);
   let finalPosition = new THREE.Vector3();
 
   if (focusedMagazine !== magazine) {
@@ -235,7 +317,6 @@ export const updateMagazineCarousel = ({
     if (isPortrait) {
       // Portrait mode positioning with instant wrapping
       const baseIndex = getBaseIndex(magazine);
-      const totalSpacing = spacing * 3;
       const magazineOffset = dragOffset + (baseIndex * spacing);
       
       // Wrap the offset instantly
@@ -319,4 +400,68 @@ export const updateMagazineCarousel = ({
 export const performLerp = (current, target, lerpFactor) => {
   current.lerp(target, lerpFactor);
   return current;
+};
+
+/**
+ * Gets the float configuration for magazines
+ * @param {boolean} isPortrait - Whether the view is in portrait mode
+ * @returns {Object} Float configuration values
+ */
+export const getFloatConfig = (isPortrait) => {
+  return getSpacingConfig(isPortrait).float;
+};
+
+/**
+ * Gets the button position configuration
+ * @param {boolean} isPortrait - Whether the view is in portrait mode
+ * @returns {Object|null} Button position or null in portrait mode
+ */
+export const getButtonPosition = (isPortrait) => {
+  return isPortrait ? null : getSpacingConfig(isPortrait).positions.button;
+};
+
+/**
+ * Calculates the magazine position in landscape mode
+ * @param {string} magazine - Magazine ID
+ * @param {number} dragOffset - Current drag offset
+ * @param {number} page - Current page number
+ * @param {boolean} isPortrait - Whether in portrait mode
+ * @returns {THREE.Vector3} The calculated position
+ */
+export const calculateMagazinePosition = (magazine, dragOffset, page, isPortrait) => {
+  const position = new THREE.Vector3();
+  const config = getSpacingConfig(isPortrait);
+
+  if (isPortrait) {
+    position.set(
+      config.positions.x + (page > 0 ? config.positions.pageOpenOffset : 0),
+      0,
+      config.positions.z
+    );
+  } else {
+    const magazineConfig = config.positions[magazine];
+    position.set(
+      magazineConfig.x + 
+        (dragOffset > 0 ? magazineConfig.dragOffset || 0 : 0) + 
+        (page > 0 ? config.positions.button.x : 0),
+      0,
+      magazineConfig.z - (page > 0 ? magazineConfig.pageOffset || 0 : 0)
+    );
+  }
+
+  return position;
+};
+
+/**
+ * Checks if a magazine is in the middle position
+ * @param {Object} params - Check parameters
+ * @param {THREE.Vector3} params.position - Magazine position
+ * @param {boolean} params.isPortrait - Whether in portrait mode
+ * @returns {boolean} Whether the magazine is in the middle
+ */
+export const isMiddleMagazine = ({ position, isPortrait }) => {
+  if (isPortrait) {
+    return Math.abs(position.y) < 0.3;
+  }
+  return Math.abs(position.x) < 0.3;
 };

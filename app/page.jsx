@@ -5,6 +5,7 @@ import { Suspense, useState, useEffect } from 'react'
 import { useAtom } from 'jotai'
 import { motion, AnimatePresence } from 'framer-motion'
 import { styleMagazineAtom } from '@/helpers/atoms';
+import { textureCache, getTexturePath, getRoughnessPath } from '@/helpers/textureLoader'
 
 // Direct imports for UI components
 import { SmackHeader, SmackButtons, SmackCTA, SmackTopBar } from '@/components/dom/SmackUI'
@@ -100,43 +101,45 @@ const picturesVague = [
 
 const PreloadComponents = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true)
+  const [imagesLoaded, setImagesLoaded] = useState(false)
   
   useEffect(() => {
-    // Helper function to preload an image
-    const preloadImage = (src) => {
-      return new Promise((resolve, reject) => {
-        const img = new Image()
-        img.src = src
-        img.onload = resolve
-        img.onerror = reject
-      })
-    }
-
-    // Preload all textures
     const preloadTextures = async () => {
-      const texturePromises = [
-        ...picturesSmack.map(pic => preloadImage(`/textures/smack/${pic}.png`)),
-        ...picturesEngineer.map(pic => preloadImage(`/textures/engineer/${pic}.png`)),
-        ...picturesVague.map(pic => preloadImage(`/textures/vague/${pic}.png`)),
-        preloadImage('/textures/book-cover-roughness.png')
+      const texturePaths = [
+        ...picturesSmack.map(pic => getTexturePath('smack', pic)),
+        ...picturesEngineer.map(pic => getTexturePath('engineer', pic)),
+        ...picturesVague.map(pic => getTexturePath('vague', pic)),
+        getRoughnessPath()
       ]
 
       try {
-        await Promise.all(texturePromises)
-        setIsLoading(false)
+        await textureCache.preloadTextures(texturePaths)
+        setImagesLoaded(true)
       } catch (error) {
         console.error('Failed to preload some textures:', error)
-        setIsLoading(false) // Continue even if some textures fail to load
+        setImagesLoaded(true) // Continue even if some textures fail to load
       }
     }
 
     preloadTextures()
   }, [])
 
+  // Add a separate effect to handle the final loading state
+  useEffect(() => {
+    if (imagesLoaded) {
+      // Add a small delay to ensure UI components are mounted
+      const timer = setTimeout(() => {
+        setIsLoading(false)
+      }, 1000) // 1 second delay
+
+      return () => clearTimeout(timer)
+    }
+  }, [imagesLoaded])
+
   if (isLoading) {
     return (
       <div className='flex h-screen w-full flex-col items-center justify-center'>
-        <svg className='-ml-1 mr-3 h-5 w-5 animate-spin text-black' fill='none' viewBox='0 0 24 24'>
+        <svg className='-ml-1 mr-3 h-5 w-5 animate-spin text-white' fill='none' viewBox='0 0 24 24'>
           <circle className='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4' />
           <path
             className='opacity-75'

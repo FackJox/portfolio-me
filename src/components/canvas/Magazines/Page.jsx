@@ -17,6 +17,7 @@ import {
   Vector3,
 } from "three";
 import { degToRad } from "three/src/math/MathUtils.js";
+import { textureCache, getTexturePath, getRoughnessPath } from "@/helpers/textureLoader";
 
 // Constants
 const PAGE_WIDTH = 1.28;
@@ -85,25 +86,31 @@ const pageMaterials = [
   }),
 ];
 
-
-
 export const Page = ({ number, front, back, page, magazine, opened, pages, magazineClosed, setPage, highlighted, isFocused, ...props }) => {
-  const [picture, picture2, pictureRoughness] = useTexture([
-    `/textures/${magazine}/${front}.png`,
-    `/textures/${magazine}/${back}.png`,
-    ...(number === 0 || number === pages.length - 1
-      ? [`/textures/book-cover-roughness.png`]
-      : []),
-  ]);
-  picture.colorSpace = picture2.colorSpace = SRGBColorSpace;
+  const [textures, setTextures] = useState({ picture: null, picture2: null, pictureRoughness: null });
+
+  useEffect(() => {
+    const loadTextures = async () => {
+      const [picture, picture2, ...[pictureRoughness]] = await Promise.all([
+        textureCache.loadTexture(getTexturePath(magazine, front)),
+        textureCache.loadTexture(getTexturePath(magazine, back)),
+        ...(number === 0 || number === pages.length - 1
+          ? [textureCache.loadTexture(getRoughnessPath())]
+          : []),
+      ]);
+      setTextures({ picture, picture2, pictureRoughness });
+    };
+    loadTextures();
+  }, [magazine, front, back, number, pages.length]);
 
   const group = useRef();
   const turnedAt = useRef(0);
   const lastOpened = useRef(opened);
-
   const skinnedMeshRef = useRef();
 
   const manualSkinnedMesh = useMemo(() => {
+    if (!textures.picture || !textures.picture2) return null;
+
     const bones = [];
     for (let i = 0; i <= PAGE_SEGMENTS; i++) {
       let bone = new Bone();
@@ -123,10 +130,10 @@ export const Page = ({ number, front, back, page, magazine, opened, pages, magaz
       ...pageMaterials,
       new MeshStandardMaterial({
         color: whiteColor,
-        map: picture,
+        map: textures.picture,
         ...(number === 0
           ? {
-              roughnessMap: pictureRoughness,
+              roughnessMap: textures.pictureRoughness,
             }
           : {
               roughness: 0.1,
@@ -136,10 +143,10 @@ export const Page = ({ number, front, back, page, magazine, opened, pages, magaz
       }),
       new MeshStandardMaterial({
         color: whiteColor,
-        map: picture2,
+        map: textures.picture2,
         ...(number === pages.length - 1
           ? {
-              roughnessMap: pictureRoughness,
+              roughnessMap: textures.pictureRoughness,
             }
           : {
               roughness: 0.1,
@@ -155,8 +162,7 @@ export const Page = ({ number, front, back, page, magazine, opened, pages, magaz
     mesh.add(skeleton.bones[0]);
     mesh.bind(skeleton);
     return mesh;
-  }, []);
-
+  }, [textures, number, pages.length]);
 
   useFrame((_, delta) => {
     if (!skinnedMeshRef.current) {
@@ -234,11 +240,13 @@ export const Page = ({ number, front, back, page, magazine, opened, pages, magaz
   
     return (
       <group {...props} ref={group}>
-        <primitive
-          object={manualSkinnedMesh}
-          ref={skinnedMeshRef}
-          position-z={-number * PAGE_DEPTH + page * PAGE_DEPTH}
-        />
+        {manualSkinnedMesh && (
+          <primitive
+            object={manualSkinnedMesh}
+            ref={skinnedMeshRef}
+            position-z={-number * PAGE_DEPTH + page * PAGE_DEPTH}
+          />
+        )}
       </group>
     );
   };

@@ -8,13 +8,19 @@ Change landscape carosuel spacing for different aspect ratios
 
 Blueprint effects on engineer background
 
-incrase speed of lerp between right and left pages
-
 in desktop mode stop style changes when magazine is in focus mode
+
+fix loader
 
 suspense all pages until the magazine is selected in focus mode
 
 a website loader of all of the pages flying around
+
+Design 3d for breakpoints - flex ?
+
+Adjust 3d window to flex in middle of CTA and menu
+
+better bounding box
 
 ---
 

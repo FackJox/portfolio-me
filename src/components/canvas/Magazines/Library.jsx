@@ -15,7 +15,7 @@ import {
   styleMagazineAtom,
   magazineViewingStatesAtom
 } from '@/helpers/atoms';
-import { calculateFocusPosition, updateMagazineCarousel, calculateMiddleMagazine } from "@/helpers/positionHelper";
+import { calculateFocusPosition, updateMagazineCarousel, calculateMiddleMagazine, getSpacingConfig } from "@/helpers/positionHelper";
 
 const picturesSmack = [
   "02Contents",
@@ -212,35 +212,34 @@ export const Library = (props) => {
         dragStartRef.current = targetOffsetRef.current;
         velocityRef.current = 0;
       },
-      onDrag: ({ event, movement: [dx, dy], velocity: [vx, vy], delta: [deltaX, deltaY], last }) => {
+      onDrag: ({ event, movement: [dx, dy], last }) => {
         if (focusedMagazine) return;
         event.stopPropagation();
         
+        const config = getSpacingConfig(isPortrait);
         const totalMovement = Math.sqrt(dx * dx + dy * dy);
         
-        if (totalMovement > 5) {
-          const movement = isPortrait ? -dy * 0.01 : dx * 0.01;
+        if (totalMovement > config.dragThreshold) {
+          const movement = isPortrait ? -dy * config.dragSensitivity : dx * config.dragSensitivity;
           
           if (last) {
             setIsDragging(false);
-            const spacing = isPortrait ? 2.5 : 2;
             
             // Calculate the nearest snap position
-            const currentPosition = Math.round(dragStartRef.current / spacing);
+            const currentPosition = Math.round(dragStartRef.current / config.magazine);
             
             // Determine direction based on the total movement
             const deltaMovement = isPortrait ? -dy : dx;
-            if (Math.abs(deltaMovement) > 20) { // Increased threshold for more deliberate movements
+            if (Math.abs(deltaMovement) > config.threshold) {
               const targetPosition = currentPosition + (deltaMovement > 0 ? 1 : -1);
-              targetOffsetRef.current = targetPosition * spacing;
+              targetOffsetRef.current = targetPosition * config.magazine;
             } else {
-              targetOffsetRef.current = currentPosition * spacing;
+              targetOffsetRef.current = currentPosition * config.magazine;
             }
           } else {
             // During drag, snap to the nearest position
             const newOffset = dragStartRef.current + movement;
-            const spacing = isPortrait ? 2.5 : 2;
-            targetOffsetRef.current = Math.round(newOffset / spacing) * spacing;
+            targetOffsetRef.current = Math.round(newOffset / config.magazine) * config.magazine;
           }
         } else if (last) {
           setIsDragging(false);
@@ -298,7 +297,7 @@ export const Library = (props) => {
         {...bind()}
       >
         <planeGeometry args={[50, 50]} />
-        <meshBasicMaterial transparent opacity={0} />
+        <meshBasicMaterial transparent opacity={1} />
       </mesh>
       
       {/* Magazines */}
