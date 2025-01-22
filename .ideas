@@ -1,47 +1,45 @@
-search / keyword cloud to list projects that can then be flicked to - 3d with react three flex
-Different font for each type of cloud - filter clouds by Technical and Creative
 
-Different text size for landscape mobile mode
+---
+Bugs
+3d label buttons jumping back to incorrect Positioning
+Some loading race conditions gives black magazines in incorrect position
+HTML Text occlusion
+Drag on carousel still clicking a lot
 
-landscape mode in mobile different layout to ipad mode - aspect ratio
-
-Change landscape carosuel spacing for different aspect ratios
-
-CTA pulses 1 second after page turn
-
-Blueprint effects on engineer background
-
-in desktop mode stop style changes when magazine is in focus mode
-
-fix loader
-
+---
+Performance
 suspense all pages until the magazine is selected in focus mode
 
-a website loader of all of the pages flying around
-
-Design 3d for breakpoints - flex ?
-
-Adjust 3d window to flex in middle of CTA and menu
-
-better bounding box
-
-change button colours in landscape on hover 
-
+---
+Styling
+Blueprint effects on engineer background
+In landscape mode lerp the magazines slightly towards the center of the screen when they have been hovered
+Add brief tool tips for gesture use, swipe click
 ---
 
 animations -
-For buttons - easeinout the background colour
-rotate the text like the header
-lerp between the line colour
+In portait mode rotate the text in the same direction as the carousel drag
+change button colours in landscape on hover 
+Press animations for buttons 
+CTA pulses 1 second after page turn
+
 
 ---
-
-Desktop - 
-
-
-Get rid of menu and have the titles underneath them
+Responsive
+Design 3d for breakpoints - flex ?
+Different text size for landscape mobile mode
+landscape mode in mobile different layout to ipad mode - aspect ratio
+Change landscape carosuel spacing for different aspect ratios
+zoom?? 
 
 ---
+Features
+Menu and connect elements
+
+a website loader of all of the pages flying around
+
+search / keyword cloud to list projects that can then be flicked to - 3d with react three flex
+Different font for each type of cloud - filter clouds by Technical and Creative
 
 If can do clickable website -
 

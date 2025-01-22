@@ -1,13 +1,17 @@
-import { motion } from 'framer-motion'
+import { motion } from 'motion/react'
 import { layoutAnimations } from '@/helpers/animationConfigs'
 
 export const SmackHeader = () => {
   return (
-    <div className='w-full flex items-center justify-center pt-3 pb-2 '>
-      <h1 className='font-[YoungSerif] text-[#FABE7F] text-3xl sm:text-4xl md:text-5xl tracking-[-0.04em] text-center align-middle whitespace-nowrap'>
+    <motion.div 
+      layoutId="header-container"
+      className='w-full flex items-center justify-center pt-3 pb-2'
+      {...layoutAnimations.headerContainer}
+    >
+      <motion.h1 {...layoutAnimations.headerText} className='font-[YoungSerif] text-[#FABE7F] text-3xl sm:text-4xl md:text-5xl tracking-[-0.04em] text-center align-middle whitespace-nowrap'>
         JACK FOXCROFT
-      </h1>
-    </div>
+      </motion.h1>
+    </motion.div>
   )
 }
 

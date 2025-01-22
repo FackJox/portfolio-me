@@ -1,13 +1,17 @@
-import { motion } from 'framer-motion'
+import { motion } from 'motion/react'
 import { layoutAnimations } from '@/helpers/animationConfigs'
 
 export const VagueHeader = () => {
   return (
-    <div className='w-full flex items-center justify-center pt-4 pb-3 '>
-      <h1 className='font-[Vogue] text-[#F7F6F7] text-4xl sm:text-5xl md:text-6xl tracking-[-0.07em] text-center align-middle whitespace-nowrap'>
+    <motion.div 
+      layoutId="header-container"
+      className='w-full flex items-center justify-center pt-4 pb-3'
+      {...layoutAnimations.headerContainer}
+    >
+      <motion.h1 {...layoutAnimations.headerText} className='font-[Vogue] text-[#F7F6F7] text-4xl sm:text-5xl md:text-6xl tracking-[-0.07em] text-center align-middle whitespace-nowrap'>
         JACK FOXCROFT
-      </h1>
-    </div>
+      </motion.h1>
+    </motion.div>
   )
 }
 

@@ -3,7 +3,7 @@
 import dynamic from 'next/dynamic'
 import { Suspense, useState, useEffect } from 'react'
 import { useAtom } from 'jotai'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence } from 'motion/react'
 import { styleMagazineAtom } from '@/helpers/atoms';
 import { textureCache, getTexturePath, getRoughnessPath, picturesSmack, picturesEngineer, picturesVague } from '@/helpers/textureLoader'
 import { useDeviceOrientation, getLayoutConfig } from '@/helpers/deviceHelper'

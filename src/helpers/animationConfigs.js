@@ -13,15 +13,30 @@ export const layoutAnimations = {
     transition: { duration: 0.4 }
   },
   topBarBorder: { 
-    transition: { duration: 0.4, ease: 'easeInOut' }
+    transition: { 
+      type: "spring",
+      stiffness: 150,
+      damping: 20
+    }
   },
   topBarDivider: {
     initial: { scaleY: 0 },
     animate: { scaleY: 1 },
     exit: { scaleY: 0 },
-    transition: { duration: 0.3, ease: 'easeInOut' }
+    transition: { 
+      type: "spring",
+      stiffness: 200,
+      damping: 25
+    }
   },
-  header: {
+  headerContainer: {
+    transition: { 
+      type: "spring",
+      stiffness: 150,
+      damping: 20
+    }
+  },
+  headerText: {
     initial: { opacity: 0, rotateX: 90 },
     animate: { opacity: 1, rotateX: 0 },
     exit: { opacity: 0, rotateX: -90 },
@@ -34,13 +49,21 @@ export const layoutAnimations = {
     transition: { duration: 0.4, delay: 0.2 }
   },
   buttonsBorder: {
-    transition: { duration: 0.4, ease: 'easeInOut' }
+    transition: { 
+      type: "spring",
+      stiffness: 150,
+      damping: 20
+    }
   },
   buttonsDivider: {
     initial: { scaleY: 0 },
     animate: { scaleY: 1 },
     exit: { scaleY: 0 },
-    transition: { duration: 0.3, ease: 'easeInOut' }
+    transition: { 
+      type: "spring",
+      stiffness: 200,
+      damping: 25
+    }
   },
   CTAtext: {
     initial: { opacity: 0, y: 20 },
@@ -49,7 +72,11 @@ export const layoutAnimations = {
     transition: { duration: 0.4 }
   },
   CTAborder: {
-    transition: { duration: 0.4, ease: 'easeInOut' }
+    transition: { 
+      type: "spring",
+      stiffness: 150,
+      damping: 20
+    }
   }
 };
 
