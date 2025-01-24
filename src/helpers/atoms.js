@@ -30,3 +30,12 @@ export const magazineViewingStateAtom = (magazine) =>
       });
     }
   );
+
+// Atoms for loading states
+export const texturesLoadedAtom = atom(false);
+export const hdrLoadedAtom = atom(false);
+
+// Derived atom to check if all assets are loaded
+export const allAssetsLoadedAtom = atom(
+  (get) => get(texturesLoadedAtom) && get(hdrLoadedAtom)
+);

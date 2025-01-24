@@ -4,8 +4,8 @@ import dynamic from 'next/dynamic'
 import { Suspense, useState, useEffect } from 'react'
 import { useAtom } from 'jotai'
 import { motion, AnimatePresence } from 'motion/react'
-import { styleMagazineAtom } from '@/helpers/atoms';
-import { textureCache, getTexturePath, getRoughnessPath, picturesSmack, picturesEngineer, picturesVague } from '@/helpers/textureLoader'
+import { styleMagazineAtom, texturesLoadedAtom, hdrLoadedAtom } from '@/helpers/atoms';
+import { textureCache, getTexturePath, getRoughnessPath, picturesSmack, picturesEngineer, picturesVague, hdrLoader, getHDRPath } from '@/helpers/textureLoader'
 import { useDeviceOrientation, getLayoutConfig } from '@/helpers/deviceHelper'
 import { layoutAnimations, backgroundTransitions } from '@/helpers/animationConfigs'
 
@@ -39,10 +39,11 @@ const Common = dynamic(() => import('@/components/canvas/View').then((mod) => mo
 
 const PreloadComponents = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true)
-  const [imagesLoaded, setImagesLoaded] = useState(false)
+  const [, setTexturesLoaded] = useAtom(texturesLoadedAtom)
+  const [, setHdrLoaded] = useAtom(hdrLoadedAtom)
   
   useEffect(() => {
-    const preloadTextures = async () => {
+    const preloadAssets = async () => {
       const texturePaths = [
         ...picturesSmack.map(pic => getTexturePath('smack', pic)),
         ...picturesEngineer.map(pic => getTexturePath('engineer', pic)),
@@ -51,28 +52,27 @@ const PreloadComponents = ({ children }) => {
       ]
 
       try {
-        await textureCache.preloadTextures(texturePaths)
-        setImagesLoaded(true)
+        // Load textures and HDR in parallel
+        await Promise.all([
+          textureCache.preloadTextures(texturePaths).then(() => setTexturesLoaded(true)),
+          hdrLoader.loadHDR(getHDRPath()).then(() => setHdrLoaded(true))
+        ])
+        
+        // Add a small delay to ensure smooth transition
+        setTimeout(() => {
+          setIsLoading(false)
+        }, 1000)
       } catch (error) {
-        console.error('Failed to preload some textures:', error)
-        setImagesLoaded(true) // Continue even if some textures fail to load
+        console.error('Failed to load assets:', error)
+        // Continue even if some assets fail to load
+        setTexturesLoaded(true)
+        setHdrLoaded(true)
+        setIsLoading(false)
       }
     }
 
-    preloadTextures()
-  }, [])
-
-  // Add a separate effect to handle the final loading state
-  useEffect(() => {
-    if (imagesLoaded) {
-      // Add a small delay to ensure UI components are mounted
-      const timer = setTimeout(() => {
-        setIsLoading(false)
-      }, 1000) // 1 second delay
-
-      return () => clearTimeout(timer)
-    }
-  }, [imagesLoaded])
+    preloadAssets()
+  }, [setTexturesLoaded, setHdrLoaded])
 
   if (isLoading) {
     return (

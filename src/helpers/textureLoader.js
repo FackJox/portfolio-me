@@ -1,5 +1,6 @@
 import { TextureLoader } from 'three';
 import { SRGBColorSpace } from 'three';
+import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader';
 
 // Magazine textures to preload
 export const picturesSmack = [
@@ -111,4 +112,43 @@ class TextureCache {
   }
 }
 
-export const textureCache = new TextureCache(); 
+export const textureCache = new TextureCache();
+
+class HDRLoader {
+  constructor() {
+    this.rgbeLoader = new RGBELoader();
+    this.loadedHDR = null;
+    this.loadingPromise = null;
+  }
+
+  async loadHDR(path) {
+    if (this.loadedHDR) {
+      return this.loadedHDR;
+    }
+
+    if (this.loadingPromise) {
+      return this.loadingPromise;
+    }
+
+    this.loadingPromise = new Promise((resolve, reject) => {
+      this.rgbeLoader.load(
+        path,
+        (texture) => {
+          this.loadedHDR = texture;
+          this.loadingPromise = null;
+          resolve(texture);
+        },
+        undefined,
+        (error) => {
+          this.loadingPromise = null;
+          reject(error);
+        }
+      );
+    });
+
+    return this.loadingPromise;
+  }
+}
+
+export const hdrLoader = new HDRLoader();
+export const getHDRPath = () => '/textures/environment.hdr'; 
