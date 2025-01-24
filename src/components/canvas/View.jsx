@@ -1,14 +1,23 @@
 'use client'
 
-import { forwardRef, Suspense, useImperativeHandle, useRef } from 'react'
+import { forwardRef, Suspense, useImperativeHandle, useRef, useEffect } from 'react'
 import { OrbitControls, PerspectiveCamera, Environment, View as ViewImpl } from '@react-three/drei'
 import { Three } from '@/helpers/components/Three'
 import { useAtom } from 'jotai'
 import { hdrLoadedAtom } from '@/helpers/atoms'
-import { hdrLoader } from '@/helpers/textureLoader'
+import { hdrLoader, getHDRPath } from '@/helpers/textureLoader'
+import { useThree } from '@react-three/fiber'
 
 export const Common = ({ color }) => {
   const [hdrLoaded] = useAtom(hdrLoadedAtom)
+  const { scene } = useThree()
+
+  useEffect(() => {
+    if (hdrLoaded && hdrLoader.loadedHDR) {
+      scene.environment = hdrLoader.loadedHDR
+      scene.background = null // or hdrLoader.loadedHDR if you want HDR as background
+    }
+  }, [hdrLoaded, scene])
 
   return (
     <Suspense fallback={null}>
@@ -16,10 +25,10 @@ export const Common = ({ color }) => {
       <PerspectiveCamera makeDefault fov={40} position={[0, 0, 10]} />
       
       {hdrLoaded && (
-        <Environment
+        <Environment 
           map={hdrLoader.loadedHDR}
           environmentIntensity={0.5}
-          environmentRotation={[0, Math.PI / 180, 0]}
+          resolution={256}
         />
       )}
       
