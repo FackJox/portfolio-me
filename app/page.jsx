@@ -4,7 +4,7 @@ import dynamic from 'next/dynamic'
 import { Suspense, useState, useEffect } from 'react'
 import { useAtom } from 'jotai'
 import { motion, AnimatePresence } from 'motion/react'
-import { styleMagazineAtom, texturesLoadedAtom, hdrLoadedAtom } from '@/helpers/atoms';
+import { styleMagazineAtom, texturesLoadedAtom, hdrLoadedAtom, allAssetsLoadedAtom } from '@/helpers/atoms';
 import { textureCache, getTexturePath, getRoughnessPath, picturesSmack, picturesEngineer, picturesVague, hdrLoader, getHDRPath } from '@/helpers/textureLoader'
 import { useDeviceOrientation, getLayoutConfig } from '@/helpers/deviceHelper'
 import { layoutAnimations, backgroundTransitions } from '@/helpers/animationConfigs'
@@ -92,6 +92,16 @@ const PreloadComponents = ({ children }) => {
   return children
 }
 
+const AllAssetsLoader = ({ children }) => {
+  const [allAssetsLoaded] = useAtom(allAssetsLoadedAtom)
+  
+  if (!allAssetsLoaded) {
+    return null
+  }
+  
+  return children
+}
+
 export default function Page() {
   const [styleMagazine] = useAtom(styleMagazineAtom)
   const isPortrait = useDeviceOrientation();
@@ -152,7 +162,9 @@ export default function Page() {
         <motion.div layout className='relative w-full flex-1'>
           <View className='absolute w-full inset-0 flex items-center justify-center'>
             <Suspense fallback={null}>
-              <Library position={[0, 0, 0]} />
+              <AllAssetsLoader>
+                <Library position={[0, 0, 0]} />
+              </AllAssetsLoader>
               <Common />
             </Suspense>
           </View>

@@ -151,4 +151,4 @@ class HDRLoader {
 }
 
 export const hdrLoader = new HDRLoader();
-export const getHDRPath = () => '/textures/environment.hdr'; 
+export const getHDRPath = () => '/textures/warehouse.hdr'; 
