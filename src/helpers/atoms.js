@@ -18,6 +18,12 @@ export const magazineViewingStatesAtom = atom({
   smack: false
 });
 
+// Atom to track carousel movement
+export const lastCarouselMoveAtom = atom({
+  time: Date.now(),
+  movement: 0
+});
+
 // Derived atom to get/set viewing state for a specific magazine
 export const magazineViewingStateAtom = (magazine) => 
   atom(

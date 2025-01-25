@@ -13,7 +13,8 @@ import {
   engineerAtom, 
   focusedMagazineAtom, 
   styleMagazineAtom,
-  magazineViewingStatesAtom
+  magazineViewingStatesAtom,
+  lastCarouselMoveAtom
 } from '@/helpers/atoms';
 import { calculateFocusPosition, updateMagazineCarousel, calculateMiddleMagazine, getSpacingConfig } from "@/helpers/positionHelper";
 import { useDeviceOrientation } from '@/helpers/deviceHelper'
@@ -90,10 +91,12 @@ export const Library = (props) => {
   const dragStartRef = useRef(0);
   const velocityRef = useRef(0);
   const targetOffsetRef = useRef(0);
+  const lastCarouselMoveTimeRef = useRef(0);
   const groupRef = useRef();
   const [focusedMagazine, setFocusedMagazine] = useAtom(focusedMagazineAtom);
   const [currentMiddleMagazine, setMiddleMagazine] = useAtom(styleMagazineAtom);
   const [magazineViewStates] = useAtom(magazineViewingStatesAtom);
+  const [lastCarouselMove, setLastCarouselMove] = useAtom(lastCarouselMoveAtom);
   
   // Add initialization tracking
   const isMountedRef = useRef(false);
@@ -242,8 +245,15 @@ export const Library = (props) => {
             config,
             dragStartPosition: dragStartRef.current,
             targetOffsetRef,
-            setIsDragging
+            setIsDragging,
+            setLastCarouselMove
           });
+
+          // Update last carousel movement time if there's significant movement
+          if (totalMovement > 20) {
+            lastCarouselMoveTimeRef.current = Date.now();
+            console.log('[Library] Carousel movement detected', { totalMovement, time: lastCarouselMoveTimeRef.current });
+          }
         }
       },
     },
@@ -290,6 +300,7 @@ export const Library = (props) => {
           Button={config.Button}
           targetPosition={targetPositions[magazineName]}
           camera={camera}
+          lastCarouselMove={lastCarouselMove}
         />
       ))}
     </group>

@@ -1,4 +1,5 @@
 import { handlePageViewTransition } from "@/helpers/positionHelper";
+import { lastCarouselMoveAtom } from "@/helpers/atoms";
 
 /**
  * Determines if an interaction should be treated as a tap/click
@@ -9,10 +10,13 @@ import { handlePageViewTransition } from "@/helpers/positionHelper";
  * @returns {boolean} Whether the interaction should be treated as a tap
  */
 export const isTapInteraction = ({ duration, totalMovement, isPortrait }) => {
-  // In portrait mode, be more lenient with what counts as a tap
-  return isPortrait ? 
-    (duration < 200 && totalMovement < 20) : 
+  // In portrait mode, be more strict with what counts as a tap
+  const isTap = isPortrait ? 
+    (duration < 150 && totalMovement < 10) : 
     (duration < 150 && totalMovement < 10);
+  
+  console.log('[Gesture] Tap detection', { duration, totalMovement, isPortrait, isTap });
+  return isTap;
 };
 
 /**
@@ -24,95 +28,50 @@ export const isTapInteraction = ({ duration, totalMovement, isPortrait }) => {
  * @returns {boolean} Whether the interaction should be treated as a swipe
  */
 export const isSwipeInteraction = ({ deltaX, deltaY, isDrag }) => {
-  return isDrag && Math.abs(deltaX) > 5;
+  const isSwipe = isDrag && Math.abs(deltaX) > 5;
+  console.log('[Gesture] Swipe detection', { deltaX, deltaY, isDrag, isSwipe });
+  return isSwipe;
 };
 
 /**
- * Handles magazine interaction (tap/click or swipe)
- * @param {Object} params - Parameters for interaction handling
- * @param {number} params.deltaX - Horizontal movement
- * @param {number} params.deltaY - Vertical movement
- * @param {boolean} params.isDrag - Whether the interaction is a drag
- * @param {string} params.magazine - Magazine ID
- * @param {string} params.focusedMagazine - Currently focused magazine ID
- * @param {Function} params.setFocusedMagazine - Function to set focused magazine
- * @param {number} params.page - Current page number
- * @param {Array} params.pages - Array of pages
- * @param {Function} params.setPage - Function to set page number
- * @param {Function} params.setViewingRightPage - Function to set right page viewing state
- * @param {boolean} params.viewingRightPage - Current right page viewing state
- * @param {boolean} params.isPortrait - Whether in portrait mode
- * @param {string} params.currentMiddleMagazine - Currently middle magazine ID
- * @returns {void}
+ * Checks if it's safe to focus a magazine based on recent carousel movement
  */
-export const handleMagazineInteraction = ({
-  deltaX,
-  deltaY,
-  isDrag,
-  magazine,
+export const canFocusMagazine = ({ 
+  magazine, 
+  currentMiddleMagazine, 
+  isPortrait, 
   focusedMagazine,
-  setFocusedMagazine,
-  page,
-  pages,
-  setPage,
-  setViewingRightPage,
-  viewingRightPage,
-  isPortrait,
-  currentMiddleMagazine,
-  lastPageRef,
-  lastViewingStateRef
+  lastCarouselMove,
+  dragDuration,
+  totalMovement
 }) => {
-  // Check if magazine is clickable in portrait mode
+  // Basic validation checks
   if (isPortrait && currentMiddleMagazine !== magazine) {
-    return;
+    console.log('[Gesture] Focus blocked - not middle magazine', { magazine, currentMiddleMagazine });
+    return false;
   }
 
-  const isSwipe = isSwipeInteraction({ deltaX, deltaY, isDrag });
-
-  if (!isSwipe) {
-    // Handle as click/tap
-    if (focusedMagazine !== magazine) {
-      setFocusedMagazine(magazine);
-    } else if (focusedMagazine === magazine) {
-      setFocusedMagazine(null);
-    }
-    return;
+  if (focusedMagazine && focusedMagazine !== magazine) {
+    console.log('[Gesture] Focus blocked - different magazine focused', { magazine, focusedMagazine });
+    return false;
   }
 
-  // Ignore swipes if not focused on this magazine
-  if (focusedMagazine && focusedMagazine !== magazine) return;
+  // Check for recent carousel movement
+  const timeSinceCarouselMove = Date.now() - lastCarouselMove.time;
+  const hasRecentCarouselMove = timeSinceCarouselMove < 500; // Increased to 500ms for safety
 
-  // Handle horizontal swipes
-  if (Math.abs(deltaX) > Math.abs(deltaY)) {
-    // Store state before closing from last page
-    if (page === pages.length - 1 && deltaX < -50) {
-      lastPageRef.current = page;
-      lastViewingStateRef.current = viewingRightPage;
-    }
-
-    if (isPortrait) {
-      const result = handlePageViewTransition({
-        deltaX,
-        isViewingRightPage: viewingRightPage,
-        currentPage: page,
-        maxPages: pages.length
-      });
-      
-      setPage(result.newPage);
-      setViewingRightPage(result.newViewingRightPage);
-    } else {
-      if (deltaX > 50) {
-        setPage((p) => Math.max(p - 1, 0));
-      } else if (deltaX < -50) {
-        if (page === pages.length - 1) {
-          setPage(0);
-          setFocusedMagazine(null);
-        } else {
-          setPage((p) => Math.min(p + 1, pages.length - 1));
-        }
-      }
-    }
+  if (hasRecentCarouselMove) {
+    console.log('[Gesture] Focus blocked - recent carousel movement', { 
+      timeSinceCarouselMove,
+      lastMovement: lastCarouselMove.movement 
+    });
+    return false;
   }
+
+  // Check if this is a valid tap
+  const isTap = isTapInteraction({ duration: dragDuration, totalMovement, isPortrait });
+  
+  return isTap;
 };
 
 /**
@@ -136,12 +95,22 @@ export const handleLibraryDrag = ({
   config,
   dragStartPosition,
   targetOffsetRef,
-  setIsDragging
+  setIsDragging,
+  setLastCarouselMove
 }) => {
   const totalMovement = Math.sqrt(dx * dx + dy * dy);
   
   if (totalMovement > config.dragThreshold) {
     const movement = isPortrait ? -dy * config.dragSensitivity : dx * config.dragSensitivity;
+    
+    // Update carousel movement tracking
+    if (totalMovement > 20) {
+      setLastCarouselMove({
+        time: Date.now(),
+        movement: totalMovement
+      });
+      console.log('[Gesture] Carousel movement detected', { totalMovement });
+    }
     
     if (isLast) {
       setIsDragging(false);
@@ -164,5 +133,127 @@ export const handleLibraryDrag = ({
     }
   } else if (isLast) {
     setIsDragging(false);
+  }
+}; 
+
+/**
+ * Handles magazine interaction (tap/click or swipe)
+ */
+export const handleMagazineInteraction = ({
+  deltaX,
+  deltaY,
+  isDrag,
+  magazine,
+  focusedMagazine,
+  setFocusedMagazine,
+  page,
+  pages,
+  setPage,
+  setViewingRightPage,
+  viewingRightPage,
+  isPortrait,
+  currentMiddleMagazine,
+  lastPageRef,
+  lastViewingStateRef,
+  lastCarouselMove,
+  dragDuration,
+  totalMovement
+}) => {
+  // Check if we can focus the magazine
+  const canFocus = canFocusMagazine({
+    magazine,
+    currentMiddleMagazine,
+    isPortrait,
+    focusedMagazine,
+    lastCarouselMove,
+    dragDuration,
+    totalMovement
+  });
+
+  if (canFocus) {
+    // Handle as click/tap
+    if (focusedMagazine !== magazine) {
+      console.log('[Gesture] Focusing magazine', { magazine, previousFocus: focusedMagazine });
+      // Store current state before focusing
+      if (page !== 0) {
+        lastPageRef.current = page;
+        lastViewingStateRef.current = viewingRightPage;
+      }
+      // Focus the new magazine
+      setFocusedMagazine(magazine);
+      // If we have a stored page, restore it, otherwise start at page 1
+      if (lastPageRef.current > 1) {
+        console.log('[Gesture] Restoring to last page', { lastPage: lastPageRef.current });
+        setPage(lastPageRef.current);
+        // Only restore viewing state in portrait mode
+        if (isPortrait) {
+          setViewingRightPage(lastViewingStateRef.current);
+        } else {
+          setViewingRightPage(false); // Always center in landscape
+        }
+      } else {
+        console.log('[Gesture] Starting at page 1');
+        setPage(1);
+        setViewingRightPage(false); // Always center in landscape
+      }
+    } else if (focusedMagazine === magazine) {
+      console.log('[Gesture] Unfocusing magazine', { magazine });
+      // Store state before unfocusing
+      if (page !== 0) {
+        lastPageRef.current = page;
+        lastViewingStateRef.current = viewingRightPage;
+      }
+      // Reset page to 0 and unfocus
+      setPage(0);
+      setViewingRightPage(false);
+      setFocusedMagazine(null);
+    }
+    return;
+  }
+
+  const isSwipe = isSwipeInteraction({ deltaX, deltaY, isDrag });
+  
+  // Handle swipes only if focused on this magazine
+  if (isSwipe && focusedMagazine === magazine) {
+    if (Math.abs(deltaX) > Math.abs(deltaY)) {
+      // Store state before closing from last page
+      if (page === pages.length - 1 && deltaX < -50) {
+        console.log('[Gesture] Storing last page state', { page, viewingRightPage });
+        lastPageRef.current = page;
+        lastViewingStateRef.current = viewingRightPage;
+      }
+
+      if (isPortrait) {
+        const result = handlePageViewTransition({
+          deltaX,
+          isViewingRightPage: viewingRightPage,
+          currentPage: page,
+          maxPages: pages.length
+        });
+        
+        console.log('[Gesture] Page transition in portrait', { 
+          deltaX,
+          currentPage: page,
+          newPage: result.newPage,
+          currentViewState: viewingRightPage,
+          newViewState: result.newViewingRightPage
+        });
+        
+        setPage(result.newPage);
+        setViewingRightPage(result.newViewingRightPage);
+      } else {
+        console.log('[Gesture] Page transition in landscape', { deltaX, page });
+        if (deltaX > 50) {
+          setPage((p) => Math.max(p - 1, 0));
+        } else if (deltaX < -50) {
+          if (page === pages.length - 1) {
+            setPage(0);
+            setFocusedMagazine(null);
+          } else {
+            setPage((p) => Math.min(p + 1, pages.length - 1));
+          }
+        }
+      }
+    }
   }
 }; 
