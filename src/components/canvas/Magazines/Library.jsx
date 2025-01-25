@@ -252,7 +252,6 @@ export const Library = (props) => {
           // Update last carousel movement time if there's significant movement
           if (totalMovement > 20) {
             lastCarouselMoveTimeRef.current = Date.now();
-            console.log('[Library] Carousel movement detected', { totalMovement, time: lastCarouselMoveTimeRef.current });
           }
         }
       },
