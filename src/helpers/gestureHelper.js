@@ -15,7 +15,6 @@ export const isTapInteraction = ({ duration, totalMovement, isPortrait }) => {
     (duration < 150 && totalMovement < 10) : 
     (duration < 150 && totalMovement < 10);
   
-  console.log('[Gesture] Tap detection', { duration, totalMovement, isPortrait, isTap });
   return isTap;
 };
 
@@ -29,7 +28,6 @@ export const isTapInteraction = ({ duration, totalMovement, isPortrait }) => {
  */
 export const isSwipeInteraction = ({ deltaX, deltaY, isDrag }) => {
   const isSwipe = isDrag && Math.abs(deltaX) > 5;
-  console.log('[Gesture] Swipe detection', { deltaX, deltaY, isDrag, isSwipe });
   return isSwipe;
 };
 
@@ -47,12 +45,10 @@ export const canFocusMagazine = ({
 }) => {
   // Basic validation checks
   if (isPortrait && currentMiddleMagazine !== magazine) {
-    console.log('[Gesture] Focus blocked - not middle magazine', { magazine, currentMiddleMagazine });
     return false;
   }
 
   if (focusedMagazine && focusedMagazine !== magazine) {
-    console.log('[Gesture] Focus blocked - different magazine focused', { magazine, focusedMagazine });
     return false;
   }
 
@@ -61,10 +57,6 @@ export const canFocusMagazine = ({
   const hasRecentCarouselMove = timeSinceCarouselMove < 500; // Increased to 500ms for safety
 
   if (hasRecentCarouselMove) {
-    console.log('[Gesture] Focus blocked - recent carousel movement', { 
-      timeSinceCarouselMove,
-      lastMovement: lastCarouselMove.movement 
-    });
     return false;
   }
 
@@ -109,7 +101,6 @@ export const handleLibraryDrag = ({
         time: Date.now(),
         movement: totalMovement
       });
-      console.log('[Gesture] Carousel movement detected', { totalMovement });
     }
     
     if (isLast) {
@@ -173,7 +164,6 @@ export const handleMagazineInteraction = ({
   if (canFocus) {
     // Handle as click/tap
     if (focusedMagazine !== magazine) {
-      console.log('[Gesture] Focusing magazine', { magazine, previousFocus: focusedMagazine });
       // Store current state before focusing
       if (page !== 0) {
         lastPageRef.current = page;
@@ -183,10 +173,6 @@ export const handleMagazineInteraction = ({
       setFocusedMagazine(magazine);
       // If we have a stored page, restore it, otherwise start at page 1
       if (lastPageRef.current > 0) {
-        console.log('[Gesture] Restoring to last page', { 
-          lastPage: lastPageRef.current,
-          lastViewState: lastViewingStateRef.current 
-        });
         setPage(lastPageRef.current);
         // Only restore viewing state in portrait mode
         if (isPortrait) {
@@ -195,12 +181,10 @@ export const handleMagazineInteraction = ({
           setViewingRightPage(false); // Always center in landscape
         }
       } else {
-        console.log('[Gesture] Starting at page 1');
         setPage(1);
         setViewingRightPage(false); // Always center in landscape
       }
     } else if (focusedMagazine === magazine) {
-      console.log('[Gesture] Unfocusing magazine', { magazine });
       // Store state before unfocusing
       if (page !== 0) {
         lastPageRef.current = page;
@@ -221,7 +205,6 @@ export const handleMagazineInteraction = ({
     if (Math.abs(deltaX) > Math.abs(deltaY)) {
       // Store state before closing from last page
       if (page === pages.length - 1 && deltaX < -50) {
-        console.log('[Gesture] Storing last page state', { page, viewingRightPage });
         lastPageRef.current = page;
         lastViewingStateRef.current = viewingRightPage;
       }
@@ -234,18 +217,9 @@ export const handleMagazineInteraction = ({
           maxPages: pages.length
         });
         
-        console.log('[Gesture] Page transition in portrait', { 
-          deltaX,
-          currentPage: page,
-          newPage: result.newPage,
-          currentViewState: viewingRightPage,
-          newViewState: result.newViewingRightPage
-        });
-        
         setPage(result.newPage);
         setViewingRightPage(result.newViewingRightPage);
       } else {
-        console.log('[Gesture] Page transition in landscape', { deltaX, page });
         if (deltaX > 50) {
           setPage((p) => Math.max(p - 1, 0));
         } else if (deltaX < -50) {

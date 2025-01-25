@@ -56,7 +56,6 @@ export const Magazine = ({
   // Handle orientation changes
   const handleOrientationChange = useCallback((newIsPortrait) => {
     if (!newIsPortrait && focusedMagazine === magazine) {
-      console.log('[Magazine] Orientation changed to landscape, resetting view state', { magazine });
       setViewingRightPage(false);
     }
   }, [focusedMagazine, magazine]);
@@ -81,7 +80,6 @@ export const Magazine = ({
   // Focus/unfocus logic
   useEffect(() => {
     if (focusedMagazine === magazine) {
-      console.log('[Magazine] Magazine focused', { magazine, page, lastPage: lastPageRef.current });
       // When focusing, check if we should restore state
       if (page === 0) {
         setPage(lastPageRef.current);
@@ -90,7 +88,6 @@ export const Magazine = ({
       // Update style magazine when focused
       setStyleMagazine(magazine);
     } else if (focusedMagazine !== magazine && page > 0) {
-      console.log('[Magazine] Magazine unfocused', { magazine, page, lastPage: lastPageRef.current });
       // Store state if we're not already closing (page !== 0)
       // Changed condition to store state for any page > 0
       if (page !== 0) {
@@ -106,12 +103,6 @@ export const Magazine = ({
   // Only update stored state when explicitly changing pages
   useEffect(() => {
     if (focusedMagazine === magazine && page > 0) {
-      console.log('[Magazine] Storing page state', { 
-        magazine, 
-        page, 
-        viewingRightPage,
-        lastPage: lastPageRef.current 
-      });
       lastPageRef.current = page;
       lastViewingStateRef.current = viewingRightPage;
     }
@@ -158,18 +149,15 @@ export const Magazine = ({
       onDragStart: ({ event }) => {
         // Check if magazine is clickable first
         if (isPortrait && currentMiddleMagazine !== magazine) {
-          console.log('[Magazine] Drag ignored - not middle magazine in portrait', { magazine, currentMiddleMagazine });
           return;
         }
         if (focusedMagazine && focusedMagazine !== magazine) {
-          console.log('[Magazine] Drag ignored - different magazine focused', { magazine, focusedMagazine });
           return;
         }
         
         event.stopPropagation();
         setIsDragging(true);
         dragStartTimeRef.current = Date.now();
-        console.log('[Magazine] Drag started', { magazine, time: dragStartTimeRef.current });
       },
       onDrag: ({ last, movement: [dx, dy], event }) => {
         // Check if magazine is clickable first
@@ -187,15 +175,6 @@ export const Magazine = ({
           const dragDuration = Date.now() - dragStartTimeRef.current;
           const totalMovement = Math.sqrt(dx * dx + dy * dy);
           
-          console.log('[Magazine] Drag ended', { 
-            magazine,
-            dragDuration,
-            totalMovement,
-            dx,
-            dy,
-            isTap: isTapInteraction({ duration: dragDuration, totalMovement, isPortrait })
-          });
-
           handleMagazineInteraction({
             deltaX: dx,
             deltaY: dy,
