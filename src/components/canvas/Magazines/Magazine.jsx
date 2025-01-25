@@ -117,62 +117,6 @@ export const Magazine = ({
   }, [page]);
 
   // Gestures (swipe vs click)
- const handleInteraction = ({ deltaX, deltaY, isDrag, magazine, focusedMagazine, setFocusedMagazine, page, pages, setPage, setViewingRightPage, viewingRightPage, isPortrait, layoutPosition }) => {
-    // Check if magazine is clickable first
-    if (isPortrait && currentMiddleMagazine !== magazine) {
-      return;
-    }
-
-    const isSwipe = isDrag && Math.abs(deltaX) > 5;
-
-        if (!isSwipe) {
-                // Handle as click
-
-      if (focusedMagazine !== magazine) {
-          setFocusedMagazine(magazine);
-      } else if (focusedMagazine === magazine) {
-        setFocusedMagazine(null);
-      }
-      return;
-        }
-    // Ignore swipes if not focused on this magazine
-    if (focusedMagazine && focusedMagazine !== magazine) return;
-
-    // Handle horizontal swipes
-    if (Math.abs(deltaX) > Math.abs(deltaY)) {
-// Store state before closing from last page
-      if (page === pages.length - 1 && deltaX < -50) {
-        lastPageRef.current = page;
-        lastViewingStateRef.current = viewingRightPage;
-      }
-
-      if (isPortrait) {
-        const result = handlePageViewTransition({
-          deltaX,
-          isViewingRightPage: viewingRightPage,
-          currentPage: page,
-          maxPages: pages.length
-        });
-        
-        setPage(result.newPage);
-        setViewingRightPage(result.newViewingRightPage);
-      } else {
- if (deltaX > 50) {
-          setPage((p) => Math.max(p - 1, 0));
-        } else if (deltaX < -50) {
-          if (page === pages.length - 1) {
-    setPage(0);
-            setFocusedMagazine(null);
-          } else {
-            setPage((p) => Math.min(p + 1, pages.length - 1));
-          }
-        }
-      }
-    }
-
-
-};
-
   const bind = useGesture(
     {
       onDragStart: ({ event }) => {
@@ -188,11 +132,12 @@ export const Magazine = ({
         setIsDragging(true);
         dragStartTimeRef.current = Date.now();
       },
-      onDrag: ({ last, movement: [dx, dy], event, tap, distance }) => {
+      onDrag: ({ last, movement: [dx, dy], event }) => {
         // Check if magazine is clickable first
         if (isPortrait && currentMiddleMagazine !== magazine) {
           return;
         }
+        
         if (focusedMagazine && focusedMagazine !== magazine) {
           return;
         }
@@ -203,55 +148,30 @@ export const Magazine = ({
           const dragDuration = Date.now() - dragStartTimeRef.current;
           const totalMovement = Math.sqrt(dx * dx + dy * dy);
           
-          const isTap = isTapInteraction({ duration: dragDuration, totalMovement, isPortrait });
-            
-          if (isTap) {
-            handleMagazineInteraction({
-              deltaX: 0,
-              deltaY: 0,
-              isDrag: false,
-              magazine,
-              focusedMagazine,
-              setFocusedMagazine,
-              page,
-              pages,
-              setPage,
-              setViewingRightPage,
-              viewingRightPage,
-              isPortrait,
-              currentMiddleMagazine,
-              lastPageRef,
-              lastViewingStateRef
-            });
-          } else {
-            handleMagazineInteraction({
-              deltaX: dx,
-              deltaY: dy,
-              isDrag: true,
-              magazine,
-              focusedMagazine,
-              setFocusedMagazine,
-              page,
-              pages,
-              setPage,
-              setViewingRightPage,
-              viewingRightPage,
-              isPortrait,
-              currentMiddleMagazine,
-              lastPageRef,
-              lastViewingStateRef
-            });
-          }
+          handleMagazineInteraction({
+            deltaX: dx,
+            deltaY: dy,
+            isDrag: !isTapInteraction({ duration: dragDuration, totalMovement, isPortrait }),
+            magazine,
+            focusedMagazine,
+            setFocusedMagazine,
+            page,
+            pages,
+            setPage,
+            setViewingRightPage,
+            viewingRightPage,
+            isPortrait,
+            currentMiddleMagazine,
+            lastPageRef,
+            lastViewingStateRef
+          });
+          
           setIsDragging(false);
         }
       },
     },
     { eventOptions: { passive: false } }
   );
-
-
-
-
 
   // Delayed flip logic
   useEffect(() => {

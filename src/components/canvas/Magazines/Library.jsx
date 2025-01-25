@@ -17,7 +17,7 @@ import {
 } from '@/helpers/atoms';
 import { calculateFocusPosition, updateMagazineCarousel, calculateMiddleMagazine, getSpacingConfig } from "@/helpers/positionHelper";
 import { useDeviceOrientation } from '@/helpers/deviceHelper'
-import { handleLibraryDrag } from "@/helpers/gestureHelper";
+import { handleLibraryDrag, isTapInteraction, isSwipeInteraction } from "@/helpers/gestureHelper";
 
 const picturesSmack = [
   "02Contents",
@@ -211,28 +211,40 @@ export const Library = (props) => {
   // Handle drag gestures
   const bind = useGesture(
     {
-      onDragStart: ({ event }) => {
+      onDragStart: ({ event, movement: [dx, dy], timeStamp }) => {
         if (focusedMagazine) return;
         event.stopPropagation();
-        setIsDragging(true);
         dragStartRef.current = targetOffsetRef.current;
         velocityRef.current = 0;
       },
-      onDrag: ({ event, movement: [dx, dy], last }) => {
+      onDrag: ({ event, movement: [dx, dy], last, first, timeStamp, initial: [ix, iy], xy: [x, y] }) => {
         if (focusedMagazine) return;
         event.stopPropagation();
+
+        const totalMovement = Math.sqrt(dx * dx + dy * dy);
+        const duration = timeStamp - (first ? timeStamp : dragStartRef.current);
         
-        const config = getSpacingConfig(isPortrait);
-        handleLibraryDrag({
-          isPortrait,
-          dx,
-          dy,
-          isLast: last,
-          config,
-          dragStartPosition: dragStartRef.current,
-          targetOffsetRef,
-          setIsDragging
-        });
+        // Check if this is a tap interaction
+        if (last && isTapInteraction({ duration, totalMovement, isPortrait })) {
+          setIsDragging(false);
+          return;
+        }
+
+        // Check if this is a swipe interaction
+        const isDrag = totalMovement > 5;
+        if (isSwipeInteraction({ deltaX: dx, deltaY: dy, isDrag })) {
+          const config = getSpacingConfig(isPortrait);
+          handleLibraryDrag({
+            isPortrait,
+            dx,
+            dy,
+            isLast: last,
+            config,
+            dragStartPosition: dragStartRef.current,
+            targetOffsetRef,
+            setIsDragging
+          });
+        }
       },
     },
     { drag: { filterTaps: true } }
