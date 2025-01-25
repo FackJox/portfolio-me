@@ -192,17 +192,17 @@ export const Page = ({ number, front, back, page, magazine, opened, pages, magaz
     const bones = skinnedMeshRef.current.skeleton.bones;
     for (let i = 0; i < bones.length; i++) {
       const target = i === 0 ? group.current : bones[i];
-
-      const insideCurveIntensity = i < 8 ? Math.cos(i * 0.2 + 0.15) : 0;
-      const outsideCurveIntensity = i >= 8 ? Math.cos(i * 0.3 + 0.09) : 0;
+      
+        const insideCurveIntensity = i < 8 ? Math.cos(i * 0.2 + 0.15) : 0;
+        const outsideCurveIntensity = i >= 8 ? Math.cos(i * 0.3 + 0.09) : 0;
       const turningIntensity =
         Math.sin(i * Math.PI  * (1 / bones.length)) * turningTime;
       let rotationAngle =
-        insideCurveStrength * insideCurveIntensity * targetRotation -
+          insideCurveStrength * insideCurveIntensity * targetRotation -
 
-        outsideCurveStrength * outsideCurveIntensity * targetRotation +
+          outsideCurveStrength * outsideCurveIntensity * targetRotation +
         
-        turningCurveStrength * turningIntensity * targetRotation;
+          turningCurveStrength * turningIntensity * targetRotation;
 
 
       let foldRotationAngle = degToRad(Math.sign(targetRotation) * 2);
@@ -213,16 +213,16 @@ export const Page = ({ number, front, back, page, magazine, opened, pages, magaz
           } else {
             rotationAngle = 0;
             foldRotationAngle = 0;
-          }
+      }
         }
-        easing.dampAngle(
-          target.rotation,
-          "y",
-          rotationAngle,
-          easingFactor,
-          delta
-        );
-  
+      easing.dampAngle(
+        target.rotation,
+        "y",
+        rotationAngle,
+        easingFactor,
+        delta
+      );
+
         const foldIntensity =
           i > 8
             ? Math.sin(i * Math.PI * (1 / bones.length) - 0.5) * turningTime
@@ -235,7 +235,7 @@ export const Page = ({ number, front, back, page, magazine, opened, pages, magaz
           delta
         );
       }
-    });
+  });
   
   
     return (

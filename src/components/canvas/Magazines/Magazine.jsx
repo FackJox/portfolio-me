@@ -29,7 +29,8 @@ export const Magazine = ({
   const [focusedMagazine, setFocusedMagazine] = useAtom(focusedMagazineAtom);
   const [, setStyleMagazine] = useAtom(styleMagazineAtom);
   const [highlighted, setHighlighted] = useState(false);
-  const [viewingRightPage, setViewingRightPage] = useAtom(magazineViewingStateAtom(magazine));
+  const viewingStateAtom = useMemo(() => magazineViewingStateAtom(magazine), [magazine]);
+  const [viewingRightPage, setViewingRightPage] = useAtom(viewingStateAtom);
   const [isDragging, setIsDragging] = useState(false);
   const dragStartTimeRef = useRef(0);
   const isHoveredRef = useRef(false);

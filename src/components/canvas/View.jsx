@@ -7,6 +7,7 @@ import { useAtom } from 'jotai'
 import { hdrLoadedAtom } from '@/helpers/atoms'
 import { hdrLoader, getHDRPath } from '@/helpers/textureLoader'
 import { useThree } from '@react-three/fiber'
+import {Perf} from 'r3f-perf'
 
 export const Common = ({ color }) => {
   const [hdrLoaded] = useAtom(hdrLoadedAtom)
@@ -23,7 +24,7 @@ export const Common = ({ color }) => {
     <Suspense fallback={null}>
       {color && <color attach='background' args={[color]} />}
       <PerspectiveCamera makeDefault fov={40} position={[0, 0, 10]} />
-      
+      <Perf />
       {hdrLoaded && (
         <Environment 
           map={hdrLoader.loadedHDR}
