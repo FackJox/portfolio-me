@@ -9,6 +9,7 @@ import * as THREE from "three";
 import { styleMagazineAtom, magazineViewingStateAtom } from '@/helpers/atoms';
 import { performLerp, handlePageViewTransition, updateMagazineCarousel, calculatePageViewOffset, getFloatConfig, getButtonPosition, isMiddleMagazine, hoverMagazine } from "@/helpers/positionHelper";
 import { useDeviceOrientation } from '@/helpers/deviceHelper'
+import { handleMagazineInteraction, isTapInteraction } from "@/helpers/gestureHelper";
 
 export const Magazine = ({
   pictures,
@@ -198,18 +199,14 @@ export const Magazine = ({
 
         if (event.preventDefault) event.preventDefault();
         
-        // Handle tap/click in portrait mode with less movement tolerance
         if (last) {
           const dragDuration = Date.now() - dragStartTimeRef.current;
           const totalMovement = Math.sqrt(dx * dx + dy * dy);
           
-          // In portrait mode, be more lenient with what counts as a tap
-          const isTap = isPortrait ? 
-            (dragDuration < 200 && totalMovement < 20) : 
-            (dragDuration < 150 && totalMovement < 10);
+          const isTap = isTapInteraction({ duration: dragDuration, totalMovement, isPortrait });
             
           if (isTap) {
-            handleInteraction({
+            handleMagazineInteraction({
               deltaX: 0,
               deltaY: 0,
               isDrag: false,
@@ -222,10 +219,12 @@ export const Magazine = ({
               setViewingRightPage,
               viewingRightPage,
               isPortrait,
-              layoutPosition
+              currentMiddleMagazine,
+              lastPageRef,
+              lastViewingStateRef
             });
           } else {
-            handleInteraction({
+            handleMagazineInteraction({
               deltaX: dx,
               deltaY: dy,
               isDrag: true,
@@ -238,7 +237,9 @@ export const Magazine = ({
               setViewingRightPage,
               viewingRightPage,
               isPortrait,
-              layoutPosition
+              currentMiddleMagazine,
+              lastPageRef,
+              lastViewingStateRef
             });
           }
           setIsDragging(false);

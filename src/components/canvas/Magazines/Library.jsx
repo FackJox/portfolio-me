@@ -17,6 +17,7 @@ import {
 } from '@/helpers/atoms';
 import { calculateFocusPosition, updateMagazineCarousel, calculateMiddleMagazine, getSpacingConfig } from "@/helpers/positionHelper";
 import { useDeviceOrientation } from '@/helpers/deviceHelper'
+import { handleLibraryDrag } from "@/helpers/gestureHelper";
 
 const picturesSmack = [
   "02Contents",
@@ -222,33 +223,16 @@ export const Library = (props) => {
         event.stopPropagation();
         
         const config = getSpacingConfig(isPortrait);
-        const totalMovement = Math.sqrt(dx * dx + dy * dy);
-        
-        if (totalMovement > config.dragThreshold) {
-          const movement = isPortrait ? -dy * config.dragSensitivity : dx * config.dragSensitivity;
-          
-          if (last) {
-            setIsDragging(false);
-            
-            // Calculate the nearest snap position
-            const currentPosition = Math.round(dragStartRef.current / config.magazine);
-            
-            // Determine direction based on the total movement
-            const deltaMovement = isPortrait ? -dy : dx;
-            if (Math.abs(deltaMovement) > config.threshold) {
-              const targetPosition = currentPosition + (deltaMovement > 0 ? 1 : -1);
-              targetOffsetRef.current = targetPosition * config.magazine;
-            } else {
-              targetOffsetRef.current = currentPosition * config.magazine;
-            }
-          } else {
-            // During drag, snap to the nearest position
-            const newOffset = dragStartRef.current + movement;
-            targetOffsetRef.current = Math.round(newOffset / config.magazine) * config.magazine;
-          }
-        } else if (last) {
-          setIsDragging(false);
-        }
+        handleLibraryDrag({
+          isPortrait,
+          dx,
+          dy,
+          isLast: last,
+          config,
+          dragStartPosition: dragStartRef.current,
+          targetOffsetRef,
+          setIsDragging
+        });
       },
     },
     { drag: { filterTaps: true } }
