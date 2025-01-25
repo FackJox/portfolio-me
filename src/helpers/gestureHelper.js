@@ -182,8 +182,11 @@ export const handleMagazineInteraction = ({
       // Focus the new magazine
       setFocusedMagazine(magazine);
       // If we have a stored page, restore it, otherwise start at page 1
-      if (lastPageRef.current > 1) {
-        console.log('[Gesture] Restoring to last page', { lastPage: lastPageRef.current });
+      if (lastPageRef.current > 0) {
+        console.log('[Gesture] Restoring to last page', { 
+          lastPage: lastPageRef.current,
+          lastViewState: lastViewingStateRef.current 
+        });
         setPage(lastPageRef.current);
         // Only restore viewing state in portrait mode
         if (isPortrait) {

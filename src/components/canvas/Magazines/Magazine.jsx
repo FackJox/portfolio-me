@@ -1,6 +1,6 @@
 // portfolio-me/src/components/canvas/Magazines/Magazine.jsx
 import { useAtom } from "jotai";
-import { useEffect, useState, useRef, useMemo } from "react";
+import { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import { Page } from "./Page";
 import { Float, useCursor, useTexture } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
@@ -23,8 +23,6 @@ export const Magazine = ({
   lastCarouselMove,
   ...props
 }) => {
-  const isPortrait = useDeviceOrientation();
-  
   // Atoms & State
   const [page, setPage] = useAtom(pageAtom);
   const [delayedPage, setDelayedPage] = useState(page);
@@ -34,6 +32,9 @@ export const Magazine = ({
   const viewingStateAtom = useMemo(() => magazineViewingStateAtom(magazine), [magazine]);
   const [viewingRightPage, setViewingRightPage] = useAtom(viewingStateAtom);
   const [isDragging, setIsDragging] = useState(false);
+  const [currentMiddleMagazine] = useAtom(styleMagazineAtom);
+
+  // Refs
   const dragStartTimeRef = useRef(0);
   const dragStartRef = useRef(0);
   const velocityRef = useRef(0);
@@ -41,10 +42,6 @@ export const Magazine = ({
   const lastMovementTimeRef = useRef(0);
   const lastMovementAmountRef = useRef(0);
   const isHoveredRef = useRef(false);
-    const [currentMiddleMagazine] = useAtom(styleMagazineAtom);
-
-
-  // Refs
   const groupRef = useRef();
   const floatRef = useRef();
   const floatNullifyRef = useRef();
@@ -55,6 +52,31 @@ export const Magazine = ({
   const initialPositionRef = useRef(null);
   const initialQuaternionRef = useRef(null);
   const previousViewingRightPageRef = useRef(false);
+
+  // Handle orientation changes
+  const handleOrientationChange = useCallback((newIsPortrait) => {
+    if (!newIsPortrait && focusedMagazine === magazine) {
+      console.log('[Magazine] Orientation changed to landscape, resetting view state', { magazine });
+      setViewingRightPage(false);
+    }
+  }, [focusedMagazine, magazine]);
+
+  const isPortrait = useDeviceOrientation({ onOrientationChange: handleOrientationChange });
+
+  // Delayed flip logic
+  useEffect(() => {
+    let timeout;
+    const animatePageFlip = () => {
+      setDelayedPage((current) => {
+        if (current === page) return current;
+        // Flip exactly 1 page at a time every 150ms
+        timeout = setTimeout(animatePageFlip, 150);
+        return current < page ? current + 1 : current - 1;
+      });
+    };
+    animatePageFlip();
+    return () => clearTimeout(timeout);
+  }, [page]);
 
   // Focus/unfocus logic
   useEffect(() => {
@@ -69,9 +91,9 @@ export const Magazine = ({
       setStyleMagazine(magazine);
     } else if (focusedMagazine !== magazine && page > 0) {
       console.log('[Magazine] Magazine unfocused', { magazine, page, lastPage: lastPageRef.current });
-      // Only store state if we're not already closing (page !== 0)
-      // and we haven't already stored a state (lastPageRef.current === 1)
-      if (page !== 0 && lastPageRef.current === 1) {
+      // Store state if we're not already closing (page !== 0)
+      // Changed condition to store state for any page > 0
+      if (page !== 0) {
         lastPageRef.current = page;
         lastViewingStateRef.current = viewingRightPage;
       }
@@ -84,6 +106,12 @@ export const Magazine = ({
   // Only update stored state when explicitly changing pages
   useEffect(() => {
     if (focusedMagazine === magazine && page > 0) {
+      console.log('[Magazine] Storing page state', { 
+        magazine, 
+        page, 
+        viewingRightPage,
+        lastPage: lastPageRef.current 
+      });
       lastPageRef.current = page;
       lastViewingStateRef.current = viewingRightPage;
     }
@@ -195,21 +223,6 @@ export const Magazine = ({
     },
     { eventOptions: { passive: false } }
   );
-
-  // Delayed flip logic
-  useEffect(() => {
-    let timeout;
-    const animatePageFlip = () => {
-      setDelayedPage((current) => {
-        if (current === page) return current;
-        // Flip exactly 1 page at a time every 150ms
-        timeout = setTimeout(animatePageFlip, 150);
-        return current < page ? current + 1 : current - 1;
-      });
-    };
-    animatePageFlip();
-    return () => clearTimeout(timeout);
-  }, [page]);
 
   // Set initial position on mount
   useEffect(() => {
