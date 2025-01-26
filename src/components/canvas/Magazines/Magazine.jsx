@@ -284,7 +284,7 @@ export const Magazine = ({
     <group ref={groupRef} userData={{ magazine }}>
       {/* Invisible bounding box for interaction */}
       <mesh
-        position={[page === 0 ? 0.65 : 0, 0, 0]}
+        position={[page === 0 ? 0.65 : 0, 0, -0.1]}
         geometry={new THREE.BoxGeometry(
           page === 0 ? 1.25 : 2.5, // Width: smaller when closed
           page === 0 ? 1.5 : 1.5, // Height: smaller when closed
@@ -293,7 +293,10 @@ export const Magazine = ({
         material={new THREE.MeshBasicMaterial({
           transparent: true,
           opacity: 0,
+          depthWrite: false,
+          depthTest: false,
         })}
+        renderOrder={-1}
        onPointerEnter={(e) => {
           e.stopPropagation();
           // Only set highlighted and isHovered if this magazine is clickable

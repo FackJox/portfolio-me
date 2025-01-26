@@ -1,9 +1,7 @@
 
 ---
 Bugs
-3d label buttons jumping back to incorrect Positioning
-HTML Text occlusion
-
+On portrait landscape orientation change the viewing left/right page state is not saved - save state in an atom and recall the state in deviceHelper to restore
 ---
 Performance
 suspense all pages until the magazine is selected in focus mode

@@ -10,8 +10,10 @@ export const VagueButton = () => {
       anchorX="center"
       anchorY="middle"
       font="/fonts/Vogue.ttf"
-             letterSpacing={-0.07}
-
+      letterSpacing={-0.07}
+      receiveShadow={false}
+      castShadow={false}
+      renderOrder={1}
     >
       ABOUT
     </Text>
@@ -27,7 +29,10 @@ export const EngineerButton = () => {
       anchorX="center"
       anchorY="middle"
       font="/fonts/HKGrotesk-SemiBold.otf"
-       letterSpacing={-0.13}
+      letterSpacing={-0.13}
+      receiveShadow={false}
+      castShadow={false}
+      renderOrder={1}
     >
       TECHNICAL
     </Text>
@@ -44,6 +49,9 @@ export const SmackButton = () => {
         anchorX="right"
         anchorY="middle"
         font="/fonts/lemon-regular.otf"
+        receiveShadow={false}
+        castShadow={false}
+        renderOrder={1}
       >
         CREA
       </Text>
@@ -54,6 +62,9 @@ export const SmackButton = () => {
         anchorX="left"
         anchorY="middle"
         font="/fonts/lemon-wide.otf"
+        receiveShadow={false}
+        castShadow={false}
+        renderOrder={1}
       >
         TIVE
       </Text>
