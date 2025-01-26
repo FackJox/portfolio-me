@@ -1,33 +1,63 @@
-import { Html } from '@react-three/drei'
+import { Text } from '@react-three/drei'
+import { group } from '@react-three/fiber'
 
 export const VagueButton = () => {
   return (
-    <Html transform scale={0.5}>
-      <button className='flex-1 py-2 text-xs text-[#F7F6F7] font-[HKGrotesk-Regular] tracking-[-0.12em] text-center align-middle'>
-        ABOUT
-      </button>
-    </Html>
+    <Text
+      position={[0.0, -0.03, 0]}
+      fontSize={0.35}
+      color="#F7F6F7"
+      anchorX="center"
+      anchorY="middle"
+      font="/fonts/Vogue.ttf"
+             letterSpacing={-0.07}
+
+    >
+      ABOUT
+    </Text>
   )
 }
 
 export const EngineerButton = () => {
   return (
-    <Html transform scale={0.5}>
-      <button className='flex-1 py-2 text-[#F7F6F7]  font-[HKGrotesk-SemiBold] text-xs tracking-[-0.12em] text-center align-middle'>
-        TECHNICAL
-      </button>
-    </Html>
+    <Text
+      position={[0, -0.03, 0]}
+      fontSize={0.27}
+      color="#F7F6F7"
+      anchorX="center"
+      anchorY="middle"
+      font="/fonts/HKGrotesk-SemiBold.otf"
+       letterSpacing={-0.13}
+    >
+      TECHNICAL
+    </Text>
   )
 }
 
 export const SmackButton = () => {
   return (
-    <Html transform scale={0.5}>
-      <button className='flex-1 py-1.5 text-[#F7F6F7] text-sm tracking-[0.04em] text-center align-middle'>
-        <span className='font-[lemon-regular]'>CREATI</span>
-        <span className='font-[lemon-wide]'>VE</span>
-      </button>
-    </Html>
+    <group position={[0, 0, 0]}>
+      <Text
+        position={[-0.1, -0.05, 0]}
+        fontSize={0.4}
+        color="#F7F6F7"
+        anchorX="right"
+        anchorY="middle"
+        font="/fonts/lemon-regular.otf"
+      >
+        CREA
+      </Text>
+      <Text
+        position={[-0.1, -0.05, 0]}
+        fontSize={0.4}
+        color="#F7F6F7"
+        anchorX="left"
+        anchorY="middle"
+        font="/fonts/lemon-wide.otf"
+      >
+        TIVE
+      </Text>
+    </group>
   )
 }
 

@@ -12,7 +12,6 @@ suspense all pages until the magazine is selected in focus mode
 Styling
 Blueprint effects on engineer background
 repeated text on smack background
-In landscape mode lerp the magazines slightly towards the center of the screen when they have been hovered
 Add brief tool tips for gesture use, swipe click
 ---
 
