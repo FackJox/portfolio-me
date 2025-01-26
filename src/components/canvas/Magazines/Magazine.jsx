@@ -254,7 +254,7 @@ export const Magazine = ({
           viewingRightPage,
           page,
           delayedPage,
-          lerpFactor: 0.03
+          lerpFactor: getSpacingConfig(isPortrait).lerp.pageView
         });
       }
 
@@ -292,7 +292,7 @@ export const Magazine = ({
       });
 
       // Lerp to target position
-      buttonRef.current.position.lerp(targetPos, 0.1);
+      buttonRef.current.position.lerp(targetPos, getSpacingConfig(isPortrait).lerp.button.text);
 
       // Update button rotation when hovered
       if (isHoveredRef.current) {

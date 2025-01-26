@@ -2,11 +2,15 @@ import { Text } from '@react-three/drei'
 import * as THREE from 'three'
 import { useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
+import { getSpacingConfig } from '@/helpers/positionHelper'
+import { useDeviceOrientation } from '@/helpers/deviceHelper'
 
 export const VagueButton = ({ highlighted }) => {
   const textRef = useRef()
   const colorRef = useRef(new THREE.Color("#F7F6F7"))
   const baseSize = 0.35
+  const isPortrait = useDeviceOrientation()
+  const config = getSpacingConfig(isPortrait)
   
   useFrame(() => {
     if (!textRef.current) return
@@ -14,12 +18,12 @@ export const VagueButton = ({ highlighted }) => {
     textRef.current.fontSize = THREE.MathUtils.lerp(
       textRef.current.fontSize,
       highlighted ? baseSize * 1.5 : baseSize,
-      0.1
+      config.lerp.button.text
     )
     
     // Lerp color
     const targetColor = new THREE.Color(highlighted ? "white" : "#F7F6F7")
-    colorRef.current.lerp(targetColor, 0.1)
+    colorRef.current.lerp(targetColor, config.lerp.button.color)
     if (textRef.current.material) {
       textRef.current.material.color.copy(colorRef.current)
     }
@@ -48,6 +52,8 @@ export const EngineerButton = ({ highlighted }) => {
   const textRef = useRef()
   const colorRef = useRef(new THREE.Color("#F7F6F7"))
   const baseSize = 0.25
+  const isPortrait = useDeviceOrientation()
+  const config = getSpacingConfig(isPortrait)
   
   useFrame(() => {
     if (!textRef.current) return
@@ -55,12 +61,12 @@ export const EngineerButton = ({ highlighted }) => {
     textRef.current.fontSize = THREE.MathUtils.lerp(
       textRef.current.fontSize,
       highlighted ? baseSize * 1.5 : baseSize,
-      0.1
+      config.lerp.button.text
     )
     
     // Lerp color
     const targetColor = new THREE.Color(highlighted ? "#FFB79C" : "#F7F6F7")
-    colorRef.current.lerp(targetColor, 0.1)
+    colorRef.current.lerp(targetColor, config.lerp.button.color)
     if (textRef.current.material) {
       textRef.current.material.color.copy(colorRef.current)
     }
@@ -90,6 +96,8 @@ export const SmackButton = ({ highlighted }) => {
   const rightTextRef = useRef()
   const colorRef = useRef(new THREE.Color("#F7F6F7"))
   const baseSize = 0.3
+  const isPortrait = useDeviceOrientation()
+  const config = getSpacingConfig(isPortrait)
   
   useFrame(() => {
     if (!leftTextRef.current || !rightTextRef.current) return
@@ -98,17 +106,17 @@ export const SmackButton = ({ highlighted }) => {
     leftTextRef.current.fontSize = THREE.MathUtils.lerp(
       leftTextRef.current.fontSize,
       targetSize,
-      0.1
+      config.lerp.button.text
     )
     rightTextRef.current.fontSize = THREE.MathUtils.lerp(
       rightTextRef.current.fontSize,
       targetSize,
-      0.1
+      config.lerp.button.text
     )
     
     // Lerp color
     const targetColor = new THREE.Color(highlighted ? "#FABE7F" : "#F7F6F7")
-    colorRef.current.lerp(targetColor, 0.1)
+    colorRef.current.lerp(targetColor, config.lerp.button.color)
     if (leftTextRef.current.material && rightTextRef.current.material) {
       leftTextRef.current.material.color.copy(colorRef.current)
       rightTextRef.current.material.color.copy(colorRef.current)

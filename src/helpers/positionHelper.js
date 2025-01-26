@@ -28,7 +28,15 @@ const SPACING_CONFIG = {
       width: 3,
       viewOffset: 3.8 // divisor for page view offset
     },
-    dragThreshold: 5 // minimum movement to trigger drag
+    dragThreshold: 5, // minimum movement to trigger drag
+    lerp: {
+      button: {
+        text: 0.1,
+        color: 0.1
+      },
+      pageView: 0.03,
+      carousel: 0.1
+    }
   },
   landscape: {
     magazine: 2,
@@ -81,7 +89,15 @@ const SPACING_CONFIG = {
       width: 3,
       viewOffset: 3.8
     },
-    dragThreshold: 5
+    dragThreshold: 5,
+    lerp: {
+      button: {
+        text: 0.1,
+        color: 0.1
+      },
+      pageView: 0.03,
+      carousel: 0.1
+    }
   }
 };
 
@@ -286,9 +302,10 @@ export const updateMagazineCarousel = ({
   currentMiddleMagazine,
   setMiddleMagazine,
   setPage,
-  lerpFactor = 0.1
 }) => {
   if (!magazineRef) return;
+
+  const config = getSpacingConfig(isPortrait);
 
   // Initialize needsJump ref if it doesn't exist
   if (!magazineRef.needsJump) {
@@ -313,7 +330,7 @@ export const updateMagazineCarousel = ({
     setPage(1);
   }
 
-  const { magazine: spacing, total: totalSpacing } = getSpacingConfig(isPortrait);
+  const { magazine: spacing, total: totalSpacing } = config;
   let finalPosition = new THREE.Vector3();
 
   if (focusedMagazine !== magazine) {
@@ -367,25 +384,25 @@ export const updateMagazineCarousel = ({
           magazineRef.needsJump = false;
         } else {
           // After jump, interpolate to final position
-          magazineRef.position.lerp(finalPosition, lerpFactor);
+          magazineRef.position.lerp(finalPosition, config.lerp.carousel);
         }
       } else {
         // Reset needsJump when not wrapping
         magazineRef.needsJump = true;
         // Smooth interpolation for adjacent positions
-        magazineRef.position.lerp(finalPosition, lerpFactor);
+        magazineRef.position.lerp(finalPosition, config.lerp.carousel);
       }
     } else {
       // Landscape mode positioning
       switch (magazine) {
         case 'engineer':
-          finalPosition.set(-2.5 - (dragOffset > 0 ? 1 : 0) + (page > 0 ? 0.65 : 0), getSpacingConfig(isPortrait).positions.engineer.y, 4.5 - (dragOffset > 0 ? 1 : 0));
+          finalPosition.set(-2.5 - (dragOffset > 0 ? 1 : 0) + (page > 0 ? 0.65 : 0), config.positions.engineer.y, 4.5 - (dragOffset > 0 ? 1 : 0));
           break;
         case 'vague':
-          finalPosition.set(-0.5 + (page > 0 ? 0.65 : 0), getSpacingConfig(isPortrait).positions.vague.y, 4.5 - (page > 0 ? 1 : 0));
+          finalPosition.set(-0.5 + (page > 0 ? 0.65 : 0), config.positions.vague.y, 4.5 - (page > 0 ? 1 : 0));
           break;
         case 'smack':
-          finalPosition.set(1.5 + (dragOffset > 0 ? 1 : 0) + (page > 0 ? 0.65 : 0), getSpacingConfig(isPortrait).positions.smack.y, 4.5 - (dragOffset > 0 ? 1 : 0));
+          finalPosition.set(1.5 + (dragOffset > 0 ? 1 : 0) + (page > 0 ? 0.65 : 0), config.positions.smack.y, 4.5 - (dragOffset > 0 ? 1 : 0));
           break;
       }
     }
@@ -396,7 +413,7 @@ export const updateMagazineCarousel = ({
 
   // Apply position with lerping
   if (magazineRef.position) {
-    magazineRef.position.lerp(finalPosition, lerpFactor);
+    magazineRef.position.lerp(finalPosition, config.lerp.carousel);
   } else {
     magazineRef.position = finalPosition.clone();
   }
