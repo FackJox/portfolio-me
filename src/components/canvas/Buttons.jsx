@@ -53,7 +53,7 @@ export const SmackButton = ({ highlighted }) => {
         anchorY="middle"
         font="/fonts/lemon-regular.otf"
         material={new THREE.MeshBasicMaterial({
-                  toneMapped: false,
+          toneMapped: false,
           color: highlighted ? "#FABE7F" : "#F7F6F7",
           // emissive: new THREE.Color("orange"),
           // emissiveIntensity: highlighted ? 10.22 : 0
@@ -69,7 +69,7 @@ export const SmackButton = ({ highlighted }) => {
         font="/fonts/lemon-wide.otf"
         material={new THREE.MeshBasicMaterial({
           color: highlighted ? "#FABE7F" : "#F7F6F7",
-                  toneMapped: false,
+          toneMapped: false,
           // emissive: new THREE.Color("orange"),
           // emissiveIntensity: highlighted ? 10.22 : 0
         })}
