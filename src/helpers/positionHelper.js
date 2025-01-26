@@ -1,34 +1,14 @@
 // portfolio-me/src/utils/positionHelper.js
 import * as THREE from 'three';
 
-// Spacing configuration
-const SPACING_CONFIG = {
+// Animation configuration for transitions and effects
+const ANIMATION_CONFIG = {
   portrait: {
-    magazine: 2.5,
-    total: 7.5, // magazine * 3
-    threshold: 20, // movement threshold for swipe detection
-    dragSensitivity: 0.01, // multiplier for drag movement
-    positions: {
-      x: -0.65,
-      y: 0,
-      z: 3.5,
-      zOffset: -2.5, // z-offset for middle magazine
-      pageOpenOffset: 0.65 // x-offset when page is open
-    },
     float: {
       intensity: 0.5,
       speed: 0.7,
       rotationIntensity: 2
     },
-    camera: {
-      zDistance: 2.8,
-      xOffset: -0.003
-    },
-    geometry: {
-      width: 3,
-      viewOffset: 3.8 // divisor for page view offset
-    },
-    dragThreshold: 5, // minimum movement to trigger drag
     lerp: {
       button: {
         text: 0.1,
@@ -36,7 +16,31 @@ const SPACING_CONFIG = {
       },
       pageView: 0.03,
       carousel: 0.1
+    }
+  },
+  landscape: {
+    float: {
+      intensity: 0.5,
+      speed: 0.7,
+      rotationIntensity: 2
     },
+    lerp: {
+      button: {
+        text: 0.1,
+        color: 0.1
+      },
+      pageView: 0.03,
+      carousel: 0.1
+    }
+  }
+};
+
+// Gesture and interaction configuration
+const GESTURE_CONFIG = {
+  portrait: {
+    threshold: 20, // movement threshold for swipe detection
+    dragSensitivity: 0.01, // multiplier for drag movement
+    dragThreshold: 5, // minimum movement to trigger drag
     interaction: {
       tap: {
         maxDuration: 150, // ms
@@ -57,10 +61,54 @@ const SPACING_CONFIG = {
     }
   },
   landscape: {
-    magazine: 2,
-    total: 6, // magazine * 3
     threshold: 20,
     dragSensitivity: 0.01,
+    dragThreshold: 5,
+    interaction: {
+      tap: {
+        maxDuration: 150, // ms
+        maxMovement: 10, // pixels
+      },
+      swipe: {
+        minMovement: 5, // pixels
+        pageThreshold: 50, // pixels for page turn
+        carouselThreshold: 20, // pixels for carousel movement
+      },
+      focus: {
+        debounceTime: 500, // ms to wait after carousel move before allowing focus
+      },
+      carousel: {
+        middleThreshold: 0.3, // threshold for determining middle magazine
+        wrapThreshold: 1.5, // threshold for wrapping magazines
+      }
+    }
+  }
+};
+
+// Spacing and positioning configuration
+const SPACING_CONFIG = {
+  portrait: {
+    magazine: 2.5,
+    total: 7.5, // magazine * 3
+    positions: {
+      x: -0.65,
+      y: 0,
+      z: 3.5,
+      zOffset: 2.5, // z-offset for middle magazine
+      pageOpenOffset: 0.65 // x-offset when page is open
+    },
+    camera: {
+      zDistance: 2.8,
+      xOffset: -0.003
+    },
+    geometry: {
+      width: 3,
+      viewOffset: 3.8 // divisor for page view offset
+    }
+  },
+  landscape: {
+    magazine: 2,
+    total: 6, // magazine * 3
     zOffset: 2.5, // z-offset for hover effect
     positions: {
       engineer: {
@@ -94,11 +142,6 @@ const SPACING_CONFIG = {
         }
       }
     },
-    float: {
-      intensity: 0.5,
-      speed: 0.7,
-      rotationIntensity: 2
-    },
     camera: {
       zDistance: 2.7,
       xOffset: -0.15
@@ -106,33 +149,6 @@ const SPACING_CONFIG = {
     geometry: {
       width: 3,
       viewOffset: 3.8
-    },
-    dragThreshold: 5,
-    lerp: {
-      button: {
-        text: 0.1,
-        color: 0.1
-      },
-      pageView: 0.03,
-      carousel: 0.1
-    },
-    interaction: {
-      tap: {
-        maxDuration: 150, // ms
-        maxMovement: 10, // pixels
-      },
-      swipe: {
-        minMovement: 5, // pixels
-        pageThreshold: 50, // pixels for page turn
-        carouselThreshold: 20, // pixels for carousel movement
-      },
-      focus: {
-        debounceTime: 500, // ms to wait after carousel move before allowing focus
-      },
-      carousel: {
-        middleThreshold: 0.3, // threshold for determining middle magazine
-        wrapThreshold: 1.5, // threshold for wrapping magazines
-      }
     }
   }
 };
@@ -144,6 +160,24 @@ const SPACING_CONFIG = {
  */
 export const getSpacingConfig = (isPortrait) => {
   return isPortrait ? SPACING_CONFIG.portrait : SPACING_CONFIG.landscape;
+};
+
+/**
+ * Gets the appropriate animation configuration based on view mode
+ * @param {boolean} isPortrait - Whether the view is in portrait mode
+ * @returns {Object} The animation configuration
+ */
+export const getAnimationConfig = (isPortrait) => {
+  return isPortrait ? ANIMATION_CONFIG.portrait : ANIMATION_CONFIG.landscape;
+};
+
+/**
+ * Gets the appropriate gesture configuration based on view mode
+ * @param {boolean} isPortrait - Whether the view is in portrait mode
+ * @returns {Object} The gesture configuration
+ */
+export const getGestureConfig = (isPortrait) => {
+  return isPortrait ? GESTURE_CONFIG.portrait : GESTURE_CONFIG.landscape;
 };
 
 /**
@@ -354,7 +388,9 @@ export const updateMagazineCarousel = ({
 }) => {
   if (!magazineRef) return;
 
-  const config = getSpacingConfig(isPortrait);
+  const spacingConfig = getSpacingConfig(isPortrait);
+  const animConfig = getAnimationConfig(isPortrait);
+  const gestureConfig = getGestureConfig(isPortrait);
 
   // Initialize needsJump ref if it doesn't exist
   if (!magazineRef.needsJump) {
@@ -379,7 +415,7 @@ export const updateMagazineCarousel = ({
     setPage(1);
   }
 
-  const { magazine: spacing, total: totalSpacing } = config;
+  const { magazine: spacing, total: totalSpacing } = spacingConfig;
   let finalPosition = new THREE.Vector3();
 
   if (focusedMagazine !== magazine) {
@@ -390,25 +426,25 @@ export const updateMagazineCarousel = ({
       
       // Wrap the offset instantly
       const wrapOffset = (offset, total) => {
-        return ((offset % total) + total * config.interaction.carousel.wrapThreshold) % total - total / 2;
+        return ((offset % total) + total * gestureConfig.interaction.carousel.wrapThreshold) % total - total / 2;
       };
       
       const wrappedOffset = wrapOffset(magazineOffset, totalSpacing);
       
       // Calculate target position exactly as specified
       finalPosition.set(
-        -0.65 + (page > 0 ? 0.65 : 0),
+        spacingConfig.positions.x + (page > 0 ? spacingConfig.positions.pageOpenOffset : 0),
         wrappedOffset,
-        3.5
+        spacingConfig.positions.z
       );
 
       // Bring current middle magazine closer to camera
       if (currentMiddleMagazine === magazine) {
-        finalPosition.z -= -2.5;
+        finalPosition.z += spacingConfig.positions.zOffset;
       }
       
       // Check if we're wrapping around
-      const isWrapping = Math.abs(magazineRef.position.y - wrappedOffset) > spacing * config.interaction.carousel.wrapThreshold;
+      const isWrapping = Math.abs(magazineRef.position.y - wrappedOffset) > spacing * gestureConfig.interaction.carousel.wrapThreshold;
       
       if (isWrapping) {
         const currentY = magazineRef.position.y;
@@ -424,25 +460,38 @@ export const updateMagazineCarousel = ({
           magazineRef.needsJump = false;
         } else {
           // After jump, interpolate to final position
-          magazineRef.position.lerp(finalPosition, config.lerp.carousel);
+          magazineRef.position.lerp(finalPosition, animConfig.lerp.carousel);
         }
       } else {
         // Reset needsJump when not wrapping
         magazineRef.needsJump = true;
         // Smooth interpolation for adjacent positions
-        magazineRef.position.lerp(finalPosition, config.lerp.carousel);
+        magazineRef.position.lerp(finalPosition, animConfig.lerp.carousel);
       }
     } else {
       // Landscape mode positioning
+      const magazineConfig = spacingConfig.positions[magazine];
       switch (magazine) {
         case 'engineer':
-          finalPosition.set(-2.5 - (dragOffset > 0 ? 1 : 0) + (page > 0 ? 0.65 : 0), config.positions.engineer.y, 4.5 - (dragOffset > 0 ? 1 : 0));
+          finalPosition.set(
+            magazineConfig.x + (dragOffset > 0 ? magazineConfig.dragOffset : 0) + (page > 0 ? spacingConfig.positions.button.x : 0),
+            magazineConfig.y,
+            magazineConfig.z - (dragOffset > 0 ? magazineConfig.dragOffset : 0)
+          );
           break;
         case 'vague':
-          finalPosition.set(-0.5 + (page > 0 ? 0.65 : 0), config.positions.vague.y, 4.5 - (page > 0 ? 1 : 0));
+          finalPosition.set(
+            magazineConfig.x + (page > 0 ? spacingConfig.positions.button.x : 0),
+            magazineConfig.y,
+            magazineConfig.z - (page > 0 ? magazineConfig.pageOffset : 0)
+          );
           break;
         case 'smack':
-          finalPosition.set(1.5 + (dragOffset > 0 ? 1 : 0) + (page > 0 ? 0.65 : 0), config.positions.smack.y, 4.5 - (dragOffset > 0 ? 1 : 0));
+          finalPosition.set(
+            magazineConfig.x + (dragOffset > 0 ? magazineConfig.dragOffset : 0) + (page > 0 ? spacingConfig.positions.button.x : 0),
+            magazineConfig.y,
+            magazineConfig.z - (dragOffset > 0 ? magazineConfig.dragOffset : 0)
+          );
           break;
       }
     }
@@ -453,7 +502,7 @@ export const updateMagazineCarousel = ({
 
   // Apply position with lerping
   if (magazineRef.position) {
-    magazineRef.position.lerp(finalPosition, config.lerp.carousel);
+    magazineRef.position.lerp(finalPosition, animConfig.lerp.carousel);
   } else {
     magazineRef.position = finalPosition.clone();
   }
@@ -477,7 +526,7 @@ export const performLerp = (current, target, lerpFactor) => {
  * @returns {Object} Float configuration values
  */
 export const getFloatConfig = (isPortrait) => {
-  return getSpacingConfig(isPortrait).float;
+  return getAnimationConfig(isPortrait).float;
 };
 
 /**
@@ -546,15 +595,16 @@ export const isMiddleMagazine = ({ position, isPortrait }) => {
  * @returns {THREE.Vector3} Updated position with hover effect
  */
 export const hoverMagazine = ({ position, isHovered, magazine, isPortrait }) => {
-  const config = getSpacingConfig(isPortrait);
+  const spacingConfig = getSpacingConfig(isPortrait);
+  const animConfig = getAnimationConfig(isPortrait);
   
   if (!isPortrait) {
-    const magazineConfig = config.positions[magazine];
+    const magazineConfig = spacingConfig.positions[magazine];
     if (magazineConfig) {
       const targetPosition = position.clone();
       
       // Apply z-axis hover effect (moving towards camera)
-      targetPosition.z = magazineConfig.z + (isHovered ? config.zOffset : 0);
+      targetPosition.z = magazineConfig.z + (isHovered ? spacingConfig.zOffset : 0);
       
       // Apply x-axis hover effect for side magazines
       if (magazineConfig.hoverOffset && isHovered) {
@@ -563,7 +613,7 @@ export const hoverMagazine = ({ position, isHovered, magazine, isPortrait }) => 
         targetPosition.x = magazineConfig.x;
       }
       
-      performLerp(position, targetPosition, 0.1);
+      performLerp(position, targetPosition, animConfig.lerp.button.text);
     }
   }
   

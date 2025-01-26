@@ -2,7 +2,7 @@ import { Text } from '@react-three/drei'
 import * as THREE from 'three'
 import { useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
-import { getSpacingConfig } from '@/helpers/positionHelper'
+import { getSpacingConfig, getAnimationConfig } from '@/helpers/positionHelper'
 import { useDeviceOrientation } from '@/helpers/deviceHelper'
 
 export const VagueButton = ({ highlighted }) => {
@@ -10,7 +10,7 @@ export const VagueButton = ({ highlighted }) => {
   const colorRef = useRef(new THREE.Color("#F7F6F7"))
   const baseSize = 0.35
   const isPortrait = useDeviceOrientation()
-  const config = getSpacingConfig(isPortrait)
+  const animConfig = getAnimationConfig(isPortrait)
   
   useFrame(() => {
     if (!textRef.current) return
@@ -18,12 +18,12 @@ export const VagueButton = ({ highlighted }) => {
     textRef.current.fontSize = THREE.MathUtils.lerp(
       textRef.current.fontSize,
       highlighted ? baseSize * 1.5 : baseSize,
-      config.lerp.button.text
+      animConfig.lerp.button.text
     )
     
     // Lerp color
     const targetColor = new THREE.Color(highlighted ? "white" : "#F7F6F7")
-    colorRef.current.lerp(targetColor, config.lerp.button.color)
+    colorRef.current.lerp(targetColor, animConfig.lerp.button.color)
     if (textRef.current.material) {
       textRef.current.material.color.copy(colorRef.current)
     }
@@ -53,7 +53,7 @@ export const EngineerButton = ({ highlighted }) => {
   const colorRef = useRef(new THREE.Color("#F7F6F7"))
   const baseSize = 0.25
   const isPortrait = useDeviceOrientation()
-  const config = getSpacingConfig(isPortrait)
+  const animConfig = getAnimationConfig(isPortrait)
   
   useFrame(() => {
     if (!textRef.current) return
@@ -61,12 +61,12 @@ export const EngineerButton = ({ highlighted }) => {
     textRef.current.fontSize = THREE.MathUtils.lerp(
       textRef.current.fontSize,
       highlighted ? baseSize * 1.5 : baseSize,
-      config.lerp.button.text
+      animConfig.lerp.button.text
     )
     
     // Lerp color
     const targetColor = new THREE.Color(highlighted ? "#FFB79C" : "#F7F6F7")
-    colorRef.current.lerp(targetColor, config.lerp.button.color)
+    colorRef.current.lerp(targetColor, animConfig.lerp.button.color)
     if (textRef.current.material) {
       textRef.current.material.color.copy(colorRef.current)
     }
@@ -97,7 +97,7 @@ export const SmackButton = ({ highlighted }) => {
   const colorRef = useRef(new THREE.Color("#F7F6F7"))
   const baseSize = 0.3
   const isPortrait = useDeviceOrientation()
-  const config = getSpacingConfig(isPortrait)
+  const animConfig = getAnimationConfig(isPortrait)
   
   useFrame(() => {
     if (!leftTextRef.current || !rightTextRef.current) return
@@ -106,17 +106,17 @@ export const SmackButton = ({ highlighted }) => {
     leftTextRef.current.fontSize = THREE.MathUtils.lerp(
       leftTextRef.current.fontSize,
       targetSize,
-      config.lerp.button.text
+      animConfig.lerp.button.text
     )
     rightTextRef.current.fontSize = THREE.MathUtils.lerp(
       rightTextRef.current.fontSize,
       targetSize,
-      config.lerp.button.text
+      animConfig.lerp.button.text
     )
     
     // Lerp color
     const targetColor = new THREE.Color(highlighted ? "#FABE7F" : "#F7F6F7")
-    colorRef.current.lerp(targetColor, config.lerp.button.color)
+    colorRef.current.lerp(targetColor, animConfig.lerp.button.color)
     if (leftTextRef.current.material && rightTextRef.current.material) {
       leftTextRef.current.material.color.copy(colorRef.current)
       rightTextRef.current.material.color.copy(colorRef.current)
@@ -125,20 +125,20 @@ export const SmackButton = ({ highlighted }) => {
 
   return (
     <group position={[0, 0, 0]}>
-      <Text
+    <Text
         ref={leftTextRef}
         position={[-0.295, -0.0, 0]}
-        fontSize={baseSize}
+      fontSize={baseSize}
         anchorX="right"
-        anchorY="middle"
+      anchorY="middle"
         font="/fonts/lemon-regular.otf"
-        material={new THREE.MeshBasicMaterial({
-          toneMapped: false,
-          color: colorRef.current
-        })}
-      >
+      material={new THREE.MeshBasicMaterial({
+        toneMapped: false,
+        color: colorRef.current
+      })}
+    >
         CREA
-      </Text>
+    </Text>
       <Text
         ref={rightTextRef}
         position={[-0.295, -0.0, 0]}

@@ -7,7 +7,7 @@ import { useFrame } from "@react-three/fiber";
 import { useGesture } from "@use-gesture/react";
 import * as THREE from "three";
 import { styleMagazineAtom, magazineViewingStateAtom } from '@/helpers/atoms';
-import { performLerp, handlePageViewTransition, updateMagazineCarousel, calculatePageViewOffset, getFloatConfig, getButtonPosition, isMiddleMagazine, hoverMagazine, getSpacingConfig, applyFloatNullification, calculateButtonPosition } from "@/helpers/positionHelper";
+import { performLerp, handlePageViewTransition, updateMagazineCarousel, calculatePageViewOffset, getFloatConfig, getButtonPosition, isMiddleMagazine, hoverMagazine, getSpacingConfig, getAnimationConfig, getGestureConfig, applyFloatNullification, calculateButtonPosition } from "@/helpers/positionHelper";
 import { useDeviceOrientation } from '@/helpers/deviceHelper'
 import { handleMagazineInteraction, isTapInteraction } from "@/helpers/gestureHelper";
 
@@ -232,6 +232,10 @@ export const Magazine = ({
   useFrame((_, delta) => {
     if (!groupRef.current) return;
     
+    const spacingConfig = getSpacingConfig(isPortrait);
+    const animConfig = getAnimationConfig(isPortrait);
+    const gestureConfig = getGestureConfig(isPortrait);
+    
     // Calculate horizontal offset if focused
     if (focusedMagazine === magazine) {
       const right = new THREE.Vector3(1, 0, 0)
@@ -254,7 +258,7 @@ export const Magazine = ({
           viewingRightPage,
           page,
           delayedPage,
-          lerpFactor: getSpacingConfig(isPortrait).lerp.pageView
+          lerpFactor: animConfig.lerp.pageView
         });
       }
 
@@ -282,8 +286,7 @@ export const Magazine = ({
 
     // Update button position and rotation
     if (!isPortrait && buttonRef.current && camera && floatRef.current) {
-      const config = getSpacingConfig(isPortrait);
-      const buttonConfig = config.positions.button;
+      const buttonConfig = spacingConfig.positions.button;
       
       // Calculate target button position
       const targetPos = calculateButtonPosition({
@@ -296,7 +299,7 @@ export const Magazine = ({
       });
 
       // Lerp to target position
-      buttonRef.current.position.lerp(targetPos, getSpacingConfig(isPortrait).lerp.button.text);
+      buttonRef.current.position.lerp(targetPos, animConfig.lerp.button.text);
 
       // Update button rotation when hovered
       if (isHoveredRef.current && floatRef.current) {
