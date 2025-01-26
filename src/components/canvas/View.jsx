@@ -24,7 +24,7 @@ export const Common = ({ color }) => {
     <Suspense fallback={null}>
       {color && <color attach='background' args={[color]} />}
       <PerspectiveCamera makeDefault fov={40} position={[0, 0, 10]} />
-      <Perf />
+{process.env.NODE_ENV === 'development' && <Perf position="top-left" />}
       {hdrLoaded && (
         <Environment 
           map={hdrLoader.loadedHDR}

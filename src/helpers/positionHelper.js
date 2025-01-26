@@ -40,7 +40,8 @@ const SPACING_CONFIG = {
       engineer: {
         x: -2.5,
         z: 4.5,
-        dragOffset: 1
+        dragOffset: 1,
+        hoverOffset: { x: 1 } // move right when hovered
       },
       vague: {
         x: -0.5,
@@ -50,7 +51,8 @@ const SPACING_CONFIG = {
       smack: {
         x: 1.5,
         z: 4.5,
-        dragOffset: 1
+        dragOffset: 1,
+        hoverOffset: { x: -1 } // move left when hovered
       },
       button: {
         x: 0.65,
@@ -482,9 +484,18 @@ export const hoverMagazine = ({ position, isHovered, magazine, isPortrait }) => 
   if (!isPortrait) {
     const magazineConfig = config.positions[magazine];
     if (magazineConfig) {
-      const targetZ = magazineConfig.z + (isHovered ? config.zOffset : 0);
       const targetPosition = position.clone();
-      targetPosition.z = targetZ;
+      
+      // Apply z-axis hover effect (moving towards camera)
+      targetPosition.z = magazineConfig.z + (isHovered ? config.zOffset : 0);
+      
+      // Apply x-axis hover effect for side magazines
+      if (magazineConfig.hoverOffset && isHovered) {
+        targetPosition.x = magazineConfig.x + magazineConfig.hoverOffset.x;
+      } else {
+        targetPosition.x = magazineConfig.x;
+      }
+      
       performLerp(position, targetPosition, 0.1);
     }
   }

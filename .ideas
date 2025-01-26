@@ -2,9 +2,7 @@
 ---
 Bugs
 3d label buttons jumping back to incorrect Positioning
-Some loading race conditions gives black magazines in incorrect position
 HTML Text occlusion
-Drag on carousel still clicking a lot
 
 ---
 Performance
@@ -13,6 +11,7 @@ suspense all pages until the magazine is selected in focus mode
 ---
 Styling
 Blueprint effects on engineer background
+repeated text on smack background
 In landscape mode lerp the magazines slightly towards the center of the screen when they have been hovered
 Add brief tool tips for gesture use, swipe click
 ---
