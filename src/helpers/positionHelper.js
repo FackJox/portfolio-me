@@ -379,13 +379,13 @@ export const updateMagazineCarousel = ({
       // Landscape mode positioning
       switch (magazine) {
         case 'engineer':
-          finalPosition.set(-2.5 - (dragOffset > 0 ? 1 : 0) + (page > 0 ? 0.65 : 0), 0, 4.5 - (dragOffset > 0 ? 1 : 0));
+          finalPosition.set(-2.5 - (dragOffset > 0 ? 1 : 0) + (page > 0 ? 0.65 : 0), getSpacingConfig(isPortrait).positions.engineer.y, 4.5 - (dragOffset > 0 ? 1 : 0));
           break;
         case 'vague':
-          finalPosition.set(-0.5 + (page > 0 ? 0.65 : 0), 0, 4.5 - (page > 0 ? 1 : 0));
+          finalPosition.set(-0.5 + (page > 0 ? 0.65 : 0), getSpacingConfig(isPortrait).positions.vague.y, 4.5 - (page > 0 ? 1 : 0));
           break;
         case 'smack':
-          finalPosition.set(1.5 + (dragOffset > 0 ? 1 : 0) + (page > 0 ? 0.65 : 0), 0, 4.5 - (dragOffset > 0 ? 1 : 0));
+          finalPosition.set(1.5 + (dragOffset > 0 ? 1 : 0) + (page > 0 ? 0.65 : 0), getSpacingConfig(isPortrait).positions.smack.y, 4.5 - (dragOffset > 0 ? 1 : 0));
           break;
       }
     }
@@ -456,7 +456,7 @@ export const calculateMagazinePosition = (magazine, dragOffset, page, isPortrait
       magazineConfig.x + 
         (dragOffset > 0 ? magazineConfig.dragOffset || 0 : 0) + 
         (page > 0 ? config.positions.button.x : 0),
-      0,
+      magazineConfig.y,
       magazineConfig.z - (page > 0 ? magazineConfig.pageOffset || 0 : 0)
     );
   }
