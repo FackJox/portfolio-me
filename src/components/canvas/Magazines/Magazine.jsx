@@ -282,20 +282,26 @@ export const Magazine = ({
 
     // Update button position and rotation
     if (!isPortrait && buttonRef.current && camera && floatRef.current) {
-      // Calculate button position
+      const config = getSpacingConfig(isPortrait);
+      const buttonConfig = config.positions.button;
+      
+      // Calculate target button position
       const targetPos = calculateButtonPosition({
-        position: targetButtonPosRef.current,
+        position: buttonPositionRef.current,
         camera,
         isHovered: isHoveredRef.current,
         isPortrait,
-        floatRef: floatRef.current
+        floatRef: floatRef.current,
+        buttonRef: buttonRef.current
       });
 
       // Lerp to target position
-      buttonRef.current.position.lerp(targetPos, 0.1);
+      if (targetPos) {
+        buttonRef.current.position.lerp(targetPos, buttonConfig.hover.lerpSpeed);
+      }
 
       // Update button rotation when hovered
-      if (isHoveredRef.current) {
+      if (isHoveredRef.current && floatRef.current) {
         floatRef.current.getWorldQuaternion(floatQuaternionRef.current);
         buttonRef.current.quaternion
           .copy(floatQuaternionRef.current)

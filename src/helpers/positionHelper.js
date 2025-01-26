@@ -85,7 +85,6 @@ const SPACING_CONFIG = {
   }
 };
 
-
 /**
  * Gets the appropriate spacing configuration based on view mode
  * @param {boolean} isPortrait - Whether the view is in portrait mode
@@ -257,6 +256,20 @@ export const calculateMiddleMagazine = (targetOffset, isPortrait) => {
 };
 
 /**
+ * Gets the base index for a magazine in the carousel
+ * @param {string} magazine - Magazine ID
+ * @returns {number} Base index for the magazine
+ */
+const getBaseIndex = (magazine) => {
+  switch (magazine) {
+    case 'engineer': return 1;
+    case 'vague': return 0;
+    case 'smack': return 2;
+    default: return 0;
+  }
+};
+
+/**
  * Updates magazine position and rotation in the carousel or focused state
  * @param {Object} params - Parameters for magazine position update
  * @param {THREE.Object3D} params.magazineRef - Reference to the magazine mesh
@@ -317,15 +330,6 @@ export const updateMagazineCarousel = ({
   let finalPosition = new THREE.Vector3();
 
   if (focusedMagazine !== magazine) {
-    const getBaseIndex = (mag) => {
-      switch (mag) {
-        case 'engineer': return 1;
-        case 'vague': return 0;
-        case 'smack': return 2;
-        default: return 0;
-      }
-    };
-
     if (isPortrait) {
       // Portrait mode positioning with instant wrapping
       const baseIndex = getBaseIndex(magazine);
@@ -349,44 +353,17 @@ export const updateMagazineCarousel = ({
       if (currentMiddleMagazine === magazine) {
         finalPosition.z -= -2.5;
       }
-      
-      // Check if we're wrapping around
-      const isWrapping = Math.abs(magazineRef.position.y - wrappedOffset) > spacing * 1.5;
-      
-      if (isWrapping) {
-        const currentY = magazineRef.position.y;
-        const direction = wrappedOffset > currentY ? 1 : -1;
-        
-        // If we need to jump, do the initial jump
-        if (magazineRef.needsJump) {
-          magazineRef.position.set(
-            finalPosition.x,
-            wrappedOffset + (direction * spacing),
-            finalPosition.z
-          );
-          magazineRef.needsJump = false;
-        } else {
-          // After jump, interpolate to final position
-          magazineRef.position.lerp(finalPosition, lerpFactor);
-        }
-      } else {
-        // Reset needsJump when not wrapping
-        magazineRef.needsJump = true;
-        // Smooth interpolation for adjacent positions
-        magazineRef.position.lerp(finalPosition, lerpFactor);
-      }
     } else {
       // Landscape mode positioning
-      switch (magazine) {
-        case 'engineer':
-          finalPosition.set(-2.5 - (dragOffset > 0 ? 1 : 0) + (page > 0 ? 0.65 : 0), 0, 4.5 - (dragOffset > 0 ? 1 : 0));
-          break;
-        case 'vague':
-          finalPosition.set(-0.5 + (page > 0 ? 0.65 : 0), 0, 4.5 - (page > 0 ? 1 : 0));
-          break;
-        case 'smack':
-          finalPosition.set(1.5 + (dragOffset > 0 ? 1 : 0) + (page > 0 ? 0.65 : 0), 0, 4.5 - (dragOffset > 0 ? 1 : 0));
-          break;
+      const config = getSpacingConfig(isPortrait);
+      const magazineConfig = config.positions[magazine];
+      
+      if (magazineConfig) {
+        finalPosition.set(
+          magazineConfig.x - (dragOffset > 0 ? magazineConfig.dragOffset || 0 : 0) + (page > 0 ? 0.65 : 0),
+          magazineConfig.y,
+          magazineConfig.z - (page > 0 ? magazineConfig.pageOffset || 0 : 0)
+        );
       }
     }
   } else {
@@ -456,7 +433,7 @@ export const calculateMagazinePosition = (magazine, dragOffset, page, isPortrait
       magazineConfig.x + 
         (dragOffset > 0 ? magazineConfig.dragOffset || 0 : 0) + 
         (page > 0 ? config.positions.button.x : 0),
-      0,
+      magazineConfig.y,
       magazineConfig.z - (page > 0 ? magazineConfig.pageOffset || 0 : 0)
     );
   }
@@ -543,16 +520,22 @@ export const applyFloatNullification = ({ floatRef, nullifyRef, shouldNullify })
  * @param {boolean} params.isHovered - Whether element is hovered
  * @param {boolean} params.isPortrait - Whether in portrait mode
  * @param {THREE.Object3D} params.floatRef - Reference to Float component
- * @returns {THREE.Vector3} The calculated button position
+ * @param {THREE.Object3D} params.buttonRef - Reference to button object
+ * @param {THREE.Quaternion} params.floatQuaternion - Quaternion for float rotation
+ * @param {THREE.Quaternion} params.uprightQuaternion - Upright quaternion reference
+ * @returns {void} Updates button position and rotation directly
  */
 export const calculateButtonPosition = ({
   position,
   camera,
   isHovered,
   isPortrait,
-  floatRef
+  floatRef,
+  buttonRef,
+  floatQuaternion,
+  uprightQuaternion
 }) => {
-  if (isPortrait) return position;
+  if (isPortrait || !buttonRef) return position.clone(); // Return the current position if in portrait mode
 
   const config = getSpacingConfig(isPortrait);
   const buttonConfig = config.positions.button;
