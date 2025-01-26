@@ -1,20 +1,42 @@
 import { Text } from '@react-three/drei'
 import * as THREE from 'three'
+import { useRef } from 'react'
+import { useFrame } from '@react-three/fiber'
 
 export const VagueButton = ({ highlighted }) => {
+  const textRef = useRef()
+  const colorRef = useRef(new THREE.Color("#F7F6F7"))
+  const baseSize = 0.35
+  
+  useFrame(() => {
+    if (!textRef.current) return
+    // Lerp text size
+    textRef.current.fontSize = THREE.MathUtils.lerp(
+      textRef.current.fontSize,
+      highlighted ? baseSize * 1.5 : baseSize,
+      0.1
+    )
+    
+    // Lerp color
+    const targetColor = new THREE.Color(highlighted ? "white" : "#F7F6F7")
+    colorRef.current.lerp(targetColor, 0.1)
+    if (textRef.current.material) {
+      textRef.current.material.color.copy(colorRef.current)
+    }
+  })
+
   return (
     <Text
+      ref={textRef}
       position={[0.0, -0.03, 0]}
-      fontSize={0.35}
+      fontSize={baseSize}
       anchorX="center"
       anchorY="middle"
       font="/fonts/Vogue.ttf"
       letterSpacing={-0.07}
       material={new THREE.MeshBasicMaterial({
         toneMapped: false,
-        color: highlighted ? "white" : "#F7F6F7",
-        // emissive: new THREE.Color("orange"),
-        // emissiveIntensity: highlighted ? 10.22 : 0
+        color: colorRef.current
       })}
     >
       ABOUT
@@ -23,19 +45,39 @@ export const VagueButton = ({ highlighted }) => {
 }
 
 export const EngineerButton = ({ highlighted }) => {
+  const textRef = useRef()
+  const colorRef = useRef(new THREE.Color("#F7F6F7"))
+  const baseSize = 0.25
+  
+  useFrame(() => {
+    if (!textRef.current) return
+    // Lerp text size
+    textRef.current.fontSize = THREE.MathUtils.lerp(
+      textRef.current.fontSize,
+      highlighted ? baseSize * 1.5 : baseSize,
+      0.1
+    )
+    
+    // Lerp color
+    const targetColor = new THREE.Color(highlighted ? "#FFB79C" : "#F7F6F7")
+    colorRef.current.lerp(targetColor, 0.1)
+    if (textRef.current.material) {
+      textRef.current.material.color.copy(colorRef.current)
+    }
+  })
+
   return (
     <Text
+      ref={textRef}
       position={[0, -0.0, 0]}
-      fontSize={0.25}
+      fontSize={baseSize}
       anchorX="center"
       anchorY="middle"
       font="/fonts/HKGrotesk-SemiBold.otf"
       letterSpacing={-0.13}
       material={new THREE.MeshBasicMaterial({
         toneMapped: false,
-        color: highlighted ? "#FFB79C" : "#F7F6F7",
-        // emissive: new THREE.Color("orange"),
-        // emissiveIntensity: highlighted ? 10.22 : 0
+        color: colorRef.current
       })}
     >
       Technical Work
@@ -44,34 +86,61 @@ export const EngineerButton = ({ highlighted }) => {
 }
 
 export const SmackButton = ({ highlighted }) => {
+  const leftTextRef = useRef()
+  const rightTextRef = useRef()
+  const colorRef = useRef(new THREE.Color("#F7F6F7"))
+  const baseSize = 0.3
+  
+  useFrame(() => {
+    if (!leftTextRef.current || !rightTextRef.current) return
+    // Lerp text size
+    const targetSize = highlighted ? baseSize * 1.5 : baseSize
+    leftTextRef.current.fontSize = THREE.MathUtils.lerp(
+      leftTextRef.current.fontSize,
+      targetSize,
+      0.1
+    )
+    rightTextRef.current.fontSize = THREE.MathUtils.lerp(
+      rightTextRef.current.fontSize,
+      targetSize,
+      0.1
+    )
+    
+    // Lerp color
+    const targetColor = new THREE.Color(highlighted ? "#FABE7F" : "#F7F6F7")
+    colorRef.current.lerp(targetColor, 0.1)
+    if (leftTextRef.current.material && rightTextRef.current.material) {
+      leftTextRef.current.material.color.copy(colorRef.current)
+      rightTextRef.current.material.color.copy(colorRef.current)
+    }
+  })
+
   return (
     <group position={[0, 0, 0]}>
       <Text
+        ref={leftTextRef}
         position={[-0.295, -0.0, 0]}
-        fontSize={0.3}
+        fontSize={baseSize}
         anchorX="right"
         anchorY="middle"
         font="/fonts/lemon-regular.otf"
         material={new THREE.MeshBasicMaterial({
           toneMapped: false,
-          color: highlighted ? "#FABE7F" : "#F7F6F7",
-          // emissive: new THREE.Color("orange"),
-          // emissiveIntensity: highlighted ? 10.22 : 0
+          color: colorRef.current
         })}
       >
         CREA
       </Text>
       <Text
+        ref={rightTextRef}
         position={[-0.295, -0.0, 0]}
-        fontSize={0.3}
+        fontSize={baseSize}
         anchorX="left"
         anchorY="middle"
         font="/fonts/lemon-wide.otf"
         material={new THREE.MeshBasicMaterial({
-          color: highlighted ? "#FABE7F" : "#F7F6F7",
-          toneMapped: false,
-          // emissive: new THREE.Color("orange"),
-          // emissiveIntensity: highlighted ? 10.22 : 0
+          color: colorRef.current,
+          toneMapped: false
         })}
       >
         TIVE WORK
