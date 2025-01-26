@@ -39,17 +39,20 @@ const SPACING_CONFIG = {
     positions: {
       engineer: {
         x: -2.5,
+        y: 0.3, // Slightly raised
         z: 4.5,
         dragOffset: 1,
         hoverOffset: { x: 1 } // move right when hovered
       },
       vague: {
         x: -0.5,
+        y: 0.3, // Center
         z: 4.5,
         pageOffset: 1
       },
       smack: {
         x: 1.5,
+        y: 0.3, // Slightly lowered
         z: 4.5,
         dragOffset: 1,
         hoverOffset: { x: -1 } // move left when hovered
@@ -57,7 +60,12 @@ const SPACING_CONFIG = {
       button: {
         x: 0.65,
         y: -1.05,
-        z: 0
+        z: 0,
+        hover: {
+          y: -1.2,     // Y position when hovered
+          z: 4,        // Forward distance from camera
+          lerpSpeed: 0.1 // Speed of position transition
+        }
       }
     },
     float: {
@@ -248,6 +256,20 @@ export const calculateMiddleMagazine = (targetOffset, isPortrait) => {
 };
 
 /**
+ * Gets the base index for a magazine in the carousel
+ * @param {string} magazine - Magazine ID
+ * @returns {number} Base index for the magazine
+ */
+const getBaseIndex = (magazine) => {
+  switch (magazine) {
+    case 'engineer': return 1;
+    case 'vague': return 0;
+    case 'smack': return 2;
+    default: return 0;
+  }
+};
+
+/**
  * Updates magazine position and rotation in the carousel or focused state
  * @param {Object} params - Parameters for magazine position update
  * @param {THREE.Object3D} params.magazineRef - Reference to the magazine mesh
@@ -308,15 +330,6 @@ export const updateMagazineCarousel = ({
   let finalPosition = new THREE.Vector3();
 
   if (focusedMagazine !== magazine) {
-    const getBaseIndex = (mag) => {
-      switch (mag) {
-        case 'engineer': return 1;
-        case 'vague': return 0;
-        case 'smack': return 2;
-        default: return 0;
-      }
-    };
-
     if (isPortrait) {
       // Portrait mode positioning with instant wrapping
       const baseIndex = getBaseIndex(magazine);
@@ -340,44 +353,17 @@ export const updateMagazineCarousel = ({
       if (currentMiddleMagazine === magazine) {
         finalPosition.z -= -2.5;
       }
-      
-      // Check if we're wrapping around
-      const isWrapping = Math.abs(magazineRef.position.y - wrappedOffset) > spacing * 1.5;
-      
-      if (isWrapping) {
-        const currentY = magazineRef.position.y;
-        const direction = wrappedOffset > currentY ? 1 : -1;
-        
-        // If we need to jump, do the initial jump
-        if (magazineRef.needsJump) {
-          magazineRef.position.set(
-            finalPosition.x,
-            wrappedOffset + (direction * spacing),
-            finalPosition.z
-          );
-          magazineRef.needsJump = false;
-        } else {
-          // After jump, interpolate to final position
-          magazineRef.position.lerp(finalPosition, lerpFactor);
-        }
-      } else {
-        // Reset needsJump when not wrapping
-        magazineRef.needsJump = true;
-        // Smooth interpolation for adjacent positions
-        magazineRef.position.lerp(finalPosition, lerpFactor);
-      }
     } else {
       // Landscape mode positioning
-      switch (magazine) {
-        case 'engineer':
-          finalPosition.set(-2.5 - (dragOffset > 0 ? 1 : 0) + (page > 0 ? 0.65 : 0), 0, 4.5 - (dragOffset > 0 ? 1 : 0));
-          break;
-        case 'vague':
-          finalPosition.set(-0.5 + (page > 0 ? 0.65 : 0), 0, 4.5 - (page > 0 ? 1 : 0));
-          break;
-        case 'smack':
-          finalPosition.set(1.5 + (dragOffset > 0 ? 1 : 0) + (page > 0 ? 0.65 : 0), 0, 4.5 - (dragOffset > 0 ? 1 : 0));
-          break;
+      const config = getSpacingConfig(isPortrait);
+      const magazineConfig = config.positions[magazine];
+      
+      if (magazineConfig) {
+        finalPosition.set(
+          magazineConfig.x - (dragOffset > 0 ? magazineConfig.dragOffset || 0 : 0) + (page > 0 ? 0.65 : 0),
+          magazineConfig.y || 0, // Use configured Y position or default to 0
+          magazineConfig.z - (page > 0 ? magazineConfig.pageOffset || 0 : 0)
+        );
       }
     }
   } else {
@@ -501,4 +487,74 @@ export const hoverMagazine = ({ position, isHovered, magazine, isPortrait }) => 
   }
   
   return position;
+};
+
+/**
+ * Calculates and applies Float nullification for focused or hovered elements
+ * @param {Object} params - Parameters for Float nullification
+ * @param {THREE.Object3D} params.floatRef - Reference to Float component
+ * @param {THREE.Object3D} params.nullifyRef - Reference to group that will nullify Float
+ * @param {boolean} params.shouldNullify - Whether Float should be nullified
+ */
+export const applyFloatNullification = ({ floatRef, nullifyRef, shouldNullify }) => {
+  if (!floatRef || !nullifyRef) return;
+
+  const floatGroup = floatRef;
+
+  if (shouldNullify) {
+    nullifyRef.matrix
+      .copy(floatGroup.matrix)
+      .invert();
+    nullifyRef.matrixAutoUpdate = false;
+  } else {
+    nullifyRef.matrix.identity();
+    nullifyRef.matrixAutoUpdate = true;
+  }
+};
+
+/**
+ * Calculates button position with Float nullification
+ * @param {Object} params - Parameters for button positioning
+ * @param {THREE.Vector3} params.position - Current position
+ * @param {THREE.Camera} params.camera - Camera reference
+ * @param {boolean} params.isHovered - Whether element is hovered
+ * @param {boolean} params.isPortrait - Whether in portrait mode
+ * @param {THREE.Object3D} params.floatRef - Reference to Float component
+ * @returns {THREE.Vector3} The calculated button position
+ */
+export const calculateButtonPosition = ({
+  position,
+  camera,
+  isHovered,
+  isPortrait,
+  floatRef
+}) => {
+  if (isPortrait) return position;
+
+  const config = getSpacingConfig(isPortrait);
+  const buttonConfig = config.positions.button;
+  const targetPos = new THREE.Vector3();
+
+  if (isHovered) {
+    // Calculate centered position at bottom of viewport
+    targetPos.copy(camera.position);
+    const forward = new THREE.Vector3(0, 0, -1)
+      .applyQuaternion(camera.quaternion)
+      .normalize();
+    targetPos.addScaledVector(forward, buttonConfig.hover.z);
+    targetPos.y = buttonConfig.hover.y;
+
+    // Apply Float nullification if needed
+    if (floatRef) {
+      const floatMatrix = new THREE.Matrix4();
+      floatRef.updateWorldMatrix(true, false);
+      floatMatrix.copy(floatRef.matrixWorld);
+      const floatInverseMatrix = floatMatrix.clone().invert();
+      targetPos.applyMatrix4(floatInverseMatrix);
+    }
+  } else {
+    targetPos.set(buttonConfig.x, buttonConfig.y, buttonConfig.z);
+  }
+
+  return targetPos;
 };

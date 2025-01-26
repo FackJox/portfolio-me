@@ -7,7 +7,7 @@ import { useFrame } from "@react-three/fiber";
 import { useGesture } from "@use-gesture/react";
 import * as THREE from "three";
 import { styleMagazineAtom, magazineViewingStateAtom } from '@/helpers/atoms';
-import { performLerp, handlePageViewTransition, updateMagazineCarousel, calculatePageViewOffset, getFloatConfig, getButtonPosition, isMiddleMagazine, hoverMagazine } from "@/helpers/positionHelper";
+import { performLerp, handlePageViewTransition, updateMagazineCarousel, calculatePageViewOffset, getFloatConfig, getButtonPosition, isMiddleMagazine, hoverMagazine, getSpacingConfig, applyFloatNullification, calculateButtonPosition } from "@/helpers/positionHelper";
 import { useDeviceOrientation } from '@/helpers/deviceHelper'
 import { handleMagazineInteraction, isTapInteraction } from "@/helpers/gestureHelper";
 
@@ -52,6 +52,15 @@ export const Magazine = ({
   const initialPositionRef = useRef(null);
   const initialQuaternionRef = useRef(null);
   const previousViewingRightPageRef = useRef(false);
+
+  const buttonRef = useRef();
+  const buttonPositionRef = useRef(new THREE.Vector3());
+
+  // Add these refs near the top with other refs
+  const floatMatrixRef = useRef(new THREE.Matrix4());
+  const floatQuaternionRef = useRef(new THREE.Quaternion());
+  const uprightQuaternionRef = useRef(new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, 0)));
+  const targetButtonPosRef = useRef(new THREE.Vector3());
 
   // Handle orientation changes
   const handleOrientationChange = useCallback((newIsPortrait) => {
@@ -219,7 +228,7 @@ export const Magazine = ({
     initialQuaternionRef.current = groupRef.current.quaternion.clone();
   }, [targetPosition]);
 
-  // Lerp towards target position
+  // Combine all useFrame calls into one
   useFrame((_, delta) => {
     if (!groupRef.current) return;
     
@@ -261,22 +270,40 @@ export const Magazine = ({
         isPortrait
       });
     }
-  });
 
-  // Float nullification
-  useFrame(() => {
-    if (!floatRef.current || !floatNullifyRef.current) return;
+    // Handle Float nullification
+    if (floatRef.current && floatNullifyRef.current) {
+      applyFloatNullification({
+        floatRef: floatRef.current,
+        nullifyRef: floatNullifyRef.current,
+        shouldNullify: focusedMagazine === magazine
+      });
+    }
 
-    const floatGroup = floatRef.current;
+    // Update button position and rotation
+    if (!isPortrait && buttonRef.current && camera && floatRef.current) {
+      // Calculate button position
+      const targetPos = calculateButtonPosition({
+        position: targetButtonPosRef.current,
+        camera,
+        isHovered: isHoveredRef.current,
+        isPortrait,
+        floatRef: floatRef.current
+      });
 
-    if (focusedMagazine === magazine) {
-      floatNullifyRef.current.matrix
-        .copy(floatGroup.matrix)
-        .invert();
-      floatNullifyRef.current.matrixAutoUpdate = false;
-    } else {
-      floatNullifyRef.current.matrix.identity();
-      floatNullifyRef.current.matrixAutoUpdate = true;
+      // Lerp to target position
+      buttonRef.current.position.lerp(targetPos, 0.1);
+
+      // Update button rotation when hovered
+      if (isHoveredRef.current) {
+        floatRef.current.getWorldQuaternion(floatQuaternionRef.current);
+        buttonRef.current.quaternion
+          .copy(floatQuaternionRef.current)
+          .invert()
+          .multiply(uprightQuaternionRef.current);
+      } else {
+        buttonRef.current.quaternion.set(0, 0, 0, 1);
+      }
     }
   });
 
@@ -349,7 +376,7 @@ export const Magazine = ({
             ))}
           </group>
           {!isPortrait && (
-            <group position={[getButtonPosition(isPortrait).x, getButtonPosition(isPortrait).y, getButtonPosition(isPortrait).z]}>
+            <group ref={buttonRef}>
               <Button highlighted={highlighted && !isPortrait} />
             </group>
           )}
