@@ -7,9 +7,35 @@ import { useFrame } from "@react-three/fiber";
 import { useGesture } from "@use-gesture/react";
 import * as THREE from "three";
 import { styleMagazineAtom, magazineViewingStateAtom } from '@/helpers/atoms';
-import { performLerp, handlePageViewTransition, updateMagazineCarousel, calculatePageViewOffset, getFloatConfig, getButtonPosition, isMiddleMagazine, hoverMagazine, getSpacingConfig, getAnimationConfig, getGestureConfig, applyFloatNullification, calculateButtonPosition } from "@/helpers/positionHelper";
-import { useDeviceOrientation } from '@/helpers/deviceHelper'
+import { 
+  performLerp, 
+  handlePageViewTransition, 
+  updateMagazineCarousel, 
+  calculatePageViewOffset, 
+  isMiddleMagazine, 
+  hoverMagazine, 
+  getSpacingConfig, 
+  applyFloatNullification, 
+  calculateButtonPosition 
+} from "@/helpers/positionHelper";
+import { useDeviceOrientation } from '@/helpers/deviceHelper';
 import { handleMagazineInteraction, isTapInteraction } from "@/helpers/gestureHelper";
+import { ANIMATION_CONFIG } from '@/helpers/animationConfigs';
+import { GESTURE_CONFIG } from '@/helpers/gestureHelper';
+
+// Helper functions to get configs based on orientation
+const getAnimationConfig = (isPortrait) => {
+  return isPortrait ? ANIMATION_CONFIG.portrait : ANIMATION_CONFIG.landscape;
+};
+
+const getGestureConfig = (isPortrait) => {
+  return isPortrait ? GESTURE_CONFIG.portrait : GESTURE_CONFIG.landscape;
+};
+
+// Helper function to get float config based on orientation
+const getFloatConfig = (isPortrait) => {
+  return getAnimationConfig(isPortrait).float;
+};
 
 export const Magazine = ({
   pictures,

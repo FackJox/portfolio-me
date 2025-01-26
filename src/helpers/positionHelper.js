@@ -1,89 +1,7 @@
 // portfolio-me/src/utils/positionHelper.js
 import * as THREE from 'three';
-
-// Animation configuration for transitions and effects
-const ANIMATION_CONFIG = {
-  portrait: {
-    float: {
-      intensity: 0.5,
-      speed: 0.7,
-      rotationIntensity: 2
-    },
-    lerp: {
-      button: {
-        text: 0.1,
-        color: 0.1
-      },
-      pageView: 0.03,
-      carousel: 0.1
-    }
-  },
-  landscape: {
-    float: {
-      intensity: 0.5,
-      speed: 0.7,
-      rotationIntensity: 2
-    },
-    lerp: {
-      button: {
-        text: 0.1,
-        color: 0.1
-      },
-      pageView: 0.03,
-      carousel: 0.1
-    }
-  }
-};
-
-// Gesture and interaction configuration
-const GESTURE_CONFIG = {
-  portrait: {
-    threshold: 20, // movement threshold for swipe detection
-    dragSensitivity: 0.01, // multiplier for drag movement
-    dragThreshold: 5, // minimum movement to trigger drag
-    interaction: {
-      tap: {
-        maxDuration: 150, // ms
-        maxMovement: 10, // pixels
-      },
-      swipe: {
-        minMovement: 5, // pixels
-        pageThreshold: 50, // pixels for page turn
-        carouselThreshold: 20, // pixels for carousel movement
-      },
-      focus: {
-        debounceTime: 500, // ms to wait after carousel move before allowing focus
-      },
-      carousel: {
-        middleThreshold: 0.3, // threshold for determining middle magazine
-        wrapThreshold: 1.5, // threshold for wrapping magazines
-      }
-    }
-  },
-  landscape: {
-    threshold: 20,
-    dragSensitivity: 0.01,
-    dragThreshold: 5,
-    interaction: {
-      tap: {
-        maxDuration: 150, // ms
-        maxMovement: 10, // pixels
-      },
-      swipe: {
-        minMovement: 5, // pixels
-        pageThreshold: 50, // pixels for page turn
-        carouselThreshold: 20, // pixels for carousel movement
-      },
-      focus: {
-        debounceTime: 500, // ms to wait after carousel move before allowing focus
-      },
-      carousel: {
-        middleThreshold: 0.3, // threshold for determining middle magazine
-        wrapThreshold: 1.5, // threshold for wrapping magazines
-      }
-    }
-  }
-};
+import { ANIMATION_CONFIG } from './animationConfigs';
+import { GESTURE_CONFIG } from './gestureHelper';
 
 // Spacing and positioning configuration
 const SPACING_CONFIG = {
@@ -518,15 +436,6 @@ export const updateMagazineCarousel = ({
 export const performLerp = (current, target, lerpFactor) => {
   current.lerp(target, lerpFactor);
   return current;
-};
-
-/**
- * Gets the float configuration for magazines
- * @param {boolean} isPortrait - Whether the view is in portrait mode
- * @returns {Object} Float configuration values
- */
-export const getFloatConfig = (isPortrait) => {
-  return getAnimationConfig(isPortrait).float;
 };
 
 /**

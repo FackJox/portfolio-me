@@ -2,8 +2,14 @@ import { Text } from '@react-three/drei'
 import * as THREE from 'three'
 import { useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
-import { getSpacingConfig, getAnimationConfig } from '@/helpers/positionHelper'
+import { getSpacingConfig } from '@/helpers/positionHelper'
+import { ANIMATION_CONFIG } from '@/helpers/animationConfigs'
 import { useDeviceOrientation } from '@/helpers/deviceHelper'
+
+// Helper function to get animation config based on orientation
+const getAnimationConfig = (isPortrait) => {
+  return isPortrait ? ANIMATION_CONFIG.portrait : ANIMATION_CONFIG.landscape;
+};
 
 export const VagueButton = ({ highlighted }) => {
   const textRef = useRef()

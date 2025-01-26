@@ -1,5 +1,59 @@
-import { handlePageViewTransition, getGestureConfig } from "@/helpers/positionHelper";
+export const GESTURE_CONFIG = {
+  portrait: {
+    threshold: 20, // movement threshold for swipe detection
+    dragSensitivity: 0.01, // multiplier for drag movement
+    dragThreshold: 5, // minimum movement to trigger drag
+    interaction: {
+      tap: {
+        maxDuration: 150, // ms
+        maxMovement: 10, // pixels
+      },
+      swipe: {
+        minMovement: 5, // pixels
+        pageThreshold: 50, // pixels for page turn
+        carouselThreshold: 20, // pixels for carousel movement
+      },
+      focus: {
+        debounceTime: 500, // ms to wait after carousel move before allowing focus
+      },
+      carousel: {
+        middleThreshold: 0.3, // threshold for determining middle magazine
+        wrapThreshold: 1.5, // threshold for wrapping magazines
+      }
+    }
+  },
+  landscape: {
+    threshold: 20,
+    dragSensitivity: 0.01,
+    dragThreshold: 5,
+    interaction: {
+      tap: {
+        maxDuration: 150, // ms
+        maxMovement: 10, // pixels
+      },
+      swipe: {
+        minMovement: 5, // pixels
+        pageThreshold: 50, // pixels for page turn
+        carouselThreshold: 20, // pixels for carousel movement
+      },
+      focus: {
+        debounceTime: 500, // ms to wait after carousel move before allowing focus
+      },
+      carousel: {
+        middleThreshold: 0.3, // threshold for determining middle magazine
+        wrapThreshold: 1.5, // threshold for wrapping magazines
+      }
+    }
+  }
+};
+
+import { handlePageViewTransition } from "@/helpers/positionHelper";
 import { lastCarouselMoveAtom } from "@/helpers/atoms";
+
+// Helper function to get gesture config based on orientation
+const getGestureConfig = (isPortrait) => {
+  return isPortrait ? GESTURE_CONFIG.portrait : GESTURE_CONFIG.landscape;
+};
 
 /**
  * Determines if an interaction should be treated as a tap/click

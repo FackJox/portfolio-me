@@ -16,9 +16,11 @@ import {
   magazineViewingStatesAtom,
   lastCarouselMoveAtom
 } from '@/helpers/atoms';
-import { calculateFocusPosition, updateMagazineCarousel, calculateMiddleMagazine, getSpacingConfig } from "@/helpers/positionHelper";
-import { useDeviceOrientation } from '@/helpers/deviceHelper'
+import { calculateFocusPosition, updateMagazineCarousel, calculateMiddleMagazine, getSpacingConfig } from '@/helpers/positionHelper';
+import { useDeviceOrientation } from '@/helpers/deviceHelper';
 import { handleLibraryDrag, isTapInteraction, isSwipeInteraction } from "@/helpers/gestureHelper";
+import { ANIMATION_CONFIG } from '@/helpers/animationConfigs';
+import { GESTURE_CONFIG } from '@/helpers/gestureHelper';
 
 const picturesSmack = [
   "02Contents",
@@ -81,6 +83,15 @@ const magazines = {
   vague: "vague",
   engineer: "engineer",
   smack: "smack",
+};
+
+// Helper functions to get configs based on orientation
+const getAnimationConfig = (isPortrait) => {
+  return isPortrait ? ANIMATION_CONFIG.portrait : ANIMATION_CONFIG.landscape;
+};
+
+const getGestureConfig = (isPortrait) => {
+  return isPortrait ? GESTURE_CONFIG.portrait : GESTURE_CONFIG.landscape;
 };
 
 export const Library = (props) => {
