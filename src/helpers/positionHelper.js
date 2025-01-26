@@ -36,6 +36,24 @@ const SPACING_CONFIG = {
       },
       pageView: 0.03,
       carousel: 0.1
+    },
+    interaction: {
+      tap: {
+        maxDuration: 150, // ms
+        maxMovement: 10, // pixels
+      },
+      swipe: {
+        minMovement: 5, // pixels
+        pageThreshold: 50, // pixels for page turn
+        carouselThreshold: 20, // pixels for carousel movement
+      },
+      focus: {
+        debounceTime: 500, // ms to wait after carousel move before allowing focus
+      },
+      carousel: {
+        middleThreshold: 0.3, // threshold for determining middle magazine
+        wrapThreshold: 1.5, // threshold for wrapping magazines
+      }
     }
   },
   landscape: {
@@ -97,6 +115,24 @@ const SPACING_CONFIG = {
       },
       pageView: 0.03,
       carousel: 0.1
+    },
+    interaction: {
+      tap: {
+        maxDuration: 150, // ms
+        maxMovement: 10, // pixels
+      },
+      swipe: {
+        minMovement: 5, // pixels
+        pageThreshold: 50, // pixels for page turn
+        carouselThreshold: 20, // pixels for carousel movement
+      },
+      focus: {
+        debounceTime: 500, // ms to wait after carousel move before allowing focus
+      },
+      carousel: {
+        middleThreshold: 0.3, // threshold for determining middle magazine
+        wrapThreshold: 1.5, // threshold for wrapping magazines
+      }
     }
   }
 };
@@ -354,7 +390,7 @@ export const updateMagazineCarousel = ({
       
       // Wrap the offset instantly
       const wrapOffset = (offset, total) => {
-        return ((offset % total) + total * 1.5) % total - total / 2;
+        return ((offset % total) + total * config.interaction.carousel.wrapThreshold) % total - total / 2;
       };
       
       const wrappedOffset = wrapOffset(magazineOffset, totalSpacing);
@@ -372,7 +408,7 @@ export const updateMagazineCarousel = ({
       }
       
       // Check if we're wrapping around
-      const isWrapping = Math.abs(magazineRef.position.y - wrappedOffset) > spacing * 1.5;
+      const isWrapping = Math.abs(magazineRef.position.y - wrappedOffset) > spacing * config.interaction.carousel.wrapThreshold;
       
       if (isWrapping) {
         const currentY = magazineRef.position.y;
@@ -493,10 +529,11 @@ export const calculateMagazinePosition = (magazine, dragOffset, page, isPortrait
  * @returns {boolean} Whether the magazine is in the middle
  */
 export const isMiddleMagazine = ({ position, isPortrait }) => {
+  const config = getSpacingConfig(isPortrait).interaction.carousel;
   if (isPortrait) {
-    return Math.abs(position.y) < 0.3;
+    return Math.abs(position.y) < config.middleThreshold;
   }
-  return Math.abs(position.x) < 0.3;
+  return Math.abs(position.x) < config.middleThreshold;
 };
 
 /**

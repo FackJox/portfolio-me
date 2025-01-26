@@ -1,4 +1,4 @@
-import { handlePageViewTransition } from "@/helpers/positionHelper";
+import { handlePageViewTransition, getSpacingConfig } from "@/helpers/positionHelper";
 import { lastCarouselMoveAtom } from "@/helpers/atoms";
 
 /**
@@ -10,12 +10,8 @@ import { lastCarouselMoveAtom } from "@/helpers/atoms";
  * @returns {boolean} Whether the interaction should be treated as a tap
  */
 export const isTapInteraction = ({ duration, totalMovement, isPortrait }) => {
-  // In portrait mode, be more strict with what counts as a tap
-  const isTap = isPortrait ? 
-    (duration < 150 && totalMovement < 10) : 
-    (duration < 150 && totalMovement < 10);
-  
-  return isTap;
+  const config = getSpacingConfig(isPortrait).interaction.tap;
+  return duration < config.maxDuration && totalMovement < config.maxMovement;
 };
 
 /**
@@ -27,8 +23,7 @@ export const isTapInteraction = ({ duration, totalMovement, isPortrait }) => {
  * @returns {boolean} Whether the interaction should be treated as a swipe
  */
 export const isSwipeInteraction = ({ deltaX, deltaY, isDrag }) => {
-  const isSwipe = isDrag && Math.abs(deltaX) > 5;
-  return isSwipe;
+  return isDrag && Math.abs(deltaX) > getSpacingConfig(true).interaction.swipe.minMovement;
 };
 
 /**
@@ -53,17 +48,16 @@ export const canFocusMagazine = ({
   }
 
   // Check for recent carousel movement
+  const config = getSpacingConfig(isPortrait).interaction;
   const timeSinceCarouselMove = Date.now() - lastCarouselMove.time;
-  const hasRecentCarouselMove = timeSinceCarouselMove < 500; // Increased to 500ms for safety
+  const hasRecentCarouselMove = timeSinceCarouselMove < config.focus.debounceTime;
 
   if (hasRecentCarouselMove) {
     return false;
   }
 
   // Check if this is a valid tap
-  const isTap = isTapInteraction({ duration: dragDuration, totalMovement, isPortrait });
-  
-  return isTap;
+  return isTapInteraction({ duration: dragDuration, totalMovement, isPortrait });
 };
 
 /**
@@ -91,12 +85,13 @@ export const handleLibraryDrag = ({
   setLastCarouselMove
 }) => {
   const totalMovement = Math.sqrt(dx * dx + dy * dy);
+  const interactionConfig = config.interaction;
   
   if (totalMovement > config.dragThreshold) {
     const movement = isPortrait ? -dy * config.dragSensitivity : dx * config.dragSensitivity;
     
     // Update carousel movement tracking
-    if (totalMovement > 20) {
+    if (totalMovement > interactionConfig.swipe.carouselThreshold) {
       setLastCarouselMove({
         time: Date.now(),
         movement: totalMovement
@@ -199,12 +194,13 @@ export const handleMagazineInteraction = ({
   }
 
   const isSwipe = isSwipeInteraction({ deltaX, deltaY, isDrag });
+  const config = getSpacingConfig(isPortrait).interaction.swipe;
   
   // Handle swipes only if focused on this magazine
   if (isSwipe && focusedMagazine === magazine) {
     if (Math.abs(deltaX) > Math.abs(deltaY)) {
       // Store state before closing from last page
-      if (page === pages.length - 1 && deltaX < -50) {
+      if (page === pages.length - 1 && deltaX < -config.pageThreshold) {
         lastPageRef.current = page;
         lastViewingStateRef.current = viewingRightPage;
       }
@@ -220,9 +216,9 @@ export const handleMagazineInteraction = ({
         setPage(result.newPage);
         setViewingRightPage(result.newViewingRightPage);
       } else {
-        if (deltaX > 50) {
+        if (deltaX > config.pageThreshold) {
           setPage((p) => Math.max(p - 1, 0));
-        } else if (deltaX < -50) {
+        } else if (deltaX < -config.pageThreshold) {
           if (page === pages.length - 1) {
             setPage(0);
             setFocusedMagazine(null);
