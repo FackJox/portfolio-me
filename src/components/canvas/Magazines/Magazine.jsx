@@ -296,7 +296,6 @@ export const Magazine = ({
           depthWrite: false,
           depthTest: false,
         })}
-        renderOrder={-1}
        onPointerEnter={(e) => {
           e.stopPropagation();
           // Only set highlighted and isHovered if this magazine is clickable
@@ -351,7 +350,7 @@ export const Magazine = ({
           </group>
           {!isPortrait && (
             <group position={[getButtonPosition(isPortrait).x, getButtonPosition(isPortrait).y, getButtonPosition(isPortrait).z]}>
-              <Button />
+              <Button highlighted={highlighted && !isPortrait} />
             </group>
           )}
         </group>

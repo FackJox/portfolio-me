@@ -1,72 +1,80 @@
 import { Text } from '@react-three/drei'
-import { group } from '@react-three/fiber'
+import * as THREE from 'three'
 
-export const VagueButton = () => {
+export const VagueButton = ({ highlighted }) => {
   return (
     <Text
       position={[0.0, -0.03, 0]}
       fontSize={0.35}
-      color="#F7F6F7"
       anchorX="center"
       anchorY="middle"
       font="/fonts/Vogue.ttf"
       letterSpacing={-0.07}
-      receiveShadow={false}
-      castShadow={false}
-      renderOrder={1}
+      material={new THREE.MeshBasicMaterial({
+        toneMapped: false,
+        color: highlighted ? "white" : "#F7F6F7",
+        // emissive: new THREE.Color("orange"),
+        // emissiveIntensity: highlighted ? 10.22 : 0
+      })}
     >
       ABOUT
     </Text>
   )
 }
 
-export const EngineerButton = () => {
+export const EngineerButton = ({ highlighted }) => {
   return (
     <Text
-      position={[0, -0.03, 0]}
-      fontSize={0.27}
-      color="#F7F6F7"
+      position={[0, -0.0, 0]}
+      fontSize={0.25}
       anchorX="center"
       anchorY="middle"
       font="/fonts/HKGrotesk-SemiBold.otf"
       letterSpacing={-0.13}
-      receiveShadow={false}
-      castShadow={false}
-      renderOrder={1}
+      material={new THREE.MeshBasicMaterial({
+        toneMapped: false,
+        color: highlighted ? "#FFB79C" : "#F7F6F7",
+        // emissive: new THREE.Color("orange"),
+        // emissiveIntensity: highlighted ? 10.22 : 0
+      })}
     >
-      TECHNICAL
+      Technical Work
     </Text>
   )
 }
 
-export const SmackButton = () => {
+export const SmackButton = ({ highlighted }) => {
   return (
     <group position={[0, 0, 0]}>
       <Text
-        position={[-0.1, -0.05, 0]}
-        fontSize={0.4}
-        color="#F7F6F7"
+        position={[-0.295, -0.0, 0]}
+        fontSize={0.3}
         anchorX="right"
         anchorY="middle"
         font="/fonts/lemon-regular.otf"
-        receiveShadow={false}
-        castShadow={false}
-        renderOrder={1}
+        material={new THREE.MeshBasicMaterial({
+                  toneMapped: false,
+          color: highlighted ? "#FABE7F" : "#F7F6F7",
+          // emissive: new THREE.Color("orange"),
+          // emissiveIntensity: highlighted ? 10.22 : 0
+        })}
       >
         CREA
       </Text>
       <Text
-        position={[-0.1, -0.05, 0]}
-        fontSize={0.4}
-        color="#F7F6F7"
+        position={[-0.295, -0.0, 0]}
+        fontSize={0.3}
         anchorX="left"
         anchorY="middle"
         font="/fonts/lemon-wide.otf"
-        receiveShadow={false}
-        castShadow={false}
-        renderOrder={1}
+        material={new THREE.MeshBasicMaterial({
+          color: highlighted ? "#FABE7F" : "#F7F6F7",
+                  toneMapped: false,
+          // emissive: new THREE.Color("orange"),
+          // emissiveIntensity: highlighted ? 10.22 : 0
+        })}
       >
-        TIVE
+        TIVE WORK
       </Text>
     </group>
   )
