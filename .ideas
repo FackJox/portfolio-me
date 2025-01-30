@@ -18,6 +18,8 @@ repeated text on smack background
 Add brief tool tips for gesture use, swipe click
 change Vague button hover colour based on magazine cover
 On hover make the buttons come to the centre of the viewport, on focus, make the buttons slide off the bottom
+
+In wordcloud mode, slide "Contents" out to "Contents Filter: Engineering, Creative"
 ---
 
 animations -

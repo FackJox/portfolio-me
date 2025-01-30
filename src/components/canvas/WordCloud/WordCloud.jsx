@@ -5,7 +5,7 @@ import { useAspect, Html, Text, Plane, PerspectiveCamera, useTexture } from '@re
 import { Flex, Box, useReflow } from '@react-three/flex'
 import { useAtom } from 'jotai'
 import { pagesAtom, scrollState } from '@/helpers/atoms'
-import { skills } from '@/helpers/contentsConfig'
+import { skills, SmackContents, EngineerContents } from '@/helpers/contentsConfig'
 import { picturesSmack, picturesEngineer, picturesVague, getTexturePath } from '@/helpers/textureLoader'
 
 function Reflower() {
@@ -14,12 +14,92 @@ function Reflower() {
   return null
 }
 
+// Create a texture manager to handle texture loading and caching
+const textureManager = {
+  cache: new Map(),
+  loadingPromises: new Map(),
+
+  async load(path) {
+    // Return cached texture if available
+    if (this.cache.has(path)) {
+      return this.cache.get(path)
+    }
+
+    // Return existing promise if texture is already loading
+    if (this.loadingPromises.has(path)) {
+      return this.loadingPromises.get(path)
+    }
+
+    // Create new loading promise
+    const loadingPromise = new Promise((resolve, reject) => {
+      const img = new Image()
+      img.onload = () => {
+        const texture = new THREE.Texture(img)
+        texture.needsUpdate = true
+        this.cache.set(path, texture)
+        this.loadingPromises.delete(path)
+        resolve(texture)
+      }
+      img.onerror = reject
+      img.src = path
+    })
+
+    this.loadingPromises.set(path, loadingPromise)
+    return loadingPromise
+  },
+
+  dispose(path) {
+    if (this.cache.has(path)) {
+      const texture = this.cache.get(path)
+      texture.dispose()
+      this.cache.delete(path)
+    }
+  },
+
+  clear() {
+    this.cache.forEach((texture) => texture.dispose())
+    this.cache.clear()
+    this.loadingPromises.clear()
+  },
+}
+
 function PicturePlane({ magazine, page }) {
-  const texture = useTexture(getTexturePath(magazine, page))
-  const scale = 1.2 // Scale down the pictures to better match text size
+  const [texture, setTexture] = useState(null)
+  const [error, setError] = useState(false)
+  const texturePath = getTexturePath(magazine, page)
+  const mounted = useRef(true)
+
+  useEffect(() => {
+    mounted.current = true
+
+    const loadTexture = async () => {
+      try {
+        const tex = await textureManager.load(texturePath)
+        if (mounted.current) {
+          setTexture(tex)
+          setError(false)
+        }
+      } catch (err) {
+        console.warn(`Failed to load texture for ${magazine}/${page}:`, err)
+        if (mounted.current) {
+          setError(true)
+        }
+      }
+    }
+
+    loadTexture()
+
+    return () => {
+      mounted.current = false
+    }
+  }, [texturePath, magazine, page])
+
+  if (error || !texture) return null
+
+  const scale = 1.2
   return (
     <mesh scale={[scale, scale, 1]}>
-      <planeGeometry args={[1.28, 1.71]} /> {/* A4 aspect ratio */}
+      <planeGeometry args={[1.28, 1.71]} />
       <meshStandardMaterial map={texture} />
     </mesh>
   )
@@ -98,10 +178,115 @@ function SkillText({ content, isEngineering, onClick }) {
   )
 }
 
+// Find pages that contain a specific skill
+function findPagesWithSkill(skillTitle) {
+  const matchingPages = []
+  console.log('Finding pages for skill:', skillTitle)
+
+  // Helper function to add pages with proper validation
+  const addPages = (magazine, pages, page) => {
+    if (pages) {
+      pages.forEach((p) => {
+        console.log(`Adding page ${p} from ${magazine} magazine`)
+        matchingPages.push({ magazine, page: p })
+      })
+    } else if (page) {
+      // For single page entries, format the page number properly
+      const formattedPage = typeof page === 'number' ? page.toString().padStart(2, '0') : page
+      console.log(`Adding single page ${formattedPage} from ${magazine} magazine`)
+      matchingPages.push({ magazine, page: formattedPage })
+    }
+  }
+
+  // Find the skill object that matches the title
+  let matchingSkill = null
+  Object.entries(skills).forEach(([category, skillSet]) => {
+    Object.values(skillSet).forEach((skill) => {
+      if (skill.title === skillTitle) {
+        console.log('Found matching skill:', skill)
+        matchingSkill = skill
+      }
+    })
+  })
+
+  if (!matchingSkill) {
+    console.log('No matching skill found')
+    return []
+  }
+
+  // Check SmackContents
+  Object.entries(SmackContents).forEach(([section, content]) => {
+    if (content.skills && content.skills.length > 0) {
+      const hasSkill = content.skills.some((skill) => skill === matchingSkill)
+      if (hasSkill) {
+        console.log(`Found skill in SmackContents section: ${section}`)
+        addPages('smack', content.pages, content.page)
+      }
+    }
+  })
+
+  // Check EngineerContents
+  Object.entries(EngineerContents).forEach(([section, content]) => {
+    if (content.skills && content.skills.length > 0) {
+      const hasSkill = content.skills.some((skill) => skill === matchingSkill)
+      if (hasSkill) {
+        console.log(`Found skill in EngineerContents section: ${section}`)
+        addPages('engineer', content.pages, content.page)
+      }
+    }
+  })
+
+  console.log('Final matching pages:', matchingPages)
+  return matchingPages
+}
+
 function Content() {
-  const { size } = useThree()
+  const { size, gl } = useThree()
   const [vpWidth, vpHeight] = useAspect(size.width, size.height)
   const [selectedSkill, setSelectedSkill] = useState(null)
+  const [matchingPages, setMatchingPages] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [currentPageIndex, setCurrentPageIndex] = useState(0)
+
+  // Clean up textures when component unmounts
+  useEffect(() => {
+    return () => {
+      textureManager.clear()
+    }
+  }, [])
+
+  // Handle page cycling
+  useEffect(() => {
+    if (matchingPages.length > 4) {
+      const interval = setInterval(() => {
+        setCurrentPageIndex((current) => (current + 1) % Math.max(1, matchingPages.length - 3))
+      }, 3000) // Cycle every 3 seconds
+
+      return () => clearInterval(interval)
+    }
+  }, [matchingPages.length])
+
+  // Preload only the first batch of textures
+  useEffect(() => {
+    const preloadInitialTextures = async () => {
+      setIsLoading(true)
+      try {
+        const initialPictures = [
+          ...picturesSmack.slice(0, 4).map((page) => ({ magazine: 'smack', page })),
+          ...picturesEngineer.slice(0, 4).map((page) => ({ magazine: 'engineer', page })),
+        ]
+
+        await Promise.all(
+          initialPictures.map(({ magazine, page }) => textureManager.load(getTexturePath(magazine, page))),
+        )
+      } catch (error) {
+        console.warn('Error preloading textures:', error)
+      }
+      setIsLoading(false)
+    }
+
+    preloadInitialTextures()
+  }, [])
 
   // Split skills into engineering and creative arrays
   const { engineeringSkills, creativeSkills } = useMemo(() => {
@@ -133,26 +318,70 @@ function Content() {
   const totalHeight = rows * itemWidth
 
   const handleSkillClick = (content) => {
-    setSelectedSkill(content)
+    if (selectedSkill === content) {
+      setSelectedSkill(null)
+      setMatchingPages([])
+    } else {
+      setSelectedSkill(content)
+      const pages = findPagesWithSkill(content)
+      setMatchingPages(pages)
+    }
   }
 
   return (
     <Box
-      flexDirection='row'
+      flexDirection='column'
       alignItems='flex-start'
-      justifyContent='center'
-      flexWrap='wrap'
+      justifyContent='flex-start'
       width={vpWidth * 0.9}
-      height={totalHeight}
+      height={totalHeight + (matchingPages.length > 0 ? 2 : 0)}
       position={[0, -totalHeight / 2, 0]}
     >
-      {skillsContent.map(
-        (item, i) =>
-          (!selectedSkill || selectedSkill === item.content) && (
-            <Box margin={0.75} key={i} width={1} height={1} centerAnchor>
-              <SkillText content={item.content} isEngineering={item.isEngineering} onClick={handleSkillClick} />
+      {/* Skills Grid */}
+      <Box
+        flexDirection='row'
+        alignItems='flex-start'
+        justifyContent='center'
+        flexWrap='wrap'
+        width={vpWidth * 0.9}
+        height={totalHeight}
+      >
+        {!isLoading &&
+          skillsContent.map(
+            (item, i) =>
+              (!selectedSkill || selectedSkill === item.content) && (
+                <Box margin={0.75} key={i} width={1} height={1} centerAnchor>
+                  <SkillText content={item.content} isEngineering={item.isEngineering} onClick={handleSkillClick} />
+                </Box>
+              ),
+          )}
+      </Box>
+
+      {/* Matching Pages Row */}
+      {!isLoading && matchingPages.length > 0 && (
+        <Box
+          flexDirection='row'
+          alignItems='center'
+          justifyContent='center'
+          flexWrap='wrap'
+          width={vpWidth * 0.9}
+          height={2}
+          marginTop={1}
+        >
+          {matchingPages.slice(currentPageIndex, currentPageIndex + 4).map((page, index) => (
+            <Box
+              margin={0.5}
+              key={`${page.magazine}-${page.page}-${index}`}
+              width={1.28 * 1.2}
+              height={1.71 * 1.2}
+              centerAnchor
+            >
+              <Suspense fallback={null}>
+                <PicturePlane magazine={page.magazine} page={page.page} />
+              </Suspense>
             </Box>
-          ),
+          ))}
+        </Box>
       )}
     </Box>
   )

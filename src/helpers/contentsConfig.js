@@ -11,7 +11,7 @@ export const skills = {
     webdesign: { icon: 'webdesign', title: 'Web Design' },
     graphics3d: { icon: 'graphics3d', title: '3D Graphics' },
     reactthreefiber: { icon: 'reactthreefiber', title: 'React Three Fiber' },
-    framermotion: { icon: 'framermotion', title: 'Framer Motion' },
+    // framermotion: { icon: 'framermotion', title: 'Framer Motion' },
     threejs: { icon: 'threejs', title: 'Three.js' },
     uxdesign: { icon: 'uxdesign', title: 'UX Design' },
     animation: { icon: 'animation', title: 'Animation' },
@@ -22,8 +22,8 @@ export const skills = {
   engineering: {
     react: { icon: 'react', title: 'React' },
     svelte: { icon: 'svelte', title: 'Svelte' },
-    nextjs: { icon: 'nextjs', title: 'Next.js' },
-    ssr: { icon: 'ssr', title: 'SSR' },
+    // nextjs: { icon: 'nextjs', title: 'Next.js' },
+    // ssr: { icon: 'ssr', title: 'SSR' },
     html: { icon: 'html', title: 'HTML' },
     js: { icon: 'js', title: 'JavaScript' },
     engineeringmanagement: { icon: 'engineeringmanagement', title: 'Engineering Management' },
@@ -40,10 +40,14 @@ export const skills = {
   },
 }
 
+
+
+
+
 export const SmackContents = {
   Editorial: { page: 2, title: 'Editorial', skills: [] },
   Graphics: {
-    page: 3,
+    pages: ["06Graphics", "07Graphics"],
     title: 'Graphics',
     skills: [
       skills.creative.design,
@@ -55,7 +59,7 @@ export const SmackContents = {
     ],
   },
   Scout: {
-    page: 4,
+    pages: ["08Scout", "09Scout"],
     title: 'Scout',
     skills: [
       skills.creative.design,
@@ -66,7 +70,7 @@ export const SmackContents = {
     ],
   },
   Bunker: {
-    page: 5,
+    pages: ["10Bunker", "11Bunker"],
     title: 'Bunker',
     skills: [
       skills.creative.design,
@@ -77,7 +81,7 @@ export const SmackContents = {
     ],
   },
   AI: {
-    page: 6,
+    pages: ["12AI", "13AI"],
     title: 'AI',
     skills: [
       skills.creative.ai,
@@ -87,7 +91,7 @@ export const SmackContents = {
     ],
   },
   Sandro: {
-    page: 7,
+    pages: ["14Sandro", "15Sandro"],
     title: 'Sandro',
     skills: [
       skills.creative.css,
@@ -103,7 +107,7 @@ export const SmackContents = {
     ],
   },
   Tarot: {
-    page: 8,
+    pages: ["18Tarot", "19Tarot"],
     title: 'Tarot',
     skills: [
       skills.creative.css,
@@ -120,7 +124,7 @@ export const SmackContents = {
     ],
   },
   Events: {
-    page: 10,
+    pages: ["20Events", "21Events"],
     title: 'Events',
     skills: [
       skills.creative.experience,
@@ -129,10 +133,12 @@ export const SmackContents = {
   },
 }
 
+
+
 export const EngineerContents = {
   Editorial: { page: 2, title: 'Editorial', skills: [] },
   DigitalTwins: {
-    page: 3,
+    pages: ['06DigitalTwins', '07DigitalTwins', '08DigitalTwins', '09DigitalTwins'],
     title: 'Digital Twins',
     skills: [
       skills.engineering.digitalisation,
@@ -145,7 +151,7 @@ export const EngineerContents = {
     ],
   },
   WindTurbines: {
-    page: 5,
+    pages: ['10WindTurbines', '11WindTurbines'],
     title: 'Wind Turbines',
     skills: [
       skills.engineering.wind,
@@ -157,7 +163,7 @@ export const EngineerContents = {
     ],
   },
   HPC: {
-    page: 6,
+    pages: ['12HPC', '13HPC'],
     title: 'HPC',
     skills: [
       skills.engineering.nuclear,
@@ -166,7 +172,7 @@ export const EngineerContents = {
     ],
   },
   Modelling: {
-    page: 7,
+    pages: ['14Modelling', '15Modelling'],
     title: 'Modelling',
     skills: [
       skills.engineering.digitalisation, 
@@ -176,7 +182,7 @@ export const EngineerContents = {
       skills.engineering.engineeringmanagement],
   },
   Transformation: {
-    page: 8,
+    pages: ['16Transformation', '17Transformation', '18Transformation', '19Transformation'],
     title: 'Transformation',
     skills: [
       skills.engineering.digitalisation,
