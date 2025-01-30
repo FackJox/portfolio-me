@@ -130,7 +130,7 @@ export default function Page() {
   const layout = getLayoutConfig(isPortrait)
   const [wordCloudVisible] = useAtom(wordCloudVisibleAtom)
   const [, setScrollTop] = useAtom(scrollTopAtom)
-  const [pages] = useAtom(pagesAtom)
+  const [pages, setPages] = useAtom(pagesAtom)
 
   const scrollArea = useRef()
   const onScroll = (e) => {
@@ -204,8 +204,8 @@ export default function Page() {
               shadow-mapSize-height={1024}
             />
             <Suspense fallback={null}>
-              <WordCloud />
-              {/* <Common /> */}
+              <WordCloud onChangePages={setPages} />
+              <Common />
             </Suspense>
           </View>
           <div

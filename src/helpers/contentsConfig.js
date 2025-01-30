@@ -1,35 +1,9 @@
-export const SmackContents = {
-  Editorial: { page: 2, title: 'Editorial', skills: [] },
-  Graphics: { page: 3, title: 'Graphics', skills: [] },
-  Scout: { page: 4, title: 'Scout', skills: [] },
-  Bunker: { page: 5, title: 'Bunker', skills: [] },
-  AI: { page: 6, title: 'AI', skills: [] },
-  Sandro: { page: 7, title: 'Sandro', skills: [] },
-  Tarot: { page: 8, title: 'Tarot', skills: [] },
-  Events: { page: 10, title: 'Events', skills: [] },
-}
-
-export const EngineerContents = {
-  Editorial: { page: 2, title: 'Editorial', skills: [] },
-  DigitalTwins: { page: 3, title: 'Digital Twins', skills: [] },
-  WindTurbines: { page: 5, title: 'Wind Turbines', skills: [] },
-  HPC: { page: 6, title: 'HPC', skills: [] },
-  Modelling: { page: 7, title: 'Modelling', skills: [] },
-  Transformation: { page: 8, title: 'Transformation', skills: [] },
-}
-
-export const VagueContents = {
-  Editorial: { page: 3, title: 'Editorial', skills: [] },
-  Timeline: { page: 4, title: 'Timeline', skills: [] },
-  About: { page: 5, title: 'About', skills: [] },
-  Contributers: { page: 6, title: 'Contributers', skills: [] },
-}
-
 export const skills = {
   creative: {
     ai: { icon: 'ai', title: 'AI' },
     design: { icon: 'design', title: 'Design' },
     unreal: { icon: 'unreal', title: 'Unreal Game Engine' },
+    unity: { icon: 'unity', title: 'Unity Game Engine' },
     css: { icon: 'css', title: 'CSS' },
     projectmanagement: { icon: 'projectmanagement', title: 'Creative Project Management' },
     graphicdesign: { icon: 'graphicdesign', title: 'Graphic Design' },
@@ -42,6 +16,7 @@ export const skills = {
     uxdesign: { icon: 'uxdesign', title: 'UX Design' },
     animation: { icon: 'animation', title: 'Animation' },
     motiongraphics: { icon: 'motiongraphics', title: 'Motion Design' },
+    experience: { icon: 'experience', title: 'Experience Design' },
   },
 
   engineering: {
@@ -59,5 +34,162 @@ export const skills = {
     nuclear: { icon: 'nuclear', title: 'Nuclear Engineering' },
     fluid: { icon: 'fluid', title: 'Fluid Engineering' },
     wind: { icon: 'wind', title: 'Wind Energy' },
-  }
+    networking: { icon: 'networking', title: 'Networking' },
+    iot: { icon: 'iot', title: 'IoT' },
+    modelling3d: { icon: 'modelling3d', title: '3D Modelling' },
+  },
+}
+
+export const SmackContents = {
+  Editorial: { page: 2, title: 'Editorial', skills: [] },
+  Graphics: {
+    page: 3,
+    title: 'Graphics',
+    skills: [
+      skills.creative.design,
+      skills.creative.ai,
+      skills.creative.graphicdesign,
+      skills.creative.typography,
+      skills.creative.animation,
+      skills.creative.motiongraphics,
+    ],
+  },
+  Scout: {
+    page: 4,
+    title: 'Scout',
+    skills: [
+      skills.creative.design,
+      skills.creative.ai,
+      skills.creative.graphicdesign,
+      skills.creative.typography,
+      skills.creative.projectmanagement,
+    ],
+  },
+  Bunker: {
+    page: 5,
+    title: 'Bunker',
+    skills: [
+      skills.creative.design,
+      skills.creative.ai,
+      skills.creative.graphicdesign,
+      skills.creative.typography,
+      skills.creative.projectmanagement,
+    ],
+  },
+  AI: {
+    page: 6,
+    title: 'AI',
+    skills: [
+      skills.creative.ai,
+      skills.creative.design,
+      skills.creative.animation,
+      skills.creative.motiongraphics,
+    ],
+  },
+  Sandro: {
+    page: 7,
+    title: 'Sandro',
+    skills: [
+      skills.creative.css,
+      skills.creative.webdesign,
+      skills.creative.reactthreefiber,
+      skills.creative.framermotion,
+      skills.creative.threejs,
+      skills.creative.uxdesign,
+      skills.creative.graphics3d,
+      skills.engineering.react,
+      skills.engineering.html,
+      skills.engineering.js,
+    ],
+  },
+  Tarot: {
+    page: 8,
+    title: 'Tarot',
+    skills: [
+      skills.creative.css,
+      skills.creative.webdesign,
+      skills.creative.reactthreefiber,
+      skills.creative.framermotion,
+      skills.creative.threejs,
+      skills.creative.uxdesign,
+      skills.creative.graphics3d,
+      skills.creative.experience,
+      skills.engineering.svelte,
+      skills.engineering.html,
+      skills.engineering.js,
+    ],
+  },
+  Events: {
+    page: 10,
+    title: 'Events',
+    skills: [
+      skills.creative.experience,
+      skills.creative.projectmanagement,
+    ],
+  },
+}
+
+export const EngineerContents = {
+  Editorial: { page: 2, title: 'Editorial', skills: [] },
+  DigitalTwins: {
+    page: 3,
+    title: 'Digital Twins',
+    skills: [
+      skills.engineering.digitalisation,
+      skills.engineering.digitaltwins,
+      skills.engineering.engineeringmanagement,
+      skills.engineering.nuclear,
+      skills.engineering.unity,
+      skills.engineering.unreal,
+      skills.engineering.react,
+    ],
+  },
+  WindTurbines: {
+    page: 5,
+    title: 'Wind Turbines',
+    skills: [
+      skills.engineering.wind,
+      skills.engineering.fluid,
+      skills.engineering.sensors,
+      skills.engineering.digitalisation,
+      skills.engineering.networking,
+      skills.engineering.iot,
+    ],
+  },
+  HPC: {
+    page: 6,
+    title: 'HPC',
+    skills: [
+      skills.engineering.nuclear,
+      skills.engineering.projectmanagement,
+      skills.engineering.modelling3d,
+    ],
+  },
+  Modelling: {
+    page: 7,
+    title: 'Modelling',
+    skills: [
+      skills.engineering.digitalisation, 
+      skills.engineering.digitaltwins, 
+      skills.engineering.sequencing, 
+      skills.engineering.nuclear, 
+      skills.engineering.engineeringmanagement],
+  },
+  Transformation: {
+    page: 8,
+    title: 'Transformation',
+    skills: [
+      skills.engineering.digitalisation,
+      skills.engineering.digitaltwins,
+      skills.engineering.engineeringmanagement,
+      skills.engineering.modelling3d,
+    ],
+  },
+}
+
+export const VagueContents = {
+  Editorial: { page: 3, title: 'Editorial', skills: [] },
+  Timeline: { page: 4, title: 'Timeline', skills: [] },
+  About: { page: 5, title: 'About', skills: [] },
+  Contributers: { page: 6, title: 'Contributers', skills: [] },
 }
