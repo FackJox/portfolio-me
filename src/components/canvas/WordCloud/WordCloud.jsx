@@ -4,7 +4,7 @@ import { Canvas, useThree, useFrame } from '@react-three/fiber'
 import { useAspect, Html, Text, Plane, PerspectiveCamera, useTexture } from '@react-three/drei'
 import { Flex, Box, useReflow } from '@react-three/flex'
 import { useAtom } from 'jotai'
-import { pagesAtom, scrollState } from '@/helpers/atoms'
+import { pagesAtom, scrollTopAtom, styleMagazineAtom } from '@/helpers/atoms'
 import { skills, SmackContents, EngineerContents } from '@/helpers/contentsConfig'
 import { picturesSmack, picturesEngineer, picturesVague, getTexturePath } from '@/helpers/textureLoader'
 
@@ -95,7 +95,7 @@ function PicturePlane({ magazine, page }) {
 
   if (error || !texture) return null
 
-  const scale = 1.2
+  const scale = 1.4
   return (
     <mesh scale={[scale, scale, 1]}>
       <planeGeometry args={[1.28, 1.71]} />
@@ -129,43 +129,62 @@ function interleaveArrays(arrays) {
   return shuffleArray(result)
 }
 
-function SkillText({ content, isEngineering, onClick }) {
+function SkillText({ content, isEngineering, onClick, isSelected }) {
   const [hovered, setHovered] = useState(false)
   const [clicked, setClicked] = useState(false)
+  const [, setStyleMagazine] = useAtom(styleMagazineAtom)
   const textRef = useRef()
 
   const getColor = () => {
-    if (clicked) return '#ff9f43' // Orange when clicked
-    if (hovered) return '#f7d794' // Light yellow when hovered
-    return isEngineering ? '#2d4059' : '#ea5455' // Default colors
+    if (clicked) return isEngineering ? '#FFB79C' : '#FABE7F' // Orange when clicked
+    if (hovered) return isEngineering ? '#FFB79C' : '#FABE7F' // Light yellow when hovered
+    return '#F4EEDC' // Default colors
+  }
+
+  const handleClick = (e) => {
+    e.stopPropagation()
+    const newClickedState = !clicked
+    setClicked(newClickedState)
+    if (newClickedState) {
+      setStyleMagazine(isEngineering ? 'engineer' : 'smack')
+    } else {
+      setStyleMagazine('vague')
+    }
+    onClick(content)
+  }
+
+  const handlePointerOver = (e) => {
+    e.stopPropagation()
+    setHovered(true)
+    if (!clicked) {
+      setStyleMagazine(isEngineering ? 'engineer' : 'smack')
+    }
+  }
+
+  const handlePointerOut = (e) => {
+    e.stopPropagation()
+    setHovered(false)
+    if (!clicked) {
+      setStyleMagazine('vague')
+    }
   }
 
   return (
-    <group
-      ref={textRef}
-      onClick={(e) => {
-        e.stopPropagation()
-        setClicked(true)
-        onClick(content)
-      }}
-      onPointerOver={(e) => {
-        e.stopPropagation()
-        setHovered(true)
-      }}
-      onPointerOut={(e) => {
-        e.stopPropagation()
-        setHovered(false)
-      }}
-    >
+    <group ref={textRef} onClick={handleClick} onPointerOver={handlePointerOver} onPointerOut={handlePointerOut}>
       <Text
         font={isEngineering ? '/fonts/HKGrotesk-SemiBold.otf' : '/fonts/lemon-regular.otf'}
-        fontSize={isEngineering ? 0.5 : 1}
+        fontSize={isEngineering ? 0.5 : 0.75}
         maxWidth={2}
         anchorX='center'
         anchorY='middle'
         color={getColor()}
         textAlign='center'
         position={[0, 0, 0]}
+        material={
+          new THREE.MeshBasicMaterial({
+            toneMapped: false,
+          })
+        }
       >
         {content}
       </Text>
@@ -229,13 +248,44 @@ function findPagesWithSkill(skillTitle) {
   return matchingPages
 }
 
+function AnimatedBox({ children, position, ...props }) {
+  const ref = useRef()
+  const targetPos = useRef(position)
+
+  useFrame(() => {
+    if (ref.current) {
+      ref.current.position.x += (targetPos.current[0] - ref.current.position.x) * 0.1
+      ref.current.position.y += (targetPos.current[1] - ref.current.position.y) * 0.1
+      ref.current.position.z += (targetPos.current[2] - ref.current.position.z) * 0.1
+    }
+  })
+
+  useEffect(() => {
+    targetPos.current = position
+  }, [position])
+
+  return (
+    <Box ref={ref} {...props}>
+      {children}
+    </Box>
+  )
+}
+
 function Content() {
   const { size, gl } = useThree()
   const [vpWidth, vpHeight] = useAspect(size.width, size.height)
   const [selectedSkill, setSelectedSkill] = useState(null)
   const [matchingPages, setMatchingPages] = useState([])
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
   const [currentPageIndex, setCurrentPageIndex] = useState(0)
+  const [savedSkillsContent, setSavedSkillsContent] = useState(null)
+  const reflow = useReflow()
+
+  // Grid calculations
+  const itemWidth = 0.8
+  const itemsPerRow = Math.floor((vpWidth * 0.9) / itemWidth)
+  const rows = Math.ceil((savedSkillsContent || []).length / itemsPerRow)
+  const totalHeight = rows * itemWidth
 
   // Clean up textures when component unmounts
   useEffect(() => {
@@ -255,30 +305,7 @@ function Content() {
     }
   }, [matchingPages.length])
 
-  // Preload only the first batch of textures
-  useEffect(() => {
-    const preloadInitialTextures = async () => {
-      setIsLoading(true)
-      try {
-        const initialPictures = [
-          ...picturesSmack.slice(0, 4).map((page) => ({ magazine: 'smack', page })),
-          ...picturesEngineer.slice(0, 4).map((page) => ({ magazine: 'engineer', page })),
-        ]
-
-        await Promise.all(
-          initialPictures.map(({ magazine, page }) => textureManager.load(getTexturePath(magazine, page))),
-        )
-      } catch (error) {
-        // Keep this warning for debugging purposes
-        console.warn('Error preloading textures:', error)
-      }
-      setIsLoading(false)
-    }
-
-    preloadInitialTextures()
-  }, [])
-
-  // Split skills into engineering and creative arrays
+  // Split and shuffle skills only once on mount
   const { engineeringSkills, creativeSkills } = useMemo(() => {
     const engineering = []
     const creative = []
@@ -293,25 +320,47 @@ function Content() {
       })
     })
 
-    return { engineeringSkills: shuffleArray(engineering), creativeSkills: shuffleArray(creative) }
-  }, [])
+    return {
+      engineeringSkills: shuffleArray([...engineering]),
+      creativeSkills: shuffleArray([...creative]),
+    }
+  }, []) // Empty dependency array - only run once on mount
 
-  // Combine only skill content
+  // Create initial interleaved content once with grid positions
+  const initialSkillsContent = useMemo(() => {
+    const content = interleaveArrays([engineeringSkills, creativeSkills])
+    // Add grid positions to each item
+    return content.map((item, index) => ({
+      ...item,
+      gridX: (index % itemsPerRow) * itemWidth,
+      gridY: Math.floor(index / itemsPerRow) * itemWidth,
+    }))
+  }, [engineeringSkills, creativeSkills, itemsPerRow, itemWidth])
+
+  // Use saved content or initial content
   const skillsContent = useMemo(() => {
-    return interleaveArrays([engineeringSkills, creativeSkills])
-  }, [engineeringSkills, creativeSkills])
+    return savedSkillsContent || initialSkillsContent
+  }, [savedSkillsContent, initialSkillsContent])
 
-  // Adjust grid calculations
-  const itemWidth = 0.8
-  const itemsPerRow = Math.floor((vpWidth * 0.9) / itemWidth)
-  const rows = Math.ceil(skillsContent.length / itemsPerRow)
-  const totalHeight = rows * itemWidth
+  // Update rows and totalHeight when content changes
+  useEffect(() => {
+    const newRows = Math.ceil(skillsContent.length / itemsPerRow)
+    if (rows !== newRows) {
+      reflow()
+    }
+  }, [skillsContent, itemsPerRow, rows, reflow])
 
   const handleSkillClick = (content) => {
     if (selectedSkill === content) {
+      // Unselecting - restore previous state
       setSelectedSkill(null)
       setMatchingPages([])
+      setSavedSkillsContent(null)
     } else {
+      // Selecting new skill - save current state
+      if (!selectedSkill) {
+        setSavedSkillsContent(skillsContent)
+      }
       setSelectedSkill(content)
       const pages = findPagesWithSkill(content)
       setMatchingPages(pages)
@@ -338,14 +387,30 @@ function Content() {
         marginTop={0.25}
       >
         {!isLoading &&
-          skillsContent.map(
-            (item, i) =>
-              (!selectedSkill || selectedSkill === item.content) && (
-                <Box margin={0.75} key={i} width={1} height={1} centerAnchor>
-                  <SkillText content={item.content} isEngineering={item.isEngineering} onClick={handleSkillClick} />
-                </Box>
-              ),
-          )}
+          skillsContent.map((item, i) => {
+            const isSelected = selectedSkill === item.content
+            const yOffset = isSelected ? totalHeight / 2 - 1 : 0
+            const xOffset = isSelected ? -item.gridX + vpWidth * 0.45 : 0
+
+            return (
+              <AnimatedBox
+                margin={0.75}
+                key={i}
+                width={1}
+                height={1}
+                centerAnchor
+                visible={!selectedSkill || isSelected}
+                position={[xOffset, yOffset, 0]}
+              >
+                <SkillText
+                  content={item.content}
+                  isEngineering={item.isEngineering}
+                  onClick={handleSkillClick}
+                  isSelected={isSelected}
+                />
+              </AnimatedBox>
+            )
+          })}
       </Box>
 
       {/* Matching Pages Row */}
@@ -400,11 +465,14 @@ function Content() {
 export default function WordCloud({ onChangePages }) {
   const group = useRef()
   const { size } = useThree()
-  const [vpWidth, vpHeight] = useAspect(size.innwidth, size.height)
+  const [vpWidth, vpHeight] = useAspect(size.width, size.height)
   const vec = new THREE.Vector3()
+  const [scrollTop] = useAtom(scrollTopAtom)
 
   useFrame(() => {
-    group.current.position.lerp(vec.set(0, scrollState.top / 100, 0), 0.1)
+    if (group.current) {
+      group.current.position.lerp(vec.set(0, scrollTop / 100, 0), 0.1)
+    }
   })
 
   const handleReflow = useCallback(

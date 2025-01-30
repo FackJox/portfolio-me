@@ -51,7 +51,5 @@ export const scrollTopAtom = atom(0)
 export const totalPagesAtom = atom(2)
 export const pagesAtom = atom(0)
 
-// Shared scroll state object
-export const scrollState = {
-  top: 0,
-}
+// Shared scroll state atom
+export const scrollState = atom({ top: 0 })
