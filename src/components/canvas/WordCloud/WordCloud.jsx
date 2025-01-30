@@ -50,9 +50,58 @@ function interleaveArrays(arrays) {
   return shuffleArray(result)
 }
 
+function SkillText({ content, isEngineering, onClick }) {
+  const [hovered, setHovered] = useState(false)
+  const [clicked, setClicked] = useState(false)
+  const textRef = useRef()
+
+  const getColor = () => {
+    if (clicked) return '#ff9f43' // Orange when clicked
+    if (hovered) return '#f7d794' // Light yellow when hovered
+    return isEngineering ? '#2d4059' : '#ea5455' // Default colors
+  }
+
+  return (
+    <group
+      ref={textRef}
+      onClick={(e) => {
+        e.stopPropagation()
+        setClicked(true)
+        onClick(content)
+      }}
+      onPointerOver={(e) => {
+        e.stopPropagation()
+        setHovered(true)
+      }}
+      onPointerOut={(e) => {
+        e.stopPropagation()
+        setHovered(false)
+      }}
+    >
+      <Text
+        font={isEngineering ? '/fonts/HKGrotesk-SemiBold.otf' : '/fonts/lemon-regular.otf'}
+        fontSize={isEngineering ? 0.5 : 1}
+        maxWidth={2}
+        anchorX='center'
+        anchorY='middle'
+        color={getColor()}
+        textAlign='center'
+        position={[0, 0, 0]}
+      >
+        {content}
+      </Text>
+      <mesh visible={false}>
+        <planeGeometry args={[2, 1]} />
+        <meshBasicMaterial transparent opacity={0} />
+      </mesh>
+    </group>
+  )
+}
+
 function Content() {
   const { size } = useThree()
   const [vpWidth, vpHeight] = useAspect(size.width, size.height)
+  const [selectedSkill, setSelectedSkill] = useState(null)
 
   // Split skills into engineering and creative arrays
   const { engineeringSkills, creativeSkills } = useMemo(() => {
@@ -72,26 +121,20 @@ function Content() {
     return { engineeringSkills: shuffleArray(engineering), creativeSkills: shuffleArray(creative) }
   }, [])
 
-  // Prepare pictures array
-  const pictures = useMemo(() => {
-    const pics = [
-      ...picturesSmack.map((pic) => ({ type: 'picture', magazine: 'smack', page: pic })),
-      ...picturesEngineer.map((pic) => ({ type: 'picture', magazine: 'engineer', page: pic })),
-      ...picturesVague.map((pic) => ({ type: 'picture', magazine: 'vague', page: pic })),
-    ]
-    return shuffleArray(pics)
-  }, [])
-
-  // Interleave all content types for better distribution
-  const mixedContent = useMemo(() => {
-    return interleaveArrays([engineeringSkills, creativeSkills, pictures])
-  }, [engineeringSkills, creativeSkills, pictures])
+  // Combine only skill content
+  const skillsContent = useMemo(() => {
+    return interleaveArrays([engineeringSkills, creativeSkills])
+  }, [engineeringSkills, creativeSkills])
 
   // Adjust grid calculations
-  const itemWidth = 0.8 // Total width including margin
-  const itemsPerRow = Math.floor((vpWidth * 0.9) / itemWidth) // Use 90% of viewport width
-  const rows = Math.ceil(mixedContent.length / itemsPerRow)
-  const totalHeight = rows * itemWidth // Use same spacing vertically
+  const itemWidth = 0.8
+  const itemsPerRow = Math.floor((vpWidth * 0.9) / itemWidth)
+  const rows = Math.ceil(skillsContent.length / itemsPerRow)
+  const totalHeight = rows * itemWidth
+
+  const handleSkillClick = (content) => {
+    setSelectedSkill(content)
+  }
 
   return (
     <Box
@@ -101,27 +144,16 @@ function Content() {
       flexWrap='wrap'
       width={vpWidth * 0.9}
       height={totalHeight}
-      position={[0, -totalHeight / 2, 0]} // Center vertically
+      position={[0, -totalHeight / 2, 0]}
     >
-      {mixedContent.map((item, i) => (
-        <Box margin={0.75} key={i} width={1} height={1} centerAnchor>
-          {item.type === 'skill' ? (
-            <Text
-              font={item.isEngineering ? '/fonts/HKGrotesk-SemiBold.otf' : '/fonts/lemon-regular.otf'}
-              fontSize={item.isEngineering ? 0.5 : 1}
-              maxWidth={2}
-              anchorX='center'
-              anchorY='middle'
-              color={item.isEngineering ? '#2d4059' : '#ea5455'}
-              textAlign='center'
-            >
-              {item.content}
-            </Text>
-          ) : (
-            <PicturePlane magazine={item.magazine} page={item.page} />
-          )}
-        </Box>
-      ))}
+      {skillsContent.map(
+        (item, i) =>
+          (!selectedSkill || selectedSkill === item.content) && (
+            <Box margin={0.75} key={i} width={1} height={1} centerAnchor>
+              <SkillText content={item.content} isEngineering={item.isEngineering} onClick={handleSkillClick} />
+            </Box>
+          ),
+      )}
     </Box>
   )
 }
@@ -146,16 +178,10 @@ export default function WordCloud({ onChangePages }) {
 
   return (
     <group ref={group} position={[0, 0, 2]}>
-      <Flex
-        flexDirection='column'
-        size={[vpWidth, vpHeight, 0]}
-        onReflow={handleReflow}
-        centerAnchor
-      >
+      <Flex flexDirection='column' size={[vpWidth, vpHeight, 0]} onReflow={handleReflow} centerAnchor>
         <Reflower />
         <Content />
       </Flex>
     </group>
   )
 }
-

@@ -181,52 +181,25 @@ export default function Page() {
           </AnimatePresence>
         </motion.div>
 
-        {/* <motion.div layout className='relative w-full flex-1'>
-          <View className='absolute w-full inset-0 flex items-center justify-center'>
-            <Suspense fallback={null}>
-              <AllAssetsLoader>
-                <Library position={[0, 0, 0]} />
-              </AllAssetsLoader>
-              <Common />
-            </Suspense>
-          </View>
-        </motion.div> */}
-
         <motion.div layout className='relative w-full flex-1'>
-          <View className='absolute w-full inset-0 flex items-center justify-center'>
-            <pointLight position={[200, 50, 900]} intensity={0.1} />
-            <ambientLight intensity={0.1} />
-            <spotLight
-              position={[300, 50, 600]}
-              penumbra={1}
-              castShadow
-              shadow-mapSize-width={1024}
-              shadow-mapSize-height={1024}
-            />
-            <Suspense fallback={null}>
-              <WordCloud onChangePages={setPages} />
-              <Common />
-            </Suspense>
-          </View>
-          <div
-            className='scrollArea'
-            ref={scrollArea}
-            onScroll={onScroll}
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-              overflow: 'auto',
-            }}
-          >
-            <div
-              style={{
-                height: `${pages * 100}vh`,
-                pointerEvents: 'none',
-              }}
-            />
+          <div className='absolute w-full h-full overflow-auto' ref={scrollArea} onScroll={onScroll}>
+            <div style={{ height: `${pages * 100}vh` }}>
+              <View className='sticky top-0 w-full h-screen flex items-center justify-center'>
+                <pointLight position={[200, 50, 900]} intensity={0.1} />
+                <ambientLight intensity={0.1} />
+                <spotLight
+                  position={[300, 50, 600]}
+                  penumbra={1}
+                  castShadow
+                  shadow-mapSize-width={1024}
+                  shadow-mapSize-height={1024}
+                />
+                <Suspense fallback={null}>
+                  <WordCloud onChangePages={setPages} />
+                  <Common />
+                </Suspense>
+              </View>
+            </div>
           </div>
         </motion.div>
 
