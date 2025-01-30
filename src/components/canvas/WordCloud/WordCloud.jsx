@@ -335,6 +335,7 @@ function Content() {
         flexWrap='wrap'
         width={vpWidth * 0.9}
         height={totalHeight}
+        marginTop={0.25}
       >
         {!isLoading &&
           skillsContent.map(
@@ -356,21 +357,40 @@ function Content() {
           flexWrap='wrap'
           width={vpWidth * 0.9}
           height={2}
-          marginTop={1}
+          marginTop={0}
         >
-          {matchingPages.slice(currentPageIndex, currentPageIndex + 4).map((page, index) => (
-            <Box
-              margin={0.5}
-              key={`${page.magazine}-${page.page}-${index}`}
-              width={1.28 * 1.2}
-              height={1.71 * 1.2}
-              centerAnchor
-            >
-              <Suspense fallback={null}>
-                <PicturePlane magazine={page.magazine} page={page.page} />
-              </Suspense>
-            </Box>
-          ))}
+          {/* Group pages in pairs */}
+          {Array.from({
+            length: Math.ceil(matchingPages.slice(currentPageIndex, currentPageIndex + 4).length / 2),
+          }).map((_, pairIndex) => {
+            const startIdx = pairIndex * 2
+            const pair = matchingPages.slice(currentPageIndex + startIdx, currentPageIndex + startIdx + 2)
+
+            return (
+              <Box
+                key={`pair-${pairIndex}`}
+                flexDirection='row'
+                alignItems='center'
+                justifyContent='center'
+                margin={0.5}
+                width={(vpWidth * 0.9) / 2 - 1}
+              >
+                {pair.map((page, index) => (
+                  <Box
+                    key={`${page.magazine}-${page.page}-${index}`}
+                    margin={0}
+                    width={(vpWidth * 0.9) / 4 - 0.5}
+                    height={((vpWidth * 0.9) / 4 - 0.5) * 1.34}
+                    centerAnchor
+                  >
+                    <Suspense fallback={null}>
+                      <PicturePlane magazine={page.magazine} page={page.page} />
+                    </Suspense>
+                  </Box>
+                ))}
+              </Box>
+            )
+          })}
         </Box>
       )}
     </Box>
