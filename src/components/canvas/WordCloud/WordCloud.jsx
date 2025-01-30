@@ -80,7 +80,6 @@ function PicturePlane({ magazine, page }) {
           setError(false)
         }
       } catch (err) {
-        console.warn(`Failed to load texture for ${magazine}/${page}:`, err)
         if (mounted.current) {
           setError(true)
         }
@@ -181,19 +180,16 @@ function SkillText({ content, isEngineering, onClick }) {
 // Find pages that contain a specific skill
 function findPagesWithSkill(skillTitle) {
   const matchingPages = []
-  console.log('Finding pages for skill:', skillTitle)
 
   // Helper function to add pages with proper validation
   const addPages = (magazine, pages, page) => {
     if (pages) {
       pages.forEach((p) => {
-        console.log(`Adding page ${p} from ${magazine} magazine`)
         matchingPages.push({ magazine, page: p })
       })
     } else if (page) {
       // For single page entries, format the page number properly
       const formattedPage = typeof page === 'number' ? page.toString().padStart(2, '0') : page
-      console.log(`Adding single page ${formattedPage} from ${magazine} magazine`)
       matchingPages.push({ magazine, page: formattedPage })
     }
   }
@@ -203,23 +199,18 @@ function findPagesWithSkill(skillTitle) {
   Object.entries(skills).forEach(([category, skillSet]) => {
     Object.values(skillSet).forEach((skill) => {
       if (skill.title === skillTitle) {
-        console.log('Found matching skill:', skill)
         matchingSkill = skill
       }
     })
   })
 
-  if (!matchingSkill) {
-    console.log('No matching skill found')
-    return []
-  }
+  if (!matchingSkill) return []
 
   // Check SmackContents
   Object.entries(SmackContents).forEach(([section, content]) => {
     if (content.skills && content.skills.length > 0) {
       const hasSkill = content.skills.some((skill) => skill === matchingSkill)
       if (hasSkill) {
-        console.log(`Found skill in SmackContents section: ${section}`)
         addPages('smack', content.pages, content.page)
       }
     }
@@ -230,13 +221,11 @@ function findPagesWithSkill(skillTitle) {
     if (content.skills && content.skills.length > 0) {
       const hasSkill = content.skills.some((skill) => skill === matchingSkill)
       if (hasSkill) {
-        console.log(`Found skill in EngineerContents section: ${section}`)
         addPages('engineer', content.pages, content.page)
       }
     }
   })
 
-  console.log('Final matching pages:', matchingPages)
   return matchingPages
 }
 
@@ -280,6 +269,7 @@ function Content() {
           initialPictures.map(({ magazine, page }) => textureManager.load(getTexturePath(magazine, page))),
         )
       } catch (error) {
+        // Keep this warning for debugging purposes
         console.warn('Error preloading textures:', error)
       }
       setIsLoading(false)
