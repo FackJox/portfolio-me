@@ -5,6 +5,8 @@ On portrait landscape orientation change the viewing left/right page state is no
 
 restore to last page on swipe close and refocus
 
+can drag magazines in landscape ??
+
 ---
 Performance
 suspense all pages until the magazine is selected in focus mode
@@ -23,6 +25,7 @@ In portait mode rotate the text in the same direction as the carousel drag
 change button colours in landscape on hover 
 Press animations for buttons 
 CTA pulses 1 second after page turn
+align animation durations
 
 
 ---
@@ -47,6 +50,11 @@ If can do clickable website -
 
 
 ----
+Content
+
+server, docker, 
+music production, ableton
+website
 
 
 Below are a few approaches for replacing the “picture” textures with interactive HTML content that follows the same folding/page-turning logic. Each approach has upsides and downsides, particularly around how (and if) you can warp the HTML to match the curvature of the 3D geometry.

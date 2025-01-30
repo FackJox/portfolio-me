@@ -2,7 +2,6 @@ import { Text } from '@react-three/drei'
 import * as THREE from 'three'
 import { useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
-import { getSpacingConfig } from '@/helpers/positionHelper'
 import { ANIMATION_CONFIG } from '@/helpers/animationConfigs'
 import { useDeviceOrientation } from '@/helpers/deviceHelper'
 

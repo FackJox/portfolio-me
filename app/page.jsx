@@ -1,11 +1,30 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import { Suspense, useState, useEffect } from 'react'
+import { Suspense, useState, useEffect, useRef } from 'react'
 import { useAtom } from 'jotai'
 import { motion, AnimatePresence } from 'motion/react'
-import { styleMagazineAtom, texturesLoadedAtom, hdrLoadedAtom, allAssetsLoadedAtom } from '@/helpers/atoms';
-import { textureCache, getTexturePath, getRoughnessPath, picturesSmack, picturesEngineer, picturesVague, hdrLoader, getHDRPath } from '@/helpers/textureLoader'
+import {
+  styleMagazineAtom,
+  texturesLoadedAtom,
+  hdrLoadedAtom,
+  allAssetsLoadedAtom,
+  wordCloudVisibleAtom,
+  scrollTopAtom,
+  totalPagesAtom,
+  pagesAtom,
+  scrollState,
+} from '@/helpers/atoms'
+import {
+  textureCache,
+  getTexturePath,
+  getRoughnessPath,
+  picturesSmack,
+  picturesEngineer,
+  picturesVague,
+  hdrLoader,
+  getHDRPath,
+} from '@/helpers/textureLoader'
 import { useDeviceOrientation, getLayoutConfig } from '@/helpers/deviceHelper'
 import { layoutAnimations, backgroundTransitions } from '@/helpers/animationConfigs'
 
@@ -14,6 +33,9 @@ import { SmackHeader, SmackButtons, SmackLabel, SmackTopBar } from '@/components
 import { EngineerHeader, EngineerButtons, EngineerLabel, EngineerTopBar } from '@/components/dom/EngineerUI'
 import { VagueHeader, VagueButtons, VagueLabel, VagueTopBar } from '@/components/dom/VagueUI'
 
+import WordCloud from '../src/components/canvas/WordCloud/WordCloud' // Import the WordCloud component
+import { PerspectiveCamera } from '@react-three/drei'
+import React from 'react'
 
 // Keep dynamic imports for canvas components
 const Library = dynamic(() => import('@/components/canvas/Magazines/Library').then((mod) => mod.Library), {
@@ -41,23 +63,23 @@ const PreloadComponents = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true)
   const [, setTexturesLoaded] = useAtom(texturesLoadedAtom)
   const [, setHdrLoaded] = useAtom(hdrLoadedAtom)
-  
+
   useEffect(() => {
     const preloadAssets = async () => {
       const texturePaths = [
-        ...picturesSmack.map(pic => getTexturePath('smack', pic)),
-        ...picturesEngineer.map(pic => getTexturePath('engineer', pic)),
-        ...picturesVague.map(pic => getTexturePath('vague', pic)),
-        getRoughnessPath()
+        ...picturesSmack.map((pic) => getTexturePath('smack', pic)),
+        ...picturesEngineer.map((pic) => getTexturePath('engineer', pic)),
+        ...picturesVague.map((pic) => getTexturePath('vague', pic)),
+        getRoughnessPath(),
       ]
 
       try {
         // Load textures and HDR in parallel
         await Promise.all([
           textureCache.preloadTextures(texturePaths).then(() => setTexturesLoaded(true)),
-          hdrLoader.loadHDR(getHDRPath()).then(() => setHdrLoaded(true))
+          hdrLoader.loadHDR(getHDRPath()).then(() => setHdrLoaded(true)),
         ])
-        
+
         // Add a small delay to ensure smooth transition
         setTimeout(() => {
           setIsLoading(false)
@@ -94,18 +116,28 @@ const PreloadComponents = ({ children }) => {
 
 const AllAssetsLoader = ({ children }) => {
   const [allAssetsLoaded] = useAtom(allAssetsLoadedAtom)
-  
+
   if (!allAssetsLoaded) {
     return null
   }
-  
+
   return children
 }
 
 export default function Page() {
   const [styleMagazine] = useAtom(styleMagazineAtom)
-  const isPortrait = useDeviceOrientation();
-  const layout = getLayoutConfig(isPortrait);
+  const isPortrait = useDeviceOrientation()
+  const layout = getLayoutConfig(isPortrait)
+  const [wordCloudVisible] = useAtom(wordCloudVisibleAtom)
+  const [, setScrollTop] = useAtom(scrollTopAtom)
+  const [pages] = useAtom(pagesAtom)
+
+  const scrollArea = useRef()
+  const onScroll = (e) => {
+    const scrollTop = e.target.scrollTop
+    scrollState.top = scrollTop
+    setScrollTop(scrollTop)
+  }
 
   return (
     <PreloadComponents>
@@ -119,10 +151,7 @@ export default function Page() {
         {/* TopBar for landscape */}
         <motion.div layout className={layout.showTopBar ? 'block w-full' : 'hidden'}>
           <AnimatePresence mode='wait'>
-            <motion.div
-              key={`top-${styleMagazine}`}
-              {...layoutAnimations.topBar}
-            >
+            <motion.div key={`top-${styleMagazine}`} {...layoutAnimations.topBar}>
               {styleMagazine === 'smack' && <SmackTopBar />}
               {styleMagazine === 'engineer' && <EngineerTopBar />}
               {styleMagazine === 'vague' && <VagueTopBar />}
@@ -133,11 +162,7 @@ export default function Page() {
         {/* Header for portrait */}
         <motion.div layout className={layout.showHeader ? 'block w-full' : 'hidden'}>
           <AnimatePresence mode='wait'>
-            <motion.div 
-              className='w-full' 
-              key={`header-${styleMagazine}`}
-              {...layoutAnimations.header}
-            >
+            <motion.div className='w-full' key={`header-${styleMagazine}`} {...layoutAnimations.header}>
               {styleMagazine === 'smack' && <SmackHeader />}
               {styleMagazine === 'engineer' && <EngineerHeader />}
               {styleMagazine === 'vague' && <VagueHeader />}
@@ -148,10 +173,7 @@ export default function Page() {
         {/* Buttons Section */}
         <motion.div layout className={layout.showButtons ? 'block w-full' : 'hidden'}>
           <AnimatePresence mode='wait'>
-            <motion.div
-              key={`buttons-${styleMagazine}`}
-              {...layoutAnimations.buttons}
-            >
+            <motion.div key={`buttons-${styleMagazine}`} {...layoutAnimations.buttons}>
               {styleMagazine === 'smack' && <SmackButtons />}
               {styleMagazine === 'engineer' && <EngineerButtons />}
               {styleMagazine === 'vague' && <VagueButtons />}
@@ -159,7 +181,7 @@ export default function Page() {
           </AnimatePresence>
         </motion.div>
 
-        <motion.div layout className='relative w-full flex-1'>
+        {/* <motion.div layout className='relative w-full flex-1'>
           <View className='absolute w-full inset-0 flex items-center justify-center'>
             <Suspense fallback={null}>
               <AllAssetsLoader>
@@ -168,14 +190,49 @@ export default function Page() {
               <Common />
             </Suspense>
           </View>
+        </motion.div> */}
+
+        <motion.div layout className='relative w-full flex-1'>
+          <View className='absolute w-full inset-0 flex items-center justify-center'>
+            <pointLight position={[200, 50, 900]} intensity={0.1} />
+            <ambientLight intensity={0.1} />
+            <spotLight
+              position={[300, 50, 600]}
+              penumbra={1}
+              castShadow
+              shadow-mapSize-width={1024}
+              shadow-mapSize-height={1024}
+            />
+            <Suspense fallback={null}>
+              <WordCloud />
+              {/* <Common /> */}
+            </Suspense>
+          </View>
+          <div
+            className='scrollArea'
+            ref={scrollArea}
+            onScroll={onScroll}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              overflow: 'auto',
+            }}
+          >
+            <div
+              style={{
+                height: `${pages * 100}vh`,
+                pointerEvents: 'none',
+              }}
+            />
+          </div>
         </motion.div>
 
         <motion.div layout className={layout.showCTA ? 'block w-full' : 'hidden'}>
           <AnimatePresence mode='wait'>
-            <motion.div
-              key={`cta-${styleMagazine}`}
-              {...layoutAnimations.cta}
-            >
+            <motion.div key={`cta-${styleMagazine}`} {...layoutAnimations.cta}>
               {styleMagazine === 'smack' && <SmackLabel />}
               {styleMagazine === 'engineer' && <EngineerLabel />}
               {styleMagazine === 'vague' && <VagueLabel />}

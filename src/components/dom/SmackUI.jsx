@@ -1,5 +1,8 @@
 import { motion } from 'motion/react'
 import { layoutAnimations } from '@/helpers/animationConfigs'
+import { wordCloudVisibleAtom } from '@/helpers/atoms'
+import { useAtom } from 'jotai'
+
 
 export const SmackHeader = () => {
   return (
@@ -16,27 +19,23 @@ export const SmackHeader = () => {
 }
 
 export const SmackButtons = () => {
+    const [wordCloudVisible, setWordCloudVisible] = useAtom(wordCloudVisibleAtom)
+
   return (
     <div className='w-full flex items-center justify-center'>
       <div className='w-full mx-5 flex relative'>
-        <motion.div 
-          layoutId="top-border"
-          className='absolute top-0 w-full h-[2px] bg-[#FABE7F]'
-        />
-        <motion.div 
-          layoutId="bottom-border"
-          className='absolute bottom-0 w-full h-[2px] bg-[#FABE7F]'
-        />
+        <motion.div layoutId='top-border' className='absolute top-0 w-full h-[2px] bg-[#FABE7F]' />
+        <motion.div layoutId='bottom-border' className='absolute bottom-0 w-full h-[2px] bg-[#FABE7F]' />
         <motion.div className='flex-1' {...layoutAnimations.buttonsText}>
-          <button className='w-full py-1.5 font-[lemon-regular] text-[#FABE7F] text-xl sm:text-2xl md:text-3xl tracking-[0.04em] text-center align-middle'>
-            MENU
+          <button
+            className='w-full py-1.5 font-[lemon-regular] text-[#FABE7F] text-xl sm:text-2xl md:text-3xl tracking-[0.04em] text-center align-middle'
+            onClick={() => setWordCloudVisible((prev) => !prev)}
+          >
+            CONTENTS
           </button>
         </motion.div>
         <div className='flex items-center flex-shrink-0'>
-          <motion.div 
-            className='h-[50%] w-[1px] bg-[#F5E4F8] relative mx-4'
-            {...layoutAnimations.buttonsDivider}
-          />
+          <motion.div className='h-[50%] w-[1px] bg-[#F5E4F8] relative mx-4' {...layoutAnimations.buttonsDivider} />
         </div>
         <motion.div className='flex-1' {...layoutAnimations.buttonsText}>
           <button className='w-full py-1.5 font-[lemon-wide] text-[#F5E4F8] text-xl sm:text-2xl md:text-3xl tracking-[0.04em] text-center align-middle'>
@@ -68,30 +67,27 @@ export const SmackLabel = () => {
 }
 
 export const SmackTopBar = () => {
+      const [wordCloudVisible, setWordCloudVisible] = useAtom(wordCloudVisibleAtom)
+
   return (
     <div className='w-full h-10 flex items-center justify-between pt-6 pb-6 pl-6 pr-8 relative'>
-      <motion.div 
-        layoutId="topbar-border"
-        className='absolute bottom-0 left-0 w-full h-[1px] bg-[#FABE7F]'
-      />
+      <motion.div layoutId='topbar-border' className='absolute bottom-0 left-0 w-full h-[1px] bg-[#FABE7F]' />
       <motion.div className='flex-1 flex items-center justify-between' {...layoutAnimations.topBarText}>
         <h1 className='font-[YoungSerif] text-[#FABE7F] text-3xl tracking-[-0.04em] whitespace-nowrap'>
           Jack Foxcroft
         </h1>
         <div className='flex items-center gap-8'>
-          <button className='font-[lemon-regular] text-[#F5E4F8] text-3xl'>
-            MENU
+          <button
+            className='font-[lemon-regular] text-[#F5E4F8] text-3xl'
+            onClick={() => setWordCloudVisible((prev) => !prev)}
+          >
+            CONTENTS
           </button>
         </div>
       </motion.div>
-      <motion.div 
-        className='h-6 w-[1px] bg-[#F5E4F8] mx-8'
-        {...layoutAnimations.topBarDivider}
-      />
+      <motion.div className='h-6 w-[1px] bg-[#F5E4F8] mx-8' {...layoutAnimations.topBarDivider} />
       <motion.div className='flex items-center' {...layoutAnimations.topBarText}>
-        <button className='font-[lemon-wide] text-[#FABE7F] text-3xl'>
-          CONNECT
-        </button>
+        <button className='font-[lemon-wide] text-[#FABE7F] text-3xl'>CONNECT</button>
       </motion.div>
     </div>
   )

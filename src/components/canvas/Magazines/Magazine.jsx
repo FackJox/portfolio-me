@@ -8,11 +8,7 @@ import { useGesture } from "@use-gesture/react";
 import * as THREE from "three";
 import { styleMagazineAtom, magazineViewingStateAtom } from '@/helpers/atoms';
 import { 
-  performLerp, 
-  handlePageViewTransition, 
-  updateMagazineCarousel, 
   calculatePageViewOffset, 
-  isMiddleMagazine, 
   hoverMagazine, 
   getSpacingConfig, 
   applyFloatNullification, 

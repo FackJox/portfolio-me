@@ -1,26 +1,25 @@
 // portfolio-me/src/components/canvas/Magazines/Library.jsx
-import { atom, useAtom } from "jotai";
-import { Magazine } from "./Magazine";
-import { VagueButton, EngineerButton, SmackButton } from "../Buttons";
-import React, { useState, useMemo, useLayoutEffect, useRef, useEffect } from "react";
+import { useAtom } from "jotai";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import { useThree, useFrame } from "@react-three/fiber";
-import { animated } from "@react-spring/three";
 import { useGesture } from "@use-gesture/react";
-import * as THREE from "three";
-import { 
-  smackAtom, 
-  vagueAtom, 
-  engineerAtom, 
-  focusedMagazineAtom, 
+import {
+  smackAtom,
+  vagueAtom,
+  engineerAtom,
+  focusedMagazineAtom,
   styleMagazineAtom,
   magazineViewingStatesAtom,
-  lastCarouselMoveAtom
-} from '@/helpers/atoms';
+  lastCarouselMoveAtom,
+  wordCloudVisibleAtom,
+} from '@/helpers/atoms'
 import { calculateFocusPosition, updateMagazineCarousel, calculateMiddleMagazine, getSpacingConfig } from '@/helpers/positionHelper';
 import { useDeviceOrientation } from '@/helpers/deviceHelper';
 import { handleLibraryDrag, isTapInteraction, isSwipeInteraction } from "@/helpers/gestureHelper";
 import { ANIMATION_CONFIG } from '@/helpers/animationConfigs';
 import { GESTURE_CONFIG } from '@/helpers/gestureHelper';
+import { Magazine } from "./Magazine";
+import { VagueButton, EngineerButton, SmackButton } from "../Buttons";
 
 const picturesSmack = [
   "02Contents",
@@ -270,33 +269,32 @@ export const Library = (props) => {
     { drag: { filterTaps: true } }
   );
 
+
+
   return (
     <group {...props} ref={groupRef}>
       {/* Invisible plane for drag detection */}
-      <mesh 
-        position={[0, 0, 10]} 
-        {...bind()}
-      >
+      <mesh position={[0, 0, 10]} {...bind()}>
         <planeGeometry args={[50, 50]} />
         <meshBasicMaterial transparent opacity={1} />
       </mesh>
-      
+
       {/* Magazines */}
       {Object.entries({
         [magazines.smack]: {
           pictures: picturesSmack,
           atom: smackAtom,
-          Button: SmackButton
+          Button: SmackButton,
         },
         [magazines.vague]: {
           pictures: picturesVague,
           atom: vagueAtom,
-          Button: VagueButton
+          Button: VagueButton,
         },
         [magazines.engineer]: {
           pictures: picturesEngineer,
           atom: engineerAtom,
-          Button: EngineerButton
+          Button: EngineerButton,
         },
       }).map(([magazineName, config]) => (
         <Magazine
@@ -314,5 +312,5 @@ export const Library = (props) => {
         />
       ))}
     </group>
-  );
+  )
 };

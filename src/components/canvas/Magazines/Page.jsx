@@ -1,6 +1,4 @@
-import { useTexture } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
-import { atom, useAtom } from "jotai";
 import { easing } from "maath";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -12,7 +10,6 @@ import {
   MeshStandardMaterial,
   Skeleton,
   SkinnedMesh,
-  SRGBColorSpace,
   Uint16BufferAttribute,
   Vector3,
 } from "three";
