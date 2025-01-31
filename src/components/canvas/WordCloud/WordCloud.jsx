@@ -2,7 +2,6 @@ import * as THREE from 'three'
 import React, { Suspense, useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { Canvas, useThree, useFrame } from '@react-three/fiber'
 import { useAspect, Html, Text, Plane, PerspectiveCamera, useTexture } from '@react-three/drei'
-import { Flex, Box, useReflow } from '@react-three/flex'
 import { useAtom } from 'jotai'
 import { pagesAtom, scrollTopAtom, styleMagazineAtom } from '@/helpers/atoms'
 import { skills, SmackContents, EngineerContents } from '@/helpers/contentsConfig'
@@ -63,7 +62,7 @@ const textureManager = {
   },
 }
 
-function PicturePlane({ magazine, page }) {
+function PicturePlane({ magazine, page, position }) {
   const [texture, setTexture] = useState(null)
   const [error, setError] = useState(false)
   const texturePath = getTexturePath(magazine, page)
@@ -97,7 +96,7 @@ function PicturePlane({ magazine, page }) {
 
   const scale = 1.4
   return (
-    <mesh scale={[scale, scale, 1]}>
+    <mesh scale={[scale, scale, 1]} position={position}>
       <planeGeometry args={[1.28, 1.71]} />
       <meshStandardMaterial map={texture} />
     </mesh>
@@ -129,7 +128,7 @@ function interleaveArrays(arrays) {
   return shuffleArray(result)
 }
 
-function SkillText({ content, isEngineering, onClick, isSelected }) {
+function SkillText({ content, isEngineering, onClick, isSelected, position }) {
   const [hovered, setHovered] = useState(false)
   const [clicked, setClicked] = useState(false)
   const [, setStyleMagazine] = useAtom(styleMagazineAtom)
@@ -170,7 +169,13 @@ function SkillText({ content, isEngineering, onClick, isSelected }) {
   }
 
   return (
-    <group ref={textRef} onClick={handleClick} onPointerOver={handlePointerOver} onPointerOut={handlePointerOut}>
+    <group
+      ref={textRef}
+      position={position}
+      onClick={handleClick}
+      onPointerOver={handlePointerOver}
+      onPointerOut={handlePointerOut}
+    >
       <Text
         font={isEngineering ? '/fonts/HKGrotesk-SemiBold.otf' : '/fonts/lemon-regular.otf'}
         fontSize={isEngineering ? 0.5 : 0.75}
@@ -179,7 +184,6 @@ function SkillText({ content, isEngineering, onClick, isSelected }) {
         anchorY='middle'
         color={getColor()}
         textAlign='center'
-        position={[0, 0, 0]}
         material={
           new THREE.MeshBasicMaterial({
             toneMapped: false,
@@ -272,24 +276,19 @@ function AnimatedBox({ children, position, ...props }) {
 }
 
 function Content() {
-  const { size, gl } = useThree()
+  const { size } = useThree()
   const [vpWidth, vpHeight] = useAspect(size.width, size.height)
   const [selectedSkill, setSelectedSkill] = useState(null)
   const [matchingPages, setMatchingPages] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [currentPageIndex, setCurrentPageIndex] = useState(0)
   const [savedSkillsContent, setSavedSkillsContent] = useState(null)
-  const reflow = useReflow()
-  const flexRef = useRef()
+  const groupRef = useRef()
 
   // Clean up textures when component unmounts
   useEffect(() => {
     return () => {
       textureManager.clear()
-      // Ensure flex container is cleaned up
-      if (flexRef.current) {
-        flexRef.current = null
-      }
     }
   }, [])
 
@@ -359,98 +358,54 @@ function Content() {
     [selectedSkill, skillsContent],
   )
 
+  const calculateSkillPosition = (index, total) => {
+    const columns = Math.ceil(Math.sqrt(total))
+    const rows = Math.ceil(total / columns)
+    const x = ((index % columns) - columns / 2) * 2.5
+    const y = (Math.floor(index / columns) - rows / 2) * 2
+    return [x, y, 0]
+  }
+
+  const calculatePagePosition = (index) => {
+    const x = ((index % 2) - 0.5) * 3
+    const y = -vpHeight / 4
+    return [x, y, 0]
+  }
+
   return (
-    <Box
-      ref={flexRef}
-      flexDirection='column'
-      alignItems='flex-start'
-      justifyContent='flex-start'
-      width={vpWidth * 0.9}
-      height='auto'
-      position={[0, 0, 0]}
-    >
-      {/* Skills Grid */}
-      <Box
-        flexDirection='row'
-        alignItems='flex-start'
-        justifyContent='center'
-        flexWrap='wrap'
-        width={vpWidth * 0.9}
-        height='auto'
-        marginTop={0.25}
-      >
-        {!isLoading &&
-          skillsContent.map((item, i) => {
-            const isSelected = selectedSkill === item.content
-            const yOffset = isSelected ? 2 : 0
-            const xOffset = isSelected ? vpWidth * 0.45 - (i % 4) * 2 : 0
+    <group ref={groupRef} position={[0, 0, 0]}>
+      {!isLoading &&
+        skillsContent.map((item, i) => {
+          const isSelected = selectedSkill === item.content
+          const basePos = calculateSkillPosition(i, skillsContent.length)
+          const yOffset = isSelected ? 2 : 0
+          const position = [basePos[0], basePos[1] + yOffset, basePos[2]]
+          const shouldShow = !selectedSkill || isSelected
 
-            return (
-              <AnimatedBox
-                key={`${item.content}-${i}`}
-                margin={0.75}
-                width={1}
-                height={1}
-                centerAnchor
-                visible={!selectedSkill || isSelected}
-                position={[xOffset, yOffset, 0]}
-              >
-                <SkillText
-                  content={item.content}
-                  isEngineering={item.isEngineering}
-                  onClick={handleSkillClick}
-                  isSelected={isSelected}
-                />
-              </AnimatedBox>
-            )
-          })}
-      </Box>
+          return shouldShow ? (
+            <SkillText
+              key={`${item.content}-${i}`}
+              content={item.content}
+              isEngineering={item.isEngineering}
+              onClick={handleSkillClick}
+              isSelected={isSelected}
+              position={position}
+            />
+          ) : null
+        })}
 
-      {/* Matching Pages Row */}
-      {!isLoading && matchingPages.length > 0 && (
-        <Box
-          flexDirection='row'
-          alignItems='center'
-          justifyContent='center'
-          flexWrap='wrap'
-          width={vpWidth * 0.9}
-          height={2}
-          marginTop={0}
-        >
-          {Array.from({
-            length: Math.min(2, Math.ceil(matchingPages.slice(currentPageIndex, currentPageIndex + 4).length / 2)),
-          }).map((_, pairIndex) => {
-            const startIdx = pairIndex * 2
-            const pair = matchingPages.slice(currentPageIndex + startIdx, currentPageIndex + startIdx + 2)
-
-            return (
-              <Box
-                key={`pair-${pairIndex}-${currentPageIndex}`}
-                flexDirection='row'
-                alignItems='center'
-                justifyContent='center'
-                margin={0.5}
-                width={(vpWidth * 0.9) / 2 - 1}
-              >
-                {pair.map((page, index) => (
-                  <Box
-                    key={`${page.magazine}-${page.page}-${index}-${currentPageIndex}`}
-                    margin={0}
-                    width={(vpWidth * 0.9) / 4 - 0.5}
-                    height={((vpWidth * 0.9) / 4 - 0.5) * 1.34}
-                    centerAnchor
-                  >
-                    <Suspense fallback={null}>
-                      <PicturePlane magazine={page.magazine} page={page.page} />
-                    </Suspense>
-                  </Box>
-                ))}
-              </Box>
-            )
-          })}
-        </Box>
-      )}
-    </Box>
+      {!isLoading &&
+        matchingPages
+          .slice(currentPageIndex, currentPageIndex + 4)
+          .map((page, index) => (
+            <PicturePlane
+              key={`${page.magazine}-${page.page}-${index}-${currentPageIndex}`}
+              magazine={page.magazine}
+              page={page.page}
+              position={calculatePagePosition(index)}
+            />
+          ))}
+    </group>
   )
 }
 
@@ -458,29 +413,23 @@ export default function WordCloud({ onChangePages }) {
   const group = useRef()
   const { size } = useThree()
   const [vpWidth, vpHeight] = useAspect(size.width, size.height)
-  const vec = new THREE.Vector3()
   const [scrollTop] = useAtom(scrollTopAtom)
 
   useFrame(() => {
     if (group.current) {
-      group.current.position.lerp(vec.set(0, scrollTop / 100, 0), 0.1)
+      group.current.position.y = THREE.MathUtils.lerp(group.current.position.y, scrollTop / 100, 0.1)
     }
   })
 
-  const handleReflow = useCallback(
-    (w, h) => {
-      const calculatedPages = h / vpHeight
-      onChangePages(calculatedPages)
-    },
-    [onChangePages, vpHeight],
-  )
+  useEffect(() => {
+    if (onChangePages) {
+      onChangePages(3) // Set a fixed number of pages since we're not using flex layout
+    }
+  }, [onChangePages])
 
   return (
     <group ref={group} position={[0, 0, 2]}>
-      <Flex flexDirection='column' size={[vpWidth, vpHeight, 0]} onReflow={handleReflow} centerAnchor>
-        <Reflower />
-        <Content />
-      </Flex>
+      <Content />
     </group>
   )
 }
