@@ -280,28 +280,31 @@ function Content() {
   const [currentPageIndex, setCurrentPageIndex] = useState(0)
   const [savedSkillsContent, setSavedSkillsContent] = useState(null)
   const reflow = useReflow()
-
-  // Grid calculations
-  const itemWidth = 0.8
-  const itemsPerRow = Math.floor((vpWidth * 0.9) / itemWidth)
-  const rows = Math.ceil((savedSkillsContent || []).length / itemsPerRow)
-  const totalHeight = rows * itemWidth
+  const flexRef = useRef()
 
   // Clean up textures when component unmounts
   useEffect(() => {
     return () => {
       textureManager.clear()
+      // Ensure flex container is cleaned up
+      if (flexRef.current) {
+        flexRef.current = null
+      }
     }
   }, [])
 
-  // Handle page cycling
+  // Handle page cycling with cleanup
   useEffect(() => {
+    let interval
     if (matchingPages.length > 4) {
-      const interval = setInterval(() => {
+      interval = setInterval(() => {
         setCurrentPageIndex((current) => (current + 1) % Math.max(1, matchingPages.length - 3))
-      }, 3000) // Cycle every 3 seconds
-
-      return () => clearInterval(interval)
+      }, 3000)
+    }
+    return () => {
+      if (interval) {
+        clearInterval(interval)
+      }
     }
   }, [matchingPages.length])
 
@@ -324,57 +327,47 @@ function Content() {
       engineeringSkills: shuffleArray([...engineering]),
       creativeSkills: shuffleArray([...creative]),
     }
-  }, []) // Empty dependency array - only run once on mount
+  }, [])
 
-  // Create initial interleaved content once with grid positions
+  // Create initial interleaved content
   const initialSkillsContent = useMemo(() => {
-    const content = interleaveArrays([engineeringSkills, creativeSkills])
-    // Add grid positions to each item
-    return content.map((item, index) => ({
-      ...item,
-      gridX: (index % itemsPerRow) * itemWidth,
-      gridY: Math.floor(index / itemsPerRow) * itemWidth,
-    }))
-  }, [engineeringSkills, creativeSkills, itemsPerRow, itemWidth])
+    return interleaveArrays([engineeringSkills, creativeSkills])
+  }, [engineeringSkills, creativeSkills])
 
   // Use saved content or initial content
   const skillsContent = useMemo(() => {
     return savedSkillsContent || initialSkillsContent
   }, [savedSkillsContent, initialSkillsContent])
 
-  // Update rows and totalHeight when content changes
-  useEffect(() => {
-    const newRows = Math.ceil(skillsContent.length / itemsPerRow)
-    if (rows !== newRows) {
-      reflow()
-    }
-  }, [skillsContent, itemsPerRow, rows, reflow])
-
-  const handleSkillClick = (content) => {
-    if (selectedSkill === content) {
-      // Unselecting - restore previous state
-      setSelectedSkill(null)
-      setMatchingPages([])
-      setSavedSkillsContent(null)
-    } else {
-      // Selecting new skill - save current state
-      if (!selectedSkill) {
-        setSavedSkillsContent(skillsContent)
+  const handleSkillClick = useCallback(
+    (content) => {
+      if (selectedSkill === content) {
+        // Unselecting - restore previous state
+        setSelectedSkill(null)
+        setMatchingPages([])
+        setSavedSkillsContent(null)
+      } else {
+        // Selecting new skill - save current state
+        if (!selectedSkill) {
+          setSavedSkillsContent(skillsContent)
+        }
+        setSelectedSkill(content)
+        const pages = findPagesWithSkill(content)
+        setMatchingPages(pages)
       }
-      setSelectedSkill(content)
-      const pages = findPagesWithSkill(content)
-      setMatchingPages(pages)
-    }
-  }
+    },
+    [selectedSkill, skillsContent],
+  )
 
   return (
     <Box
+      ref={flexRef}
       flexDirection='column'
       alignItems='flex-start'
       justifyContent='flex-start'
       width={vpWidth * 0.9}
-      height={totalHeight + (matchingPages.length > 0 ? 2 : 0)}
-      position={[0, -totalHeight / 2, 0]}
+      height='auto'
+      position={[0, 0, 0]}
     >
       {/* Skills Grid */}
       <Box
@@ -383,19 +376,19 @@ function Content() {
         justifyContent='center'
         flexWrap='wrap'
         width={vpWidth * 0.9}
-        height={totalHeight}
+        height='auto'
         marginTop={0.25}
       >
         {!isLoading &&
           skillsContent.map((item, i) => {
             const isSelected = selectedSkill === item.content
-            const yOffset = isSelected ? totalHeight / 2 - 1 : 0
-            const xOffset = isSelected ? -item.gridX + vpWidth * 0.45 : 0
+            const yOffset = isSelected ? 2 : 0
+            const xOffset = isSelected ? vpWidth * 0.45 - (i % 4) * 2 : 0
 
             return (
               <AnimatedBox
+                key={`${item.content}-${i}`}
                 margin={0.75}
-                key={i}
                 width={1}
                 height={1}
                 centerAnchor
@@ -424,16 +417,15 @@ function Content() {
           height={2}
           marginTop={0}
         >
-          {/* Group pages in pairs */}
           {Array.from({
-            length: Math.ceil(matchingPages.slice(currentPageIndex, currentPageIndex + 4).length / 2),
+            length: Math.min(2, Math.ceil(matchingPages.slice(currentPageIndex, currentPageIndex + 4).length / 2)),
           }).map((_, pairIndex) => {
             const startIdx = pairIndex * 2
             const pair = matchingPages.slice(currentPageIndex + startIdx, currentPageIndex + startIdx + 2)
 
             return (
               <Box
-                key={`pair-${pairIndex}`}
+                key={`pair-${pairIndex}-${currentPageIndex}`}
                 flexDirection='row'
                 alignItems='center'
                 justifyContent='center'
@@ -442,7 +434,7 @@ function Content() {
               >
                 {pair.map((page, index) => (
                   <Box
-                    key={`${page.magazine}-${page.page}-${index}`}
+                    key={`${page.magazine}-${page.page}-${index}-${currentPageIndex}`}
                     margin={0}
                     width={(vpWidth * 0.9) / 4 - 0.5}
                     height={((vpWidth * 0.9) / 4 - 0.5) * 1.34}
