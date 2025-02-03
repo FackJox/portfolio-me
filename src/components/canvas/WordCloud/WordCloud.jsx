@@ -1,10 +1,12 @@
 import * as THREE from 'three'
 import React, { useEffect, useRef, useState, useMemo } from 'react'
 import { useThree } from '@react-three/fiber'
-import { useAspect, Text } from '@react-three/drei'
+import { useAspect, Text3D, OrthographicCamera } from '@react-three/drei'
 import { skills } from '@/helpers/contentsConfig'
 import { getTexturePath } from '@/helpers/textureLoader'
-import { Physics, usePlane, useBox } from '@react-three/p2'
+import { Physics, RigidBody, CuboidCollider } from '@react-three/rapier'
+import HKGroteskFont from './HKGrotesk-SemiBold.json'
+import LemonFont from './Lemon_Regular.json'
 
 // ------------------------------
 // (Unchanged) Texture manager – you can keep this if you use it elsewhere
@@ -55,30 +57,6 @@ function SkillText({ content, isEngineering, onClick, position }) {
   const [clicked, setClicked] = useState(false)
   const textRef = useRef()
 
-  // Calculate font size based on content length
-  const fontSize = useMemo(() => {
-    const baseSize = 0.8 // Increased base size
-    const length = content.length
-    const words = content.split(' ')
-    const longestWord = words.reduce((a, b) => (a.length > b.length ? a : b))
-
-    // For single words, scale based on length
-    if (words.length === 1) {
-      return baseSize * Math.min(1, 6 / length)
-    }
-
-    // For multiple words
-    const scaleFactor = Math.min(
-      1,
-      Math.min(
-        5 / longestWord.length, // Scale based on longest word
-        10 / length, // Scale based on total length
-      ),
-    )
-
-    return baseSize * scaleFactor
-  }, [content])
-
   const getColor = () => {
     if (clicked) return isEngineering ? '#FFB79C' : '#FABE7F'
     if (hovered) return isEngineering ? '#FFB79C' : '#FABE7F'
@@ -104,22 +82,17 @@ function SkillText({ content, isEngineering, onClick, position }) {
 
   return (
     <group position={position} onClick={handleClick} onPointerOver={handlePointerOver} onPointerOut={handlePointerOut}>
-      <Text
+      <Text3D
         ref={textRef}
-        font={isEngineering ? '/fonts/HKGrotesk-SemiBold.otf' : '/fonts/lemon-regular.otf'}
-        fontSize={fontSize}
-        maxWidth={1.1}
-        anchorX='center'
-        anchorY='middle'
-        color={getColor()}
-        textAlign='center'
-        material={new THREE.MeshBasicMaterial({ toneMapped: false })}
-        overflowWrap='normal'
-        whiteSpace='pre-line'
-        lineHeight={1}
+        font={isEngineering ? HKGroteskFont : LemonFont}
+        size={isEngineering ? 0.25 : 0.35}
+        height={0.5}
+        curveSegments={12}
+        bevelEnabled={false}
       >
         {content}
-      </Text>
+        <meshBasicMaterial color={getColor()} toneMapped={false} />
+      </Text3D>
     </group>
   )
 }
@@ -147,47 +120,32 @@ function interleaveArrays(arrays) {
   return shuffleArray(result)
 }
 
-// Wall component using usePlane
-function Wall({ position, angle = 0 }) {
-  const [ref] = usePlane(() => ({
-    type: 'static',
-    position,
-    angle,
-  }))
-  return <group ref={ref} />
-}
-
-// Bounds – create invisible walls based on the current viewport dimensions
+// ------------------------------
+// Bounds – create invisible walls (and a ceiling and floor) based on the current viewport dimensions.
 function Bounds() {
   const { size } = useThree()
   const [vpWidth, vpHeight] = useAspect(size.width, size.height)
-
+  const thickness = 1
   return (
     <>
       {/* Left Wall */}
-      <Wall position={[-vpWidth / 2, 0]} angle={Math.PI / 2} />
+      <RigidBody type='fixed'>
+        <CuboidCollider args={[thickness, vpHeight, 10]} position={[-vpWidth / 2 - thickness / 2, 0, -5]} />
+      </RigidBody>
       {/* Right Wall */}
-      <Wall position={[vpWidth / 2, 0]} angle={-Math.PI / 2} />
+      <RigidBody type='fixed'>
+        <CuboidCollider args={[thickness, vpHeight, 10]} position={[vpWidth / 2 + thickness / 2, 0, -5]} />
+      </RigidBody>
       {/* Floor */}
-      <Wall position={[0, -vpHeight / 2]} angle={0} />
+      <RigidBody type='fixed'>
+        <CuboidCollider args={[vpWidth, thickness, 10]} position={[0, -vpHeight / 2 - thickness / 2, -5]} />
+      </RigidBody>
     </>
   )
 }
 
-// SkillBody component using useBox
-function SkillBody({ position, children }) {
-  const [ref] = useBox(() => ({
-    mass: 1,
-    position,
-    args: [0.5, 0.5],
-    linearDamping: 0.2,
-    angularDamping: 0.9,
-  }))
-
-  return <group ref={ref}>{children}</group>
-}
-
-// FallingSkills – each skill text is wrapped in a dynamic body
+// ------------------------------
+// FallingSkills – each skill text is wrapped in a dynamic RigidBody. They start from a random x position and from a y position above the top.
 function FallingSkills({ skills }) {
   const { size } = useThree()
   const [vpWidth, vpHeight] = useAspect(size.width, size.height)
@@ -212,7 +170,7 @@ function FallingSkills({ skills }) {
         const x = col * gridSpacing - vpWidth / 2 + gridSpacing / 2 + randomOffset.x
         const y = spawnYBase + row * gridSpacing + randomOffset.y
 
-        points.push([x, y])
+        points.push([x, y, 0])
       }
     }
     return shuffleArray([...points])
@@ -221,19 +179,36 @@ function FallingSkills({ skills }) {
   return (
     <>
       {skills.map((skill, i) => {
-        const spawnPos = positions[i] || [0, spawnYBase]
+        const spawnPos = positions[i] || [0, spawnYBase, 0]
+        spawnPos[2] = -5 // Set consistent Z position
 
         return (
-          <SkillBody key={i} position={spawnPos}>
-            <SkillText content={skill.content} isEngineering={skill.isEngineering} />
-          </SkillBody>
+          <RigidBody
+            key={i}
+            colliders='hull'
+            position={spawnPos}
+            type='dynamic'
+            restitution={0.3}
+            friction={0.8}
+            linearDamping={0.2}
+            angularDamping={500.2}
+            mass={1}
+            gravityScale={1}
+            enabledRotations={[false, false, true]}
+            enabledTranslations={[true, true, false]}
+          >
+            <SkillText content={skill.content} isEngineering={skill.isEngineering} position={[0, 0, 0]} />
+          </RigidBody>
         )
       })}
     </>
   )
 }
 
-// FallingContent – set up the physics simulation and create the falling skills
+// ------------------------------
+// FallingContent – set up the physics simulation and create the falling skills.
+// Here we prepare the list of skills (by interleaving and shuffling the creative
+// and engineering skills as before) and then render them inside a Physics container.
 function FallingContent() {
   const { engineeringSkills, creativeSkills } = useMemo(() => {
     const engineering = []
@@ -259,7 +234,7 @@ function FallingContent() {
   )
 
   return (
-    <Physics gravity={[0, -9.81]}>
+    <Physics gravity={[0, -9.81, 0]} debug>
       <Bounds />
       <FallingSkills skills={skillsContent} />
     </Physics>
@@ -269,9 +244,24 @@ function FallingContent() {
 // ------------------------------
 // WordCloud – simplified version without scrolling or page changes
 export default function WordCloud() {
+  const { size } = useThree()
+  const [vpWidth, vpHeight] = useAspect(size.width, size.height)
+
   return (
     <group position={[0, 0, 0]}>
-      <FallingContent />
+      <OrthographicCamera
+        makeDefault
+        position={[0, 0, 0]}
+        zoom={100}
+        near={1}
+        far={100}
+        left={-vpWidth / 2}
+        right={vpWidth / 2}
+        top={vpHeight / 2}
+        bottom={-vpHeight / 2}
+      >
+        <FallingContent />
+      </OrthographicCamera>
     </group>
   )
 }

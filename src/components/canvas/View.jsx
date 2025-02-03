@@ -1,7 +1,7 @@
 'use client'
 
 import { forwardRef, Suspense, useImperativeHandle, useRef, useEffect } from 'react'
-import { OrbitControls, PerspectiveCamera, Environment, View as ViewImpl } from '@react-three/drei'
+import { OrbitControls, PerspectiveCamera, Environment, View as ViewImpl, OrthographicCamera } from '@react-three/drei'
 import { Three } from '@/helpers/components/Three'
 import { useAtom } from 'jotai'
 import { hdrLoadedAtom } from '@/helpers/atoms'
@@ -23,10 +23,9 @@ export const Common = ({ color }) => {
   return (
     <Suspense fallback={null}>
       {color && <color attach='background' args={[color]} />}
-      <PerspectiveCamera makeDefault fov={40} position={[0, 0, 10]} />
+      <PerspectiveCamera  fov={40} position={[0, 0, 10]} />
       {process.env.NODE_ENV === 'development' && <Perf position='top-left' />}
       {hdrLoaded && <Environment map={hdrLoader.loadedHDR} environmentIntensity={0.5} resolution={256} />}
-
       <ambientLight intensity={0.1} />
       <directionalLight
         position={[2, 3, 5]}

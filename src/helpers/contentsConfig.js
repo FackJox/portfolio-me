@@ -1,6 +1,6 @@
 export const skills = {
   creative: {
-    ai: { icon: 'ai', title: 'AI' },
+    ai: { icon: 'ai', title: 'Artificial Intelligence' },
     design: { icon: 'design', title: 'Design' },
     unreal: { icon: 'unreal', title: 'Unreal Game Engine' },
     unity: { icon: 'unity', title: 'Unity Game Engine' },
