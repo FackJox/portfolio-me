@@ -51,11 +51,19 @@ const textureManager = {
 
 // ------------------------------
 // SkillText remains very similar so that the text material and pointer events work.
-// (You can choose to keep or remove onClick/hover styling as needed.)
-function SkillText({ content, isEngineering, onClick, position }) {
+function SkillText({ content, isEngineering, onClick, position, onHoverChange, scale = 1 }) {
   const [hovered, setHovered] = useState(false)
   const [clicked, setClicked] = useState(false)
   const textRef = useRef()
+  const [textSize, setTextSize] = useState([1, 0.5, 0.25])
+
+  useEffect(() => {
+    if (textRef.current) {
+      const box = new THREE.Box3().setFromObject(textRef.current)
+      const size = box.getSize(new THREE.Vector3())
+      setTextSize([size.x / 2, size.y / 2, size.z / 2])
+    }
+  }, [content])
 
   const getColor = () => {
     if (clicked) return isEngineering ? '#FFB79C' : '#FABE7F'
@@ -73,11 +81,13 @@ function SkillText({ content, isEngineering, onClick, position }) {
   const handlePointerOver = (e) => {
     e.stopPropagation()
     setHovered(true)
+    onHoverChange && onHoverChange(true)
   }
 
   const handlePointerOut = (e) => {
     e.stopPropagation()
     setHovered(false)
+    onHoverChange && onHoverChange(false)
   }
 
   return (
@@ -85,7 +95,7 @@ function SkillText({ content, isEngineering, onClick, position }) {
       <Text3D
         ref={textRef}
         font={isEngineering ? HKGroteskFont : LemonFont}
-        size={isEngineering ? 0.25 : 0.35}
+        size={isEngineering ? 0.45 : 0.65}
         height={0.5}
         curveSegments={12}
         bevelEnabled={false}
@@ -93,6 +103,7 @@ function SkillText({ content, isEngineering, onClick, position }) {
         {content}
         <meshBasicMaterial color={getColor()} toneMapped={false} />
       </Text3D>
+      <CuboidCollider args={textSize.map((s) => s * scale)} />
     </group>
   )
 }
@@ -126,19 +137,33 @@ function Bounds() {
   const { size } = useThree()
   const [vpWidth, vpHeight] = useAspect(size.width, size.height)
   const thickness = 1
+
+  const bounds = useMemo(
+    () => ({
+      left: [-vpWidth / 2 - thickness / 2, 0, -5],
+      right: [vpWidth / 2 + thickness / 2, 0, -5],
+      floor: [0, -vpHeight / 2 - thickness / 2, -5],
+      dimensions: {
+        walls: [thickness, vpHeight, 10],
+        floor: [vpWidth, thickness, 10],
+      },
+    }),
+    [vpWidth, vpHeight, thickness],
+  )
+
   return (
     <>
       {/* Left Wall */}
       <RigidBody type='fixed'>
-        <CuboidCollider args={[thickness, vpHeight, 10]} position={[-vpWidth / 2 - thickness / 2, 0, -5]} />
+        <CuboidCollider args={bounds.dimensions.walls} position={bounds.left} />
       </RigidBody>
       {/* Right Wall */}
       <RigidBody type='fixed'>
-        <CuboidCollider args={[thickness, vpHeight, 10]} position={[vpWidth / 2 + thickness / 2, 0, -5]} />
+        <CuboidCollider args={bounds.dimensions.walls} position={bounds.right} />
       </RigidBody>
       {/* Floor */}
       <RigidBody type='fixed'>
-        <CuboidCollider args={[vpWidth, thickness, 10]} position={[0, -vpHeight / 2 - thickness / 2, -5]} />
+        <CuboidCollider args={bounds.dimensions.floor} position={bounds.floor} />
       </RigidBody>
     </>
   )
@@ -149,10 +174,13 @@ function Bounds() {
 function FallingSkills({ skills }) {
   const { size } = useThree()
   const [vpWidth, vpHeight] = useAspect(size.width, size.height)
-  const spawnYBase = vpHeight / 2 + 1
+  const spawnYBase = vpHeight / 2 + 3
+  const [activeSkills, setActiveSkills] = useState([])
+  const [hoveredStates, setHoveredStates] = useState({})
 
   // Create a grid of possible positions and shuffle them
-  const gridSpacing = 3 // Space between spawn points
+  const gridSpacing = 3
+  const verticalSpacing = 4
   const columns = Math.floor(vpWidth / gridSpacing)
   const rows = Math.ceil(skills.length / columns)
 
@@ -161,14 +189,13 @@ function FallingSkills({ skills }) {
     const points = []
     for (let row = 0; row < rows; row++) {
       for (let col = 0; col < columns; col++) {
-        // Add some controlled randomness to the grid positions
         const randomOffset = {
           x: (Math.random() - 0.5) * 1.5,
-          y: (Math.random() - 0.5) * 1.5,
+          y: (Math.random() - 0.5) * 2.5,
         }
 
         const x = col * gridSpacing - vpWidth / 2 + gridSpacing / 2 + randomOffset.x
-        const y = spawnYBase + row * gridSpacing + randomOffset.y
+        const y = spawnYBase + row * verticalSpacing + randomOffset.y
 
         points.push([x, y, 0])
       }
@@ -176,28 +203,61 @@ function FallingSkills({ skills }) {
     return shuffleArray([...points])
   }, [columns, rows, vpWidth, spawnYBase])
 
+  // Gradually add skills with a delay
+  useEffect(() => {
+    let timeoutIds = []
+
+    skills.forEach((skill, index) => {
+      const delay = index * 300
+      const timeoutId = setTimeout(() => {
+        setActiveSkills((prev) => [...prev, { skill, index }])
+      }, delay)
+      timeoutIds.push(timeoutId)
+    })
+
+    return () => {
+      timeoutIds.forEach((id) => clearTimeout(id))
+    }
+  }, [skills])
+
+  const handleHoverChange = (index, isHovered) => {
+    setHoveredStates((prev) => ({
+      ...prev,
+      [index]: isHovered,
+    }))
+  }
+
   return (
     <>
-      {skills.map((skill, i) => {
-        const spawnPos = positions[i] || [0, spawnYBase, 0]
-        spawnPos[2] = -5 // Set consistent Z position
+      {activeSkills.map(({ skill, index }) => {
+        const spawnPos = positions[index] || [0, spawnYBase, 0]
+        spawnPos[2] = -5
+        const isHovered = hoveredStates[index]
+        const scale = isHovered ? 1.2 : 1
 
         return (
           <RigidBody
-            key={i}
-            colliders='hull'
+            key={index}
+            colliders={false}
             position={spawnPos}
             type='dynamic'
-            restitution={0.3}
-            friction={0.8}
-            linearDamping={0.2}
-            angularDamping={500.2}
-            mass={1}
-            gravityScale={1}
+            restitution={0.1}
+            friction={1.5}
+            linearDamping={2.5}
+            angularDamping={100}
+            mass={50}
+            density={500}
+            gravityScale={4}
             enabledRotations={[false, false, true]}
             enabledTranslations={[true, true, false]}
           >
-            <SkillText content={skill.content} isEngineering={skill.isEngineering} position={[0, 0, 0]} />
+            <SkillText
+              content={skill.content}
+              isEngineering={skill.isEngineering}
+              position={[0, 0, 0]}
+              onHoverChange={(isHovered) => handleHoverChange(index, isHovered)}
+              scale={scale}
+            />
           </RigidBody>
         )
       })}
@@ -210,6 +270,7 @@ function FallingSkills({ skills }) {
 // Here we prepare the list of skills (by interleaving and shuffling the creative
 // and engineering skills as before) and then render them inside a Physics container.
 function FallingContent() {
+  const [isPhysicsReady, setPhysicsReady] = useState(false)
   const { engineeringSkills, creativeSkills } = useMemo(() => {
     const engineering = []
     const creative = []
@@ -232,6 +293,16 @@ function FallingContent() {
     () => interleaveArrays([engineeringSkills, creativeSkills]),
     [engineeringSkills, creativeSkills],
   )
+
+  useEffect(() => {
+    // Add a small delay before enabling physics to ensure stable viewport dimensions
+    const timer = setTimeout(() => {
+      setPhysicsReady(true)
+    }, 100)
+    return () => clearTimeout(timer)
+  }, [])
+
+  if (!isPhysicsReady) return null
 
   return (
     <Physics gravity={[0, -9.81, 0]} debug>
