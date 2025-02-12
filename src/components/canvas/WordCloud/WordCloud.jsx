@@ -56,14 +56,41 @@ function SkillText({ content, isEngineering, onClick, position, onHoverChange, s
   const [clicked, setClicked] = useState(false)
   const textRef = useRef()
   const [textSize, setTextSize] = useState([1, 0.5, 0.25])
+  const [centerOffset, setCenterOffset] = useState([0, 0, 0])
+  const [fontLoaded, setFontLoaded] = useState(false)
 
   useEffect(() => {
-    if (textRef.current) {
-      const box = new THREE.Box3().setFromObject(textRef.current)
-      const size = box.getSize(new THREE.Vector3())
-      setTextSize([size.x / 2, size.y / 2, size.z / 2])
+    let retries = 0
+    let timeoutId
+    const tryMeasure = () => {
+      // Ensure geometry exists and compute bounding box if needed
+      if (textRef.current?.geometry) {
+        textRef.current.geometry.computeBoundingBox()
+        const box = textRef.current.geometry.boundingBox
+        if (box) {
+          const size = new THREE.Vector3()
+          box.getSize(size)
+          setTextSize([size.x / 2, size.y / 2, size.z / 2])
+
+          const center = new THREE.Vector3()
+          box.getCenter(center)
+          setCenterOffset([-center.x, -center.y, -center.z])
+          return // Success - exit
+        }
+      }
+
+      if (retries < 5) {
+        retries++
+        timeoutId = setTimeout(tryMeasure, 100 + retries * 50) // Backoff
+      } else {
+        console.error('Failed to measure text after retries')
+      }
     }
-  }, [content])
+
+    tryMeasure()
+
+    return () => clearTimeout(timeoutId)
+  }, [content, fontLoaded]) // Add fontLoaded as dependency
 
   const getColor = () => {
     if (clicked) return isEngineering ? '#FFB79C' : '#FABE7F'
@@ -92,17 +119,25 @@ function SkillText({ content, isEngineering, onClick, position, onHoverChange, s
 
   return (
     <group position={position} onClick={handleClick} onPointerOver={handlePointerOver} onPointerOut={handlePointerOut}>
-      <Text3D
-        ref={textRef}
-        font={isEngineering ? HKGroteskFont : LemonFont}
-        size={isEngineering ? 0.45 : 0.65}
-        height={0.5}
-        curveSegments={12}
-        bevelEnabled={false}
-      >
-        {content}
-        <meshBasicMaterial color={getColor()} toneMapped={false} />
-      </Text3D>
+      <group position={centerOffset}>
+        <Text3D
+          onSync={(troika) => {
+            troika.font.manager._loaders[0].load(() => {
+              // Final font loading callback
+              setFontLoaded(true)
+            })
+          }}
+          ref={textRef}
+          font={isEngineering ? HKGroteskFont : LemonFont}
+          size={isEngineering ? 0.45 : 0.65}
+          height={0.5}
+          curveSegments={12}
+          bevelEnabled={false}
+        >
+          {content}
+          <meshBasicMaterial color={getColor()} toneMapped={false} />
+        </Text3D>
+      </group>
       <CuboidCollider args={textSize.map((s) => s * scale)} />
     </group>
   )
