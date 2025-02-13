@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import React, { useEffect, useRef, useState, useMemo } from 'react'
-import { useThree } from '@react-three/fiber'
+import { useThree, useFrame } from '@react-three/fiber'
 import { useAspect, Text3D, OrthographicCamera } from '@react-three/drei'
 import { skills } from '@/helpers/contentsConfig'
 import { getTexturePath } from '@/helpers/textureLoader'
@@ -56,26 +56,38 @@ function SkillText({ content, isEngineering, onClick, position, onHoverChange, s
   const [clicked, setClicked] = useState(false)
   const textRef = useRef()
   const [textSize, setTextSize] = useState([1, 0.5, 0.25])
-  const [centerOffset, setCenterOffset] = useState([0, 0, 0])
   const [fontLoaded, setFontLoaded] = useState(false)
+  const [currentScale, setCurrentScale] = useState(scale)
+
+  // Calculate the target scale including hover effect
+  const targetScale = hovered ? scale * 1 : scale
+
+  // Lerp the current scale
+  useFrame((_, delta) => {
+    setCurrentScale(THREE.MathUtils.lerp(currentScale, targetScale, delta * 15))
+  })
+
+  // Calculate scaled collider size with proper scaling
+  const scaledColliderSize = textSize.map((s) => s * currentScale)
 
   useEffect(() => {
     let retries = 0
     let timeoutId
     const tryMeasure = () => {
-      // Ensure geometry exists and compute bounding box if needed
       if (textRef.current?.geometry) {
         textRef.current.geometry.computeBoundingBox()
         const box = textRef.current.geometry.boundingBox
         if (box) {
           const size = new THREE.Vector3()
           box.getSize(size)
+          // Adjust the collider size to better match the text
           setTextSize([size.x / 2, size.y / 2, size.z / 2])
 
           const center = new THREE.Vector3()
           box.getCenter(center)
-          setCenterOffset([-center.x, -center.y, -center.z])
-          return // Success - exit
+          textRef.current.geometry.translate(-center.x, -center.y, -center.z)
+
+          return
         }
       }
 
@@ -90,7 +102,7 @@ function SkillText({ content, isEngineering, onClick, position, onHoverChange, s
     tryMeasure()
 
     return () => clearTimeout(timeoutId)
-  }, [content, fontLoaded]) // Add fontLoaded as dependency
+  }, [content, fontLoaded])
 
   const getColor = () => {
     if (clicked) return isEngineering ? '#FFB79C' : '#FABE7F'
@@ -118,41 +130,39 @@ function SkillText({ content, isEngineering, onClick, position, onHoverChange, s
   }
 
   return (
-    <group position={position} onClick={handleClick} onPointerOver={handlePointerOver} onPointerOut={handlePointerOut}>
-      <group position={centerOffset}>
+    <group position={position}>
+      <group scale={currentScale}>
+        {/* Invisible mesh for hover detection */}
+        <mesh onClick={handleClick} onPointerOver={handlePointerOver} onPointerOut={handlePointerOut}>
+          <boxGeometry args={[textSize[0] * 2, textSize[1] * 2, textSize[2] * 2]} />
+          <meshBasicMaterial transparent opacity={0} />
+        </mesh>
+
         <Text3D
           onSync={(troika) => {
             troika.font.manager._loaders[0].load(() => {
-              // Final font loading callback
               setFontLoaded(true)
             })
           }}
           ref={textRef}
           font={isEngineering ? HKGroteskFont : LemonFont}
-          size={isEngineering ? 0.45 : 0.65}
+          size={isEngineering ? 0.45 : 0.55}
           height={0.5}
           curveSegments={12}
           bevelEnabled={false}
+          letterSpacing={isEngineering ? -0.06 : 0}
         >
           {content}
           <meshBasicMaterial color={getColor()} toneMapped={false} />
         </Text3D>
       </group>
-      <CuboidCollider args={textSize.map((s) => s * scale)} />
+      <CuboidCollider args={scaledColliderSize} />
     </group>
   )
 }
 
 // ------------------------------
-// Helper functions for shuffling and interleaving
-function shuffleArray(array) {
-  for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
-    ;[array[i], array[j]] = [array[j], array[i]]
-  }
-  return array
-}
-
+// Helper functions for interleaving
 function interleaveArrays(arrays) {
   const maxLength = Math.max(...arrays.map((arr) => arr.length))
   const result = []
@@ -163,7 +173,7 @@ function interleaveArrays(arrays) {
       }
     })
   }
-  return shuffleArray(result)
+  return result
 }
 
 // ------------------------------
@@ -177,7 +187,8 @@ function Bounds() {
     () => ({
       left: [-vpWidth / 2 - thickness / 2, 0, -5],
       right: [vpWidth / 2 + thickness / 2, 0, -5],
-      floor: [0, -vpHeight / 2 - thickness / 2, -5],
+
+      floor: [0, -vpHeight / 2.5 - thickness / 2, -5],
       dimensions: {
         walls: [thickness, vpHeight, 10],
         floor: [vpWidth, thickness, 10],
@@ -209,51 +220,73 @@ function Bounds() {
 function FallingSkills({ skills }) {
   const { size } = useThree()
   const [vpWidth, vpHeight] = useAspect(size.width, size.height)
-  const spawnYBase = vpHeight / 2 + 3
+  const [isPhysicsPaused, setPhysicsPaused] = useState(false)
+  const verticalSpacing = 4 // Increased from 2.5
+  const columnOffset = vpWidth / 5 // Increased from vpWidth / 4 for more horizontal space
+
   const [activeSkills, setActiveSkills] = useState([])
   const [hoveredStates, setHoveredStates] = useState({})
 
-  // Create a grid of possible positions and shuffle them
-  const gridSpacing = 3
-  const verticalSpacing = 4
-  const columns = Math.floor(vpWidth / gridSpacing)
-  const rows = Math.ceil(skills.length / columns)
-
-  // Generate all possible positions
-  const positions = useMemo(() => {
-    const points = []
-    for (let row = 0; row < rows; row++) {
-      for (let col = 0; col < columns; col++) {
-        const randomOffset = {
-          x: (Math.random() - 0.5) * 1.5,
-          y: (Math.random() - 0.5) * 2.5,
-        }
-
-        const x = col * gridSpacing - vpWidth / 2 + gridSpacing / 2 + randomOffset.x
-        const y = spawnYBase + row * verticalSpacing + randomOffset.y
-
-        points.push([x, y, 0])
-      }
-    }
-    return shuffleArray([...points])
-  }, [columns, rows, vpWidth, spawnYBase])
-
-  // Gradually add skills with a delay
   useEffect(() => {
-    let timeoutIds = []
+    const handler = (e) => e.key === 'p' && setPhysicsPaused(!isPhysicsPaused)
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [isPhysicsPaused])
 
-    skills.forEach((skill, index) => {
-      const delay = index * 300
-      const timeoutId = setTimeout(() => {
-        setActiveSkills((prev) => [...prev, { skill, index }])
-      }, delay)
-      timeoutIds.push(timeoutId)
+  // Split and generate positions for two columns
+  const { positions, splitSkills } = useMemo(() => {
+    const points = []
+
+    // Separate skills into engineering and creative
+    const engineeringSkills = skills.filter((skill) => skill.isEngineering)
+    const creativeSkills = skills.filter((skill) => !skill.isEngineering)
+
+    // Calculate rows needed for the longer column
+    const maxSkills = Math.max(engineeringSkills.length, creativeSkills.length)
+    const totalHeight = maxSkills * verticalSpacing
+    const startY = vpHeight + totalHeight * 1.5 // Increased starting height
+
+    // Generate positions for creative skills (left column)
+    creativeSkills.forEach((skill, index) => {
+      const randomOffset = {
+        x: (Math.random() - 0.5) * 3, // Increased horizontal spread
+        y: (Math.random() - 0.5) * 2, // Increased vertical spread
+      }
+
+      const x = -columnOffset + randomOffset.x
+      const y = startY - index * verticalSpacing * 1.5 + randomOffset.y // Increased spacing
+
+      points.push([x, y, -5])
     })
 
-    return () => {
-      timeoutIds.forEach((id) => clearTimeout(id))
+    // Generate positions for engineering skills (right column)
+    engineeringSkills.forEach((skill, index) => {
+      const randomOffset = {
+        x: (Math.random() - 0.5) * 3, // Increased horizontal spread
+        y: (Math.random() - 0.5) * 2, // Increased vertical spread
+      }
+
+      const x = columnOffset + randomOffset.x
+      const y = startY - index * verticalSpacing * 1.5 + randomOffset.y // Increased spacing
+
+      points.push([x, y, -5])
+    })
+
+    // Combine skills in the same order as positions
+    const orderedSkills = [...creativeSkills, ...engineeringSkills]
+
+    return {
+      positions: points,
+      splitSkills: orderedSkills.map((skill, index) => ({ skill, index })),
     }
-  }, [skills])
+  }, [vpWidth, vpHeight, skills])
+
+  // Set active skills using the properly ordered skills
+  useEffect(() => {
+    if (splitSkills.length > 0) {
+      setActiveSkills(splitSkills)
+    }
+  }, [splitSkills])
 
   const handleHoverChange = (index, isHovered) => {
     setHoveredStates((prev) => ({
@@ -265,7 +298,7 @@ function FallingSkills({ skills }) {
   return (
     <>
       {activeSkills.map(({ skill, index }) => {
-        const spawnPos = positions[index] || [0, spawnYBase, 0]
+        const spawnPos = positions[index] || [0, 0, 0]
         spawnPos[2] = -5
         const isHovered = hoveredStates[index]
         const scale = isHovered ? 1.2 : 1
@@ -275,16 +308,18 @@ function FallingSkills({ skills }) {
             key={index}
             colliders={false}
             position={spawnPos}
-            type='dynamic'
-            restitution={0.1}
+            restitution={0.2}
             friction={1.5}
-            linearDamping={2.5}
-            angularDamping={100}
-            mass={50}
-            density={500}
-            gravityScale={4}
-            enabledRotations={[false, false, true]}
+            mass={1}
+            density={50}
+            gravityScale={3}
+            enabledRotations={[false, false, false]}
             enabledTranslations={[true, true, false]}
+            type={isPhysicsPaused ? 'fixed' : 'dynamic'}
+            linearDamping={isPhysicsPaused ? 100 : 2}
+            angularDamping={isPhysicsPaused ? 100 : 100}
+            ccd={true}
+            sleepThreshold={0.2}
           >
             <SkillText
               content={skill.content}
@@ -310,7 +345,10 @@ function FallingContent() {
     const engineering = []
     const creative = []
     Object.entries(skills).forEach(([category, skillSet]) => {
-      Object.values(skillSet).forEach((skill) => {
+      console.log(`Processing category: ${category}, number of skills:`, Object.keys(skillSet).length)
+      // Convert to array while maintaining order
+      const orderedSkills = Object.values(skillSet)
+      orderedSkills.forEach((skill) => {
         if (category === 'engineering') {
           engineering.push({ content: skill.title, isEngineering: true })
         } else {
@@ -318,16 +356,19 @@ function FallingContent() {
         }
       })
     })
+    console.log('Total engineering skills:', engineering.length)
+    console.log('Total creative skills:', creative.length)
     return {
-      engineeringSkills: shuffleArray(engineering),
-      creativeSkills: shuffleArray(creative),
+      engineeringSkills: engineering, // Remove shuffling
+      creativeSkills: creative, // Remove shuffling
     }
   }, [])
 
-  const skillsContent = useMemo(
-    () => interleaveArrays([engineeringSkills, creativeSkills]),
-    [engineeringSkills, creativeSkills],
-  )
+  const skillsContent = useMemo(() => {
+    const interleaved = interleaveArrays([engineeringSkills, creativeSkills])
+    console.log('Total interleaved skills:', interleaved.length)
+    return interleaved
+  }, [engineeringSkills, creativeSkills])
 
   useEffect(() => {
     // Add a small delay before enabling physics to ensure stable viewport dimensions
@@ -340,7 +381,15 @@ function FallingContent() {
   if (!isPhysicsReady) return null
 
   return (
-    <Physics gravity={[0, -9.81, 0]} debug>
+    <Physics
+      gravity={[0, -9.81, 0]}
+      debug
+      maxStabilizationIterations={20}
+      maxVelocityIterations={20}
+      maxVelocityFriction={20}
+      collisionIterations={10}
+      timeStep={1 / 60}
+    >
       <Bounds />
       <FallingSkills skills={skillsContent} />
     </Physics>
@@ -358,7 +407,7 @@ export default function WordCloud() {
       <OrthographicCamera
         makeDefault
         position={[0, 0, 0]}
-        zoom={100}
+        zoom={90}
         near={1}
         far={100}
         left={-vpWidth / 2}
