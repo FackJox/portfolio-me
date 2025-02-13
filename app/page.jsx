@@ -9,7 +9,7 @@ import {
   texturesLoadedAtom,
   hdrLoadedAtom,
   allAssetsLoadedAtom,
-  wordCloudVisibleAtom,
+  contentsVisibleAtom,
   scrollTopAtom,
   totalPagesAtom,
   pagesAtom,
@@ -32,8 +32,7 @@ import { layoutAnimations, backgroundTransitions } from '@/helpers/animationConf
 import { SmackHeader, SmackButtons, SmackLabel, SmackTopBar } from '@/components/dom/SmackUI'
 import { EngineerHeader, EngineerButtons, EngineerLabel, EngineerTopBar } from '@/components/dom/EngineerUI'
 import { VagueHeader, VagueButtons, VagueLabel, VagueTopBar } from '@/components/dom/VagueUI'
-import Contents from '../src/components/canvas/Contents/Contents' // Import the WordCloud component
-import WordCloud from '../src/components/canvas/WordCloud/WordCloud' // Import the WordCloud component
+import Contents from '../src/components/canvas/Contents/Contents' // Import the contents component
 import { PerspectiveCamera } from '@react-three/drei'
 import React from 'react'
 
@@ -128,7 +127,7 @@ export default function Page() {
   const [styleMagazine] = useAtom(styleMagazineAtom)
   const isPortrait = useDeviceOrientation()
   const layout = getLayoutConfig(isPortrait)
-  const [wordCloudVisible] = useAtom(wordCloudVisibleAtom)
+  const [contentsVisible] = useAtom(contentsVisibleAtom)
   const [, setScrollTop] = useAtom(scrollTopAtom)
   const [pages, setPages] = useAtom(pagesAtom)
 
@@ -194,9 +193,7 @@ export default function Page() {
 
         <motion.div layout className='relative w-full flex-1'>
           <View className='absolute w-full inset-0 flex items-center justify-center'>
-        
             <Suspense fallback={null}>
-              {/* <WordCloud onChangePages={setPages} /> */}
               <Contents />
               <Common />
             </Suspense>

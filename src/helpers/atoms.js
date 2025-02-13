@@ -44,8 +44,8 @@ export const hdrLoadedAtom = atom(false)
 // Derived atom to check if all assets are loaded
 export const allAssetsLoadedAtom = atom((get) => get(texturesLoadedAtom) && get(hdrLoadedAtom))
 
-// Atom to manage WordCloud visibility
-export const wordCloudVisibleAtom = atom(false)
+// Atom to manage Contents visibility
+export const contentsVisibleAtom = atom(false)
 
 export const scrollTopAtom = atom(0)
 export const totalPagesAtom = atom(2)

@@ -1,6 +1,6 @@
 import { motion } from 'motion/react'
 import { layoutAnimations } from '@/helpers/animationConfigs'
-import { wordCloudVisibleAtom } from '@/helpers/atoms'
+import { contentsVisibleAtom } from '@/helpers/atoms'
 import { useAtom } from 'jotai'
 
 export const VagueHeader = () => {
@@ -21,7 +21,7 @@ export const VagueHeader = () => {
 }
 
 export const VagueButtons = () => {
-  const [wordCloudVisible, setWordCloudVisible] = useAtom(wordCloudVisibleAtom)
+  const [contentsVisible, setContentsVisible] = useAtom(contentsVisibleAtom)
 
   return (
     <div className='w-full flex items-center justify-center'>
@@ -31,7 +31,7 @@ export const VagueButtons = () => {
         <motion.div className='flex-1' {...layoutAnimations.buttonsText}>
           <button
             className='w-full py-2 font-[HKGrotesk-SemiBold] text-[#F7F6F7] text-xl sm:text-2xl md:text-2xl tracking-[-0.12em] text-center align-middle'
-            onClick={() => setWordCloudVisible((prev) => !prev)}
+            onClick={() => setContentsVisible((prev) => !prev)}
           >
             CONTENTS
           </button>
@@ -65,7 +65,7 @@ export const VagueLabel = () => {
 }
 
 export const VagueTopBar = () => {
-  const [wordCloudVisible, setWordCloudVisible] = useAtom(wordCloudVisibleAtom)
+  const [contentsVisible, setContentsVisible] = useAtom(contentsVisibleAtom)
 
   return (
     <div className='w-full h-10 flex items-center justify-between pt-6 pb-6 pl-6 pr-8 relative'>
@@ -77,7 +77,7 @@ export const VagueTopBar = () => {
         <div className='flex items-center gap-8'>
           <button
             className='font-[HKGrotesk-Regular] text-[#F7F6F7] text-xl tracking-[-0.12em]'
-            onClick={() => setWordCloudVisible((prev) => !prev)}
+            onClick={() => setContentsVisible((prev) => !prev)}
           >
             CONTENTS
           </button>

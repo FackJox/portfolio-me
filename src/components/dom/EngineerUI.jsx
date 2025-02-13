@@ -1,6 +1,6 @@
 import { motion } from 'motion/react'
 import { layoutAnimations } from '@/helpers/animationConfigs'
-import { wordCloudVisibleAtom } from '@/helpers/atoms'
+import { contentsVisibleAtom } from '@/helpers/atoms'
 import { useAtom } from 'jotai'
 
 export const EngineerHeader = () => {
@@ -21,7 +21,7 @@ export const EngineerHeader = () => {
 }
 
 export const EngineerButtons = () => {
-  const [wordCloudVisible, setWordCloudVisible] = useAtom(wordCloudVisibleAtom)
+  const [contentsVisible, setContentsVisible] = useAtom(contentsVisibleAtom)
 
   return (
     <div className='w-full flex items-center justify-center'>
@@ -31,7 +31,7 @@ export const EngineerButtons = () => {
         <motion.div className='flex-1' {...layoutAnimations.buttonsText}>
           <button
             className='w-full py-2 font-[HKGrotesk-Bold] text-[#F4EEDC] text-xl sm:text-2xl md:text-2xl tracking-[-0.12em] text-center align-middle'
-            onClick={() => setWordCloudVisible((prev) => !prev)}
+            onClick={() => setContentsVisible((prev) => !prev)}
           >
             CONTENTS
           </button>
@@ -65,7 +65,7 @@ export const EngineerLabel = () => {
 }
 
 export const EngineerTopBar = () => {
-  const [wordCloudVisible, setWordCloudVisible] = useAtom(wordCloudVisibleAtom)
+  const [contentsVisible, setContentsVisible] = useAtom(contentsVisibleAtom)
 
   return (
     <div className='w-full h-10 flex items-center justify-between pt-6 pb-6 pl-6 pr-8 relative'>
@@ -77,7 +77,7 @@ export const EngineerTopBar = () => {
         <div className='flex items-center gap-8'>
           <button
             className='font-[HKGrotesk-SemiBold] text-[#FFB79C] text-l tracking-[-0.12em]'
-            onClick={() => setWordCloudVisible((prev) => !prev)}
+            onClick={() => setContentsVisible((prev) => !prev)}
           >
             CONTENTS
           </button>

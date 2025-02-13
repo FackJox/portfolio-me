@@ -238,7 +238,7 @@ function SkillStackContent() {
   return <SkillStack skills={skillsContent} />
 }
 
-// WordCloud – simplified version without scrolling or page changes
+// contents – simplified version without scrolling or page changes
 export default function Contents() {
   const { size } = useThree()
   const [vpWidth, vpHeight] = useAspect(size.width, size.height)
