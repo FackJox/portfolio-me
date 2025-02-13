@@ -5,7 +5,7 @@ import { OrbitControls, PerspectiveCamera, Environment, View as ViewImpl, Orthog
 import { Three } from '@/helpers/components/Three'
 import { useAtom } from 'jotai'
 import { hdrLoadedAtom } from '@/helpers/atoms'
-import { hdrLoader } from '@/helpers/textureLoader'
+import { hdrLoader } from '@/helpers/textureLoaders'
 import { useThree } from '@react-three/fiber'
 import { Perf } from 'r3f-perf'
 
@@ -23,7 +23,7 @@ export const Common = ({ color }) => {
   return (
     <Suspense fallback={null}>
       {color && <color attach='background' args={[color]} />}
-      <PerspectiveCamera  fov={40} position={[0, 0, 10]} />
+      <PerspectiveCamera fov={40} position={[0, 0, 10]} />
       {process.env.NODE_ENV === 'development' && <Perf position='top-left' />}
       {hdrLoaded && <Environment map={hdrLoader.loadedHDR} environmentIntensity={0.5} resolution={256} />}
       <ambientLight intensity={0.1} />

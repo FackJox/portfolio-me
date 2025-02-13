@@ -184,3 +184,27 @@ export const VagueContents = {
   About: { page: 5, title: 'About', skills: [] },
   Contributers: { page: 6, title: 'Contributers', skills: [] },
 }
+
+/**
+ * Transforms the skills configuration into separate arrays for engineering and creative skills
+ * @param {Object} skillsConfig - The skills configuration object
+ * @returns {Array} Array containing all skills in the correct order for display
+ */
+export const transformSkillsConfig = (skillsConfig) => {
+  const engineering = []
+  const creative = []
+
+  Object.entries(skillsConfig).forEach(([category, skillSet]) => {
+    const orderedSkills = Object.values(skillSet)
+    orderedSkills.forEach((skill) => {
+      if (category === 'engineering') {
+        engineering.push({ content: skill.title, isEngineering: true })
+      } else {
+        creative.push({ content: skill.title, isEngineering: false })
+      }
+    })
+  })
+
+  // Return concatenated arrays to maintain column separation
+  return [...creative, ...engineering]
+}

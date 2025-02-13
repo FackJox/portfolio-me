@@ -19,8 +19,8 @@ export const GESTURE_CONFIG = {
       carousel: {
         middleThreshold: 0.3, // threshold for determining middle magazine
         wrapThreshold: 1.5, // threshold for wrapping magazines
-      }
-    }
+      },
+    },
   },
   landscape: {
     threshold: 20,
@@ -42,18 +42,18 @@ export const GESTURE_CONFIG = {
       carousel: {
         middleThreshold: 0.3, // threshold for determining middle magazine
         wrapThreshold: 1.5, // threshold for wrapping magazines
-      }
-    }
-  }
-};
+      },
+    },
+  },
+}
 
-import { handlePageViewTransition } from "@/helpers/positionHelper";
-import { lastCarouselMoveAtom } from "@/helpers/atoms";
+import { handlePageViewTransition } from '@/helpers/positionHelpers'
+import { lastCarouselMoveAtom } from '@/helpers/atoms'
 
 // Helper function to get gesture config based on orientation
 const getGestureConfig = (isPortrait) => {
-  return isPortrait ? GESTURE_CONFIG.portrait : GESTURE_CONFIG.landscape;
-};
+  return isPortrait ? GESTURE_CONFIG.portrait : GESTURE_CONFIG.landscape
+}
 
 /**
  * Determines if an interaction should be treated as a tap/click
@@ -64,9 +64,9 @@ const getGestureConfig = (isPortrait) => {
  * @returns {boolean} Whether the interaction should be treated as a tap
  */
 export const isTapInteraction = ({ duration, totalMovement, isPortrait }) => {
-  const config = getGestureConfig(isPortrait).interaction.tap;
-  return duration < config.maxDuration && totalMovement < config.maxMovement;
-};
+  const config = getGestureConfig(isPortrait).interaction.tap
+  return duration < config.maxDuration && totalMovement < config.maxMovement
+}
 
 /**
  * Determines if an interaction should be treated as a swipe
@@ -77,42 +77,42 @@ export const isTapInteraction = ({ duration, totalMovement, isPortrait }) => {
  * @returns {boolean} Whether the interaction should be treated as a swipe
  */
 export const isSwipeInteraction = ({ deltaX, deltaY, isDrag }) => {
-  return isDrag && Math.abs(deltaX) > getGestureConfig(true).interaction.swipe.minMovement;
-};
+  return isDrag && Math.abs(deltaX) > getGestureConfig(true).interaction.swipe.minMovement
+}
 
 /**
  * Checks if it's safe to focus a magazine based on recent carousel movement
  */
-export const canFocusMagazine = ({ 
-  magazine, 
-  currentMiddleMagazine, 
-  isPortrait, 
+export const canFocusMagazine = ({
+  magazine,
+  currentMiddleMagazine,
+  isPortrait,
   focusedMagazine,
   lastCarouselMove,
   dragDuration,
-  totalMovement
+  totalMovement,
 }) => {
   // Basic validation checks
   if (isPortrait && currentMiddleMagazine !== magazine) {
-    return false;
+    return false
   }
 
   if (focusedMagazine && focusedMagazine !== magazine) {
-    return false;
+    return false
   }
 
   // Check for recent carousel movement
-  const config = getGestureConfig(isPortrait).interaction;
-  const timeSinceCarouselMove = Date.now() - lastCarouselMove.time;
-  const hasRecentCarouselMove = timeSinceCarouselMove < config.focus.debounceTime;
+  const config = getGestureConfig(isPortrait).interaction
+  const timeSinceCarouselMove = Date.now() - lastCarouselMove.time
+  const hasRecentCarouselMove = timeSinceCarouselMove < config.focus.debounceTime
 
   if (hasRecentCarouselMove) {
-    return false;
+    return false
   }
 
   // Check if this is a valid tap
-  return isTapInteraction({ duration: dragDuration, totalMovement, isPortrait });
-};
+  return isTapInteraction({ duration: dragDuration, totalMovement, isPortrait })
+}
 
 /**
  * Handles library carousel drag interaction
@@ -136,45 +136,45 @@ export const handleLibraryDrag = ({
   dragStartPosition,
   targetOffsetRef,
   setIsDragging,
-  setLastCarouselMove
+  setLastCarouselMove,
 }) => {
-  const totalMovement = Math.sqrt(dx * dx + dy * dy);
-  const gestureConfig = getGestureConfig(isPortrait);
-  
+  const totalMovement = Math.sqrt(dx * dx + dy * dy)
+  const gestureConfig = getGestureConfig(isPortrait)
+
   if (totalMovement > gestureConfig.dragThreshold) {
-    const movement = isPortrait ? -dy * gestureConfig.dragSensitivity : dx * gestureConfig.dragSensitivity;
-    
+    const movement = isPortrait ? -dy * gestureConfig.dragSensitivity : dx * gestureConfig.dragSensitivity
+
     // Update carousel movement tracking
     if (totalMovement > gestureConfig.interaction.swipe.carouselThreshold) {
       setLastCarouselMove({
         time: Date.now(),
-        movement: totalMovement
-      });
+        movement: totalMovement,
+      })
     }
-    
+
     if (isLast) {
-      setIsDragging(false);
-      
+      setIsDragging(false)
+
       // Calculate the nearest snap position
-      const currentPosition = Math.round(dragStartPosition / config.magazine);
-      
+      const currentPosition = Math.round(dragStartPosition / config.magazine)
+
       // Determine direction based on the total movement
-      const deltaMovement = isPortrait ? -dy : dx;
+      const deltaMovement = isPortrait ? -dy : dx
       if (Math.abs(deltaMovement) > gestureConfig.threshold) {
-        const targetPosition = currentPosition + (deltaMovement > 0 ? 1 : -1);
-        targetOffsetRef.current = targetPosition * config.magazine;
+        const targetPosition = currentPosition + (deltaMovement > 0 ? 1 : -1)
+        targetOffsetRef.current = targetPosition * config.magazine
       } else {
-        targetOffsetRef.current = currentPosition * config.magazine;
+        targetOffsetRef.current = currentPosition * config.magazine
       }
     } else {
       // During drag, snap to the nearest position
-      const newOffset = dragStartPosition + movement;
-      targetOffsetRef.current = Math.round(newOffset / config.magazine) * config.magazine;
+      const newOffset = dragStartPosition + movement
+      targetOffsetRef.current = Math.round(newOffset / config.magazine) * config.magazine
     }
   } else if (isLast) {
-    setIsDragging(false);
+    setIsDragging(false)
   }
-}; 
+}
 
 /**
  * Handles magazine interaction (tap/click or swipe)
@@ -197,7 +197,7 @@ export const handleMagazineInteraction = ({
   lastViewingStateRef,
   lastCarouselMove,
   dragDuration,
-  totalMovement
+  totalMovement,
 }) => {
   // Check if we can focus the magazine
   const canFocus = canFocusMagazine({
@@ -207,56 +207,56 @@ export const handleMagazineInteraction = ({
     focusedMagazine,
     lastCarouselMove,
     dragDuration,
-    totalMovement
-  });
+    totalMovement,
+  })
 
   if (canFocus) {
     // Handle as click/tap
     if (focusedMagazine !== magazine) {
       // Store current state before focusing
       if (page !== 0) {
-        lastPageRef.current = page;
-        lastViewingStateRef.current = viewingRightPage;
+        lastPageRef.current = page
+        lastViewingStateRef.current = viewingRightPage
       }
       // Focus the new magazine
-      setFocusedMagazine(magazine);
+      setFocusedMagazine(magazine)
       // If we have a stored page, restore it, otherwise start at page 1
       if (lastPageRef.current > 0) {
-        setPage(lastPageRef.current);
+        setPage(lastPageRef.current)
         // Only restore viewing state in portrait mode
         if (isPortrait) {
-          setViewingRightPage(lastViewingStateRef.current);
+          setViewingRightPage(lastViewingStateRef.current)
         } else {
-          setViewingRightPage(false); // Always center in landscape
+          setViewingRightPage(false) // Always center in landscape
         }
       } else {
-        setPage(1);
-        setViewingRightPage(false); // Always center in landscape
+        setPage(1)
+        setViewingRightPage(false) // Always center in landscape
       }
     } else if (focusedMagazine === magazine) {
       // Store state before unfocusing
       if (page !== 0) {
-        lastPageRef.current = page;
-        lastViewingStateRef.current = viewingRightPage;
+        lastPageRef.current = page
+        lastViewingStateRef.current = viewingRightPage
       }
       // Reset page to 0 and unfocus
-      setPage(0);
-      setViewingRightPage(false);
-      setFocusedMagazine(null);
+      setPage(0)
+      setViewingRightPage(false)
+      setFocusedMagazine(null)
     }
-    return;
+    return
   }
 
-  const isSwipe = isSwipeInteraction({ deltaX, deltaY, isDrag });
-  const config = getGestureConfig(isPortrait).interaction.swipe;
-  
+  const isSwipe = isSwipeInteraction({ deltaX, deltaY, isDrag })
+  const config = getGestureConfig(isPortrait).interaction.swipe
+
   // Handle swipes only if focused on this magazine
   if (isSwipe && focusedMagazine === magazine) {
     if (Math.abs(deltaX) > Math.abs(deltaY)) {
       // Store state before closing from last page
       if (page === pages.length - 1 && deltaX < -config.pageThreshold) {
-        lastPageRef.current = page;
-        lastViewingStateRef.current = viewingRightPage;
+        lastPageRef.current = page
+        lastViewingStateRef.current = viewingRightPage
       }
 
       if (isPortrait) {
@@ -264,23 +264,23 @@ export const handleMagazineInteraction = ({
           deltaX,
           isViewingRightPage: viewingRightPage,
           currentPage: page,
-          maxPages: pages.length
-        });
-        
-        setPage(result.newPage);
-        setViewingRightPage(result.newViewingRightPage);
+          maxPages: pages.length,
+        })
+
+        setPage(result.newPage)
+        setViewingRightPage(result.newViewingRightPage)
       } else {
         if (deltaX > config.pageThreshold) {
-          setPage((p) => Math.max(p - 1, 0));
+          setPage((p) => Math.max(p - 1, 0))
         } else if (deltaX < -config.pageThreshold) {
           if (page === pages.length - 1) {
-            setPage(0);
-            setFocusedMagazine(null);
+            setPage(0)
+            setFocusedMagazine(null)
           } else {
-            setPage((p) => Math.min(p + 1, pages.length - 1));
+            setPage((p) => Math.min(p + 1, pages.length - 1))
           }
         }
       }
     }
   }
-}; 
+}

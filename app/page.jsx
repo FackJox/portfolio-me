@@ -24,8 +24,8 @@ import {
   picturesVague,
   hdrLoader,
   getHDRPath,
-} from '@/helpers/textureLoader'
-import { useDeviceOrientation, getLayoutConfig } from '@/helpers/deviceHelper'
+} from '@/helpers/textureLoaders'
+import { useDeviceOrientation, getLayoutConfig } from '@/helpers/deviceHelpers'
 import { layoutAnimations, backgroundTransitions } from '@/helpers/animationConfigs'
 
 // Direct imports for UI components

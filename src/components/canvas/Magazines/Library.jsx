@@ -18,11 +18,11 @@ import {
   updateMagazineCarousel,
   calculateMiddleMagazine,
   getSpacingConfig,
-} from '@/helpers/positionHelper'
-import { useDeviceOrientation } from '@/helpers/deviceHelper'
-import { handleLibraryDrag, isTapInteraction, isSwipeInteraction } from '@/helpers/gestureHelper'
+} from '@/helpers/positionHelpers'
+import { useDeviceOrientation } from '@/helpers/deviceHelpers'
+import { handleLibraryDrag, isTapInteraction, isSwipeInteraction } from '@/helpers/gestureHelpers'
 import { ANIMATION_CONFIG } from '@/helpers/animationConfigs'
-import { GESTURE_CONFIG } from '@/helpers/gestureHelper'
+import { GESTURE_CONFIG } from '@/helpers/gestureHelpers'
 import { Magazine } from './Magazine'
 import { VagueButton, EngineerButton, SmackButton } from '../Buttons'
 
