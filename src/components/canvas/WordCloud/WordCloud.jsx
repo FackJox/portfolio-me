@@ -51,7 +51,7 @@ const textureManager = {
 
 // ------------------------------
 // SkillText remains very similar so that the text material and pointer events work.
-function SkillText({ content, isEngineering, onClick, position, onHoverChange, scale = 1 }) {
+function SkillText({ content, isEngineering, onClick, position, onHoverChange, scale = 1, opacity = 1 }) {
   const [hovered, setHovered] = useState(false)
   const [clicked, setClicked] = useState(false)
   const textRef = useRef()
@@ -153,7 +153,7 @@ function SkillText({ content, isEngineering, onClick, position, onHoverChange, s
           letterSpacing={isEngineering ? -0.06 : 0}
         >
           {content}
-          <meshBasicMaterial color={getColor()} toneMapped={false} />
+          <meshBasicMaterial color={getColor()} toneMapped={false} transparent opacity={opacity} />
         </Text3D>
       </group>
       <CuboidCollider args={scaledColliderSize} />
@@ -176,117 +176,90 @@ function interleaveArrays(arrays) {
   return result
 }
 
-// ------------------------------
-// Bounds – create invisible walls (and a ceiling and floor) based on the current viewport dimensions.
-function Bounds() {
-  const { size } = useThree()
-  const [vpWidth, vpHeight] = useAspect(size.width, size.height)
-  const thickness = 1
+// Helper function to calculate stack positions
+function calculateStackPositions(skills, vpWidth, vpHeight) {
+  const positions = []
+  const startPositions = []
+  const delays = []
 
-  const bounds = useMemo(
-    () => ({
-      left: [-vpWidth / 2 - thickness / 2, 0, -5],
-      right: [vpWidth / 2 + thickness / 2, 0, -5],
+  // Separate skills into columns
+  const creativeSkills = skills.filter((skill) => !skill.isEngineering)
+  const engineeringSkills = skills.filter((skill) => skill.isEngineering)
 
-      floor: [0, -vpHeight / 2.5 - thickness / 2, -5],
-      dimensions: {
-        walls: [thickness, vpHeight, 10],
-        floor: [vpWidth, thickness, 10],
-      },
-    }),
-    [vpWidth, vpHeight, thickness],
-  )
+  // Calculate spacing for each column independently
+  const creativeSpacing = (vpHeight * 0.8) / creativeSkills.length
+  const engineeringSpacing = (vpHeight * 0.8) / engineeringSkills.length
+  const columnOffset = vpWidth / 5 // Distance between columns
+  const staggerDelay = 350 // Delay between each skill in ms
 
-  return (
-    <>
-      {/* Left Wall */}
-      <RigidBody type='fixed'>
-        <CuboidCollider args={bounds.dimensions.walls} position={bounds.left} />
-      </RigidBody>
-      {/* Right Wall */}
-      <RigidBody type='fixed'>
-        <CuboidCollider args={bounds.dimensions.walls} position={bounds.right} />
-      </RigidBody>
-      {/* Floor */}
-      <RigidBody type='fixed'>
-        <CuboidCollider args={bounds.dimensions.floor} position={bounds.floor} />
-      </RigidBody>
-    </>
-  )
+  // Calculate positions for creative skills (left column)
+  creativeSkills.forEach((_, index) => {
+    // Center the stack vertically and apply creative spacing
+    const y = (index - (creativeSkills.length - 1) / 2) * creativeSpacing
+    // Add to the start of the arrays to ensure creative skills are processed first
+    positions.unshift([-columnOffset, y, -5])
+    startPositions.unshift([-columnOffset, vpHeight + creativeSpacing * index, -5])
+    delays.unshift(index * staggerDelay)
+  })
+
+  // Calculate positions for engineering skills (right column)
+  engineeringSkills.forEach((_, index) => {
+    // Center the stack vertically and apply engineering spacing
+    const y = (index - (engineeringSkills.length - 1) / 2) * engineeringSpacing
+    // Add to the end of the arrays for engineering skills
+    positions.push([columnOffset, y, -5])
+    startPositions.push([columnOffset, vpHeight + engineeringSpacing * index, -5])
+    delays.push((creativeSkills.length + index) * staggerDelay)
+  })
+
+  return { positions, startPositions, delays }
 }
 
-// ------------------------------
-// FallingSkills – each skill text is wrapped in a dynamic RigidBody. They start from a random x position and from a y position above the top.
-function FallingSkills({ skills }) {
+// SkillCloud component with lerping animation
+function SkillCloud({ skills }) {
   const { size } = useThree()
   const [vpWidth, vpHeight] = useAspect(size.width, size.height)
-  const [isPhysicsPaused, setPhysicsPaused] = useState(false)
-  const verticalSpacing = 4 // Increased from 2.5
-  const columnOffset = vpWidth / 5 // Increased from vpWidth / 4 for more horizontal space
-
+  const [isPhysicsPaused, setPhysicsPaused] = useState(true)
   const [activeSkills, setActiveSkills] = useState([])
   const [hoveredStates, setHoveredStates] = useState({})
+  const [targetPositions, setTargetPositions] = useState([])
+  const [currentPositions, setCurrentPositions] = useState([])
+  const [delays, setDelays] = useState([])
+  const [isReady, setIsReady] = useState(false)
+  const startTimeRef = useRef(0)
+  const skillRefs = useRef([])
+  const lerpSpeed = 0.05 // Increased from 0.03 for faster movement
 
+  // Initialize skill refs and positions
   useEffect(() => {
-    const handler = (e) => e.key === 'p' && setPhysicsPaused(!isPhysicsPaused)
+    if (skills.length > 0) {
+      const { positions, startPositions, delays } = calculateStackPositions(skills, vpWidth, vpHeight)
+      setTargetPositions(positions)
+      setCurrentPositions(startPositions)
+      setDelays(delays)
+      setActiveSkills(skills.map((skill, index) => ({ skill, index })))
+      skillRefs.current = skills.map(() => ({ position: new THREE.Vector3() }))
+
+      // Add a small delay before starting animations
+      const timer = setTimeout(() => {
+        startTimeRef.current = performance.now()
+        setIsReady(true)
+      }, 500) // 500ms delay
+
+      return () => clearTimeout(timer)
+    }
+  }, [skills, vpWidth, vpHeight])
+
+  // Handle keyboard toggle for physics
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.key === 'p') {
+        setPhysicsPaused(!isPhysicsPaused)
+      }
+    }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   }, [isPhysicsPaused])
-
-  // Split and generate positions for two columns
-  const { positions, splitSkills } = useMemo(() => {
-    const points = []
-
-    // Separate skills into engineering and creative
-    const engineeringSkills = skills.filter((skill) => skill.isEngineering)
-    const creativeSkills = skills.filter((skill) => !skill.isEngineering)
-
-    // Calculate rows needed for the longer column
-    const maxSkills = Math.max(engineeringSkills.length, creativeSkills.length)
-    const totalHeight = maxSkills * verticalSpacing
-    const startY = vpHeight + totalHeight * 1.5 // Increased starting height
-
-    // Generate positions for creative skills (left column)
-    creativeSkills.forEach((skill, index) => {
-      const randomOffset = {
-        x: (Math.random() - 0.5) * 3, // Increased horizontal spread
-        y: (Math.random() - 0.5) * 2, // Increased vertical spread
-      }
-
-      const x = -columnOffset + randomOffset.x
-      const y = startY - index * verticalSpacing * 1.5 + randomOffset.y // Increased spacing
-
-      points.push([x, y, -5])
-    })
-
-    // Generate positions for engineering skills (right column)
-    engineeringSkills.forEach((skill, index) => {
-      const randomOffset = {
-        x: (Math.random() - 0.5) * 3, // Increased horizontal spread
-        y: (Math.random() - 0.5) * 2, // Increased vertical spread
-      }
-
-      const x = columnOffset + randomOffset.x
-      const y = startY - index * verticalSpacing * 1.5 + randomOffset.y // Increased spacing
-
-      points.push([x, y, -5])
-    })
-
-    // Combine skills in the same order as positions
-    const orderedSkills = [...creativeSkills, ...engineeringSkills]
-
-    return {
-      positions: points,
-      splitSkills: orderedSkills.map((skill, index) => ({ skill, index })),
-    }
-  }, [vpWidth, vpHeight, skills])
-
-  // Set active skills using the properly ordered skills
-  useEffect(() => {
-    if (splitSkills.length > 0) {
-      setActiveSkills(splitSkills)
-    }
-  }, [splitSkills])
 
   const handleHoverChange = (index, isHovered) => {
     setHoveredStates((prev) => ({
@@ -295,29 +268,55 @@ function FallingSkills({ skills }) {
     }))
   }
 
+  // Lerp positions in useFrame with staggered timing
+  useFrame(() => {
+    if (!isReady) return
+
+    if (currentPositions.length === targetPositions.length) {
+      const elapsed = performance.now() - startTimeRef.current
+      const newPositions = currentPositions.map((pos, index) => {
+        // Only start lerping if enough time has elapsed for this skill
+        if (elapsed < delays[index]) {
+          return pos
+        }
+
+        const target = targetPositions[index]
+        return [
+          THREE.MathUtils.lerp(pos[0], target[0], lerpSpeed),
+          THREE.MathUtils.lerp(pos[1], target[1], lerpSpeed),
+          pos[2],
+        ]
+      })
+      setCurrentPositions(newPositions)
+    }
+  })
+
+  if (!isReady) return null
+
   return (
     <>
       {activeSkills.map(({ skill, index }) => {
-        const spawnPos = positions[index] || [0, 0, 0]
-        spawnPos[2] = -5
+        const currentPos = currentPositions[index] || [0, vpHeight, -5]
         const isHovered = hoveredStates[index]
         const scale = isHovered ? 1.2 : 1
+        const elapsed = performance.now() - startTimeRef.current
+        const isActive = elapsed >= delays[index]
 
         return (
           <RigidBody
             key={index}
             colliders={false}
-            position={spawnPos}
+            position={currentPos}
             restitution={0.2}
             friction={1.5}
             mass={1}
             density={50}
-            gravityScale={3}
+            gravityScale={0}
             enabledRotations={[false, false, false]}
             enabledTranslations={[true, true, false]}
             type={isPhysicsPaused ? 'fixed' : 'dynamic'}
             linearDamping={isPhysicsPaused ? 100 : 2}
-            angularDamping={isPhysicsPaused ? 100 : 100}
+            angularDamping={100}
             ccd={true}
             sleepThreshold={0.2}
           >
@@ -327,6 +326,7 @@ function FallingSkills({ skills }) {
               position={[0, 0, 0]}
               onHoverChange={(isHovered) => handleHoverChange(index, isHovered)}
               scale={scale}
+              opacity={isActive ? 1 : 0}
             />
           </RigidBody>
         )
@@ -335,18 +335,13 @@ function FallingSkills({ skills }) {
   )
 }
 
-// ------------------------------
-// FallingContent – set up the physics simulation and create the falling skills.
-// Here we prepare the list of skills (by interleaving and shuffling the creative
-// and engineering skills as before) and then render them inside a Physics container.
-function FallingContent() {
+// Modify SkillCloudContent to ensure correct skill ordering
+function SkillCloudContent() {
   const [isPhysicsReady, setPhysicsReady] = useState(false)
   const { engineeringSkills, creativeSkills } = useMemo(() => {
     const engineering = []
     const creative = []
     Object.entries(skills).forEach(([category, skillSet]) => {
-      console.log(`Processing category: ${category}, number of skills:`, Object.keys(skillSet).length)
-      // Convert to array while maintaining order
       const orderedSkills = Object.values(skillSet)
       orderedSkills.forEach((skill) => {
         if (category === 'engineering') {
@@ -356,25 +351,21 @@ function FallingContent() {
         }
       })
     })
-    console.log('Total engineering skills:', engineering.length)
-    console.log('Total creative skills:', creative.length)
     return {
-      engineeringSkills: engineering, // Remove shuffling
-      creativeSkills: creative, // Remove shuffling
+      engineeringSkills: engineering,
+      creativeSkills: creative,
     }
   }, [])
 
+  // Concatenate arrays instead of interleaving to maintain column separation
   const skillsContent = useMemo(() => {
-    const interleaved = interleaveArrays([engineeringSkills, creativeSkills])
-    console.log('Total interleaved skills:', interleaved.length)
-    return interleaved
+    return [...creativeSkills, ...engineeringSkills]
   }, [engineeringSkills, creativeSkills])
 
   useEffect(() => {
-    // Add a small delay before enabling physics to ensure stable viewport dimensions
     const timer = setTimeout(() => {
       setPhysicsReady(true)
-    }, 100)
+    }, 500) // Increased from 100ms to 500ms
     return () => clearTimeout(timer)
   }, [])
 
@@ -382,7 +373,7 @@ function FallingContent() {
 
   return (
     <Physics
-      gravity={[0, -9.81, 0]}
+      gravity={[0, 0, 0]}
       debug
       maxStabilizationIterations={20}
       maxVelocityIterations={20}
@@ -390,8 +381,7 @@ function FallingContent() {
       collisionIterations={10}
       timeStep={1 / 60}
     >
-      <Bounds />
-      <FallingSkills skills={skillsContent} />
+      <SkillCloud skills={skillsContent} />
     </Physics>
   )
 }
@@ -415,7 +405,7 @@ export default function WordCloud() {
         top={vpHeight / 2}
         bottom={-vpHeight / 2}
       >
-        <FallingContent />
+        <SkillCloudContent />
       </OrthographicCamera>
     </group>
   )
