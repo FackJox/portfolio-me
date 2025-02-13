@@ -3,53 +3,9 @@ import React, { useEffect, useRef, useState, useMemo } from 'react'
 import { useThree, useFrame } from '@react-three/fiber'
 import { useAspect, Text3D, OrthographicCamera } from '@react-three/drei'
 import { skills } from '@/helpers/contentsConfig'
-import { getTexturePath } from '@/helpers/textureLoader'
-import { Physics, RigidBody, CuboidCollider } from '@react-three/rapier'
 import HKGroteskFont from './HKGrotesk-SemiBold.json'
 import LemonFont from './Lemon_Regular.json'
 
-// ------------------------------
-// (Unchanged) Texture manager – you can keep this if you use it elsewhere
-const textureManager = {
-  cache: new Map(),
-  loadingPromises: new Map(),
-  async load(path) {
-    if (this.cache.has(path)) {
-      return this.cache.get(path)
-    }
-    if (this.loadingPromises.has(path)) {
-      return this.loadingPromises.get(path)
-    }
-    const loadingPromise = new Promise((resolve, reject) => {
-      const img = new Image()
-      img.onload = () => {
-        const texture = new THREE.Texture(img)
-        texture.needsUpdate = true
-        this.cache.set(path, texture)
-        this.loadingPromises.delete(path)
-        resolve(texture)
-      }
-      img.onerror = reject
-      img.src = path
-    })
-    this.loadingPromises.set(path, loadingPromise)
-    return loadingPromise
-  },
-  dispose(path) {
-    if (this.cache.has(path)) {
-      const texture = this.cache.get(path)
-      texture.dispose()
-      this.cache.delete(path)
-    }
-  },
-  clear() {
-    this.cache.forEach((texture) => texture.dispose())
-    this.cache.clear()
-    this.loadingPromises.clear()
-  },
-}
-
-// ------------------------------
 // SkillText remains very similar so that the text material and pointer events work.
 function SkillText({ content, isEngineering, onClick, position, onHoverChange, scale = 1, opacity = 1 }) {
   const [hovered, setHovered] = useState(false)
@@ -66,43 +22,6 @@ function SkillText({ content, isEngineering, onClick, position, onHoverChange, s
   useFrame((_, delta) => {
     setCurrentScale(THREE.MathUtils.lerp(currentScale, targetScale, delta * 15))
   })
-
-  // Calculate scaled collider size with proper scaling
-  const scaledColliderSize = textSize.map((s) => s * currentScale)
-
-  useEffect(() => {
-    let retries = 0
-    let timeoutId
-    const tryMeasure = () => {
-      if (textRef.current?.geometry) {
-        textRef.current.geometry.computeBoundingBox()
-        const box = textRef.current.geometry.boundingBox
-        if (box) {
-          const size = new THREE.Vector3()
-          box.getSize(size)
-          // Adjust the collider size to better match the text
-          setTextSize([size.x / 2, size.y / 2, size.z / 2])
-
-          const center = new THREE.Vector3()
-          box.getCenter(center)
-          textRef.current.geometry.translate(-center.x, -center.y, -center.z)
-
-          return
-        }
-      }
-
-      if (retries < 5) {
-        retries++
-        timeoutId = setTimeout(tryMeasure, 100 + retries * 50) // Backoff
-      } else {
-        console.error('Failed to measure text after retries')
-      }
-    }
-
-    tryMeasure()
-
-    return () => clearTimeout(timeoutId)
-  }, [content, fontLoaded])
 
   const getColor = () => {
     if (clicked) return isEngineering ? '#FFB79C' : '#FABE7F'
@@ -156,24 +75,8 @@ function SkillText({ content, isEngineering, onClick, position, onHoverChange, s
           <meshBasicMaterial color={getColor()} toneMapped={false} transparent opacity={opacity} />
         </Text3D>
       </group>
-      <CuboidCollider args={scaledColliderSize} />
     </group>
   )
-}
-
-// ------------------------------
-// Helper functions for interleaving
-function interleaveArrays(arrays) {
-  const maxLength = Math.max(...arrays.map((arr) => arr.length))
-  const result = []
-  for (let i = 0; i < maxLength; i++) {
-    arrays.forEach((array) => {
-      if (i < array.length) {
-        result.push(array[i])
-      }
-    })
-  }
-  return result
 }
 
 // Helper function to calculate stack positions
@@ -216,10 +119,9 @@ function calculateStackPositions(skills, vpWidth, vpHeight) {
 }
 
 // SkillCloud component with lerping animation
-function SkillCloud({ skills }) {
+function SkillStack({ skills }) {
   const { size } = useThree()
   const [vpWidth, vpHeight] = useAspect(size.width, size.height)
-  const [isPhysicsPaused, setPhysicsPaused] = useState(true)
   const [activeSkills, setActiveSkills] = useState([])
   const [hoveredStates, setHoveredStates] = useState({})
   const [targetPositions, setTargetPositions] = useState([])
@@ -249,17 +151,6 @@ function SkillCloud({ skills }) {
       return () => clearTimeout(timer)
     }
   }, [skills, vpWidth, vpHeight])
-
-  // Handle keyboard toggle for physics
-  useEffect(() => {
-    const handler = (e) => {
-      if (e.key === 'p') {
-        setPhysicsPaused(!isPhysicsPaused)
-      }
-    }
-    window.addEventListener('keydown', handler)
-    return () => window.removeEventListener('keydown', handler)
-  }, [isPhysicsPaused])
 
   const handleHoverChange = (index, isHovered) => {
     setHoveredStates((prev) => ({
@@ -303,32 +194,15 @@ function SkillCloud({ skills }) {
         const isActive = elapsed >= delays[index]
 
         return (
-          <RigidBody
-            key={index}
-            colliders={false}
+          <SkillText
+            key={`skill-${skill.content}-${index}`}
+            content={skill.content}
+            isEngineering={skill.isEngineering}
             position={currentPos}
-            restitution={0.2}
-            friction={1.5}
-            mass={1}
-            density={50}
-            gravityScale={0}
-            enabledRotations={[false, false, false]}
-            enabledTranslations={[true, true, false]}
-            type={isPhysicsPaused ? 'fixed' : 'dynamic'}
-            linearDamping={isPhysicsPaused ? 100 : 2}
-            angularDamping={100}
-            ccd={true}
-            sleepThreshold={0.2}
-          >
-            <SkillText
-              content={skill.content}
-              isEngineering={skill.isEngineering}
-              position={[0, 0, 0]}
-              onHoverChange={(isHovered) => handleHoverChange(index, isHovered)}
-              scale={scale}
-              opacity={isActive ? 1 : 0}
-            />
-          </RigidBody>
+            onHoverChange={(isHovered) => handleHoverChange(index, isHovered)}
+            scale={scale}
+            opacity={isActive ? 1 : 0}
+          />
         )
       })}
     </>
@@ -336,8 +210,7 @@ function SkillCloud({ skills }) {
 }
 
 // Modify SkillCloudContent to ensure correct skill ordering
-function SkillCloudContent() {
-  const [isPhysicsReady, setPhysicsReady] = useState(false)
+function SkillStackContent() {
   const { engineeringSkills, creativeSkills } = useMemo(() => {
     const engineering = []
     const creative = []
@@ -362,33 +235,11 @@ function SkillCloudContent() {
     return [...creativeSkills, ...engineeringSkills]
   }, [engineeringSkills, creativeSkills])
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setPhysicsReady(true)
-    }, 500) // Increased from 100ms to 500ms
-    return () => clearTimeout(timer)
-  }, [])
-
-  if (!isPhysicsReady) return null
-
-  return (
-    <Physics
-      gravity={[0, 0, 0]}
-      debug
-      maxStabilizationIterations={20}
-      maxVelocityIterations={20}
-      maxVelocityFriction={20}
-      collisionIterations={10}
-      timeStep={1 / 60}
-    >
-      <SkillCloud skills={skillsContent} />
-    </Physics>
-  )
+  return <SkillStack skills={skillsContent} />
 }
 
-// ------------------------------
 // WordCloud – simplified version without scrolling or page changes
-export default function WordCloud() {
+export default function Contents() {
   const { size } = useThree()
   const [vpWidth, vpHeight] = useAspect(size.width, size.height)
 
@@ -405,7 +256,7 @@ export default function WordCloud() {
         top={vpHeight / 2}
         bottom={-vpHeight / 2}
       >
-        <SkillCloudContent />
+        <SkillStackContent />
       </OrthographicCamera>
     </group>
   )

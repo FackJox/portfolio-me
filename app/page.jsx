@@ -32,7 +32,7 @@ import { layoutAnimations, backgroundTransitions } from '@/helpers/animationConf
 import { SmackHeader, SmackButtons, SmackLabel, SmackTopBar } from '@/components/dom/SmackUI'
 import { EngineerHeader, EngineerButtons, EngineerLabel, EngineerTopBar } from '@/components/dom/EngineerUI'
 import { VagueHeader, VagueButtons, VagueLabel, VagueTopBar } from '@/components/dom/VagueUI'
-
+import Contents from '../src/components/canvas/Contents/Contents' // Import the WordCloud component
 import WordCloud from '../src/components/canvas/WordCloud/WordCloud' // Import the WordCloud component
 import { PerspectiveCamera } from '@react-three/drei'
 import React from 'react'
@@ -196,7 +196,8 @@ export default function Page() {
           <View className='absolute w-full inset-0 flex items-center justify-center'>
         
             <Suspense fallback={null}>
-              <WordCloud onChangePages={setPages} />
+              {/* <WordCloud onChangePages={setPages} /> */}
+              <Contents />
               <Common />
             </Suspense>
           </View>
