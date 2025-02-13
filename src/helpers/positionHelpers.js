@@ -606,9 +606,9 @@ export const calculateStackPositions = (skills, vpWidth, vpHeight) => {
   const engineeringSkills = skills.filter((skill) => skill.isEngineering)
 
   // Calculate spacing for each column independently
-  const creativeSpacing = (vpHeight * 1.2) / creativeSkills.length
+  const creativeSpacing = (vpHeight * 1.21) / creativeSkills.length
   const engineeringSpacing = (vpHeight * 1.2) / engineeringSkills.length
-  const columnOffset = vpWidth / 5 // Distance between columns
+  const columnOffset = vpWidth / 25 // Distance between columns (reduced from /5 to /8 for closer spacing)
   const staggerDelay = 350 // Delay between each skill in ms
 
   // Calculate positions for creative skills (left column)

@@ -194,19 +194,8 @@ export default function Contents() {
   // We removed the useThree() hook here because reading viewport size
   // in this render function causes re-renders on resize.
   return (
-    <group position={[0, 0, 0]}>
-      {/* If you need a camera that updates on resize, consider updating it imperatively in useFrame */}
-      {/* <OrthographicCamera
-          makeDefault
-          position={[0, 0, 0]}
-          zoom={90}
-          near={1}
-          far={100}
-          left={-vpWidth / 2}
-          right={vpWidth / 2}
-          top={vpHeight / 2}
-          bottom={-vpHeight / 2}
-      /> */}
+    <group position={[0, 0, 2]}>
+
       <SkillStackContent />
     </group>
   )
