@@ -609,7 +609,7 @@ export const calculateStackPositions = (skills, vpWidth, vpHeight) => {
   const creativeSpacing = (vpHeight * 0.3) / creativeSkills.length
   const engineeringSpacing = (vpHeight * 0.3) / engineeringSkills.length
   const columnOffset = vpWidth / 75 // Distance between columns
-  const staggerDelay = 350 // Delay between each skill in ms
+  const staggerDelay = 100 // Delay between each skill in ms
 
   // Calculate positions for creative skills (left column)
   creativeSkills.forEach((_, index) => {
@@ -627,7 +627,7 @@ export const calculateStackPositions = (skills, vpWidth, vpHeight) => {
     const y = (index - (engineeringSkills.length - 1) / 2) * engineeringSpacing
     // Add to the end of the arrays for engineering skills
     positions.push([columnOffset, y, -5])
-    startPositions.push([columnOffset, vpHeight + engineeringSpacing * index, -5])
+    startPositions.push([columnOffset, -vpHeight - engineeringSpacing * index, -5])
     delays.push((creativeSkills.length + index) * staggerDelay)
   })
 
@@ -648,12 +648,15 @@ export const calculateExplosionPositions = (skills, vpWidth, vpHeight, clickedCo
   const radius = Math.max(vpWidth, vpHeight) * 1.5 // Large enough to ensure skills go off screen
   const angleStep = (2 * Math.PI) / (skills.length - 1) // Divide circle by number of non-clicked skills
   let currentAngle = 0
-  const staggerDelay = 100 // Delay between each exploding skill
+  const staggerDelay = 50 // Delay between each exploding skill
+
+  // Get button position config
+  const buttonConfig = getSpacingConfig(false).positions.button
 
   skills.forEach((skill, index) => {
     if (skill.content === clickedContent) {
-      // Keep clicked skill in center
-      positions.push([0, 0, -5])
+      // Position clicked skill at bottom center like the buttons
+      positions.push([buttonConfig.x, buttonConfig.hover.y, buttonConfig.hover.z])
       delays.push(0)
     } else {
       // Calculate position on circle for other skills
