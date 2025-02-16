@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState, useMemo } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Text3D, OrthographicCamera } from '@react-three/drei'
 import { skills, transformSkillsConfig } from '@/helpers/contentsConfig'
-import { calculateStackPositions, performLerp } from '@/helpers/positionHelpers'
+import { calculateStackPositions, performLerp, calculateExplosionPositions } from '@/helpers/positionHelpers'
 import { useViewportMeasurements } from '@/helpers/deviceHelpers'
 import HKGroteskFont from './HKGrotesk-SemiBold.json'
 import LemonFont from './Lemon_Regular.json'
@@ -113,47 +113,14 @@ function SkillStack({ skills }) {
   const [currentPositions, setCurrentPositions] = useState([])
   const [delays, setDelays] = useState([])
   const [isReady, setIsReady] = useState(false)
+  const [explodedSkill, setExplodedSkill] = useState(null)
   const startTimeRef = useRef(0)
   const skillRefs = useRef([])
   const positionRefs = useRef([])
   const lerpSpeed = 0.05
 
-  // Handle viewport resize with debounce
-  useEffect(() => {
-    const handleResize = () => {
-      const newWidth = window.innerWidth / 35
-      const newHeight = window.innerHeight / 35
-
-      // Only update if the change is significant (more than 5%)
-      const widthDiff = Math.abs(newWidth - viewportRef.current.width) / viewportRef.current.width
-      const heightDiff = Math.abs(newHeight - viewportRef.current.height) / viewportRef.current.height
-
-      if (widthDiff > 0.05 || heightDiff > 0.05) {
-        viewportRef.current = { width: newWidth, height: newHeight }
-        if (skills.length > 0) {
-          const { positions, startPositions, delays } = calculateStackPositions(skills, newWidth, newHeight)
-          setTargetPositions(positions)
-          setCurrentPositions(startPositions)
-          setDelays(delays)
-        }
-      }
-    }
-
-    // Initialize viewport ref
-    viewportRef.current = { width: vpWidth, height: vpHeight }
-
-    let resizeTimeout
-    const debouncedResize = () => {
-      clearTimeout(resizeTimeout)
-      resizeTimeout = setTimeout(handleResize, 250) // 250ms debounce
-    }
-
-    window.addEventListener('resize', debouncedResize)
-    return () => {
-      window.removeEventListener('resize', debouncedResize)
-      clearTimeout(resizeTimeout)
-    }
-  }, [skills])
+  // Add a ref to track if we're in initial animation
+  const isInitialAnimationRef = useRef(true)
 
   useEffect(() => {
     if (skills.length > 0) {
@@ -172,7 +139,25 @@ function SkillStack({ skills }) {
 
       return () => clearTimeout(timer)
     }
-  }, [skills]) // Remove vpWidth and vpHeight from dependencies
+  }, [skills])
+
+  const handleSkillClick = (content) => {
+    isInitialAnimationRef.current = false
+    if (explodedSkill === content) {
+      // Reset to original stack positions
+      const { positions, delays } = calculateStackPositions(skills, vpWidth, vpHeight)
+      setTargetPositions(positions)
+      setDelays(delays)
+      setExplodedSkill(null)
+    } else {
+      // Calculate explosion positions
+      const { positions, delays } = calculateExplosionPositions(skills, vpWidth, vpHeight, content)
+      setTargetPositions(positions)
+      setDelays(delays)
+      setExplodedSkill(content)
+    }
+    startTimeRef.current = performance.now()
+  }
 
   const handleHoverChange = (index, isHovered) => {
     setHoveredStates((prev) => ({
@@ -207,7 +192,15 @@ function SkillStack({ skills }) {
         const isHovered = hoveredStates[index]
         const scale = isHovered ? 1.2 : 1
         const elapsed = performance.now() - startTimeRef.current
-        const isActive = elapsed >= delays[index]
+
+        // Only check elapsed time for initial animation
+        const isActive = isInitialAnimationRef.current ? elapsed >= delays[index] : true
+
+        // Calculate if the skill is within viewport bounds
+        const isInViewport = Math.abs(currentPos[0]) <= vpWidth * 1.5 && Math.abs(currentPos[1]) <= vpHeight * 1.5
+
+        // Fade out as skill leaves viewport during explosion
+        const opacity = isActive ? (isInViewport ? 1 : 0) : 0
 
         return (
           <SkillText
@@ -216,8 +209,9 @@ function SkillStack({ skills }) {
             isEngineering={skill.isEngineering}
             position={currentPos}
             onHoverChange={(isHovered) => handleHoverChange(index, isHovered)}
+            onClick={handleSkillClick}
             scale={scale}
-            opacity={isActive ? 1 : 0}
+            opacity={opacity}
           />
         )
       })}

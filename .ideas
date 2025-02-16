@@ -3,6 +3,28 @@ Skills -
 set up like a vertical timeline in portait mode with ones either side of a vertical line, user can scroll through
 ---
 
+When I click on a skill, all others fly off the screen
+
+The skill text moves to the bottom of center of the viewport
+
+it increases in depth
+
+It changes angle to show the 3D depth
+
+the relevant books come into view
+
+Turn to the relevant page
+
+---
+
+Pages
+
+2D of article pages to flick through
+Books view
+Contents view
+
+---
+
 Bugs
 On portrait landscape orientation change the viewing left/right page state is not saved - save state in an atom and recall the state in deviceHelper to restore
 
@@ -61,6 +83,8 @@ Content
 server, docker,
 music production, ableton
 website
+ComfyUI, Vast.AI
+
 
 ## Below are a few approaches for replacing the “picture” textures with interactive HTML content that follows the same folding/page-turning logic. Each approach has upsides and downsides, particularly around how (and if) you can warp the HTML to match the curvature of the 3D geometry.
 

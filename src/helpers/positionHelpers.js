@@ -633,3 +633,37 @@ export const calculateStackPositions = (skills, vpWidth, vpHeight) => {
 
   return { positions, startPositions, delays }
 }
+
+/**
+ * Calculates explosion positions for skills when one is clicked
+ * @param {Array} skills - Array of skill objects
+ * @param {number} vpWidth - Viewport width
+ * @param {number} vpHeight - Viewport height
+ * @param {string} clickedContent - Content of the clicked skill
+ * @returns {Object} Object containing explosion positions and delays
+ */
+export const calculateExplosionPositions = (skills, vpWidth, vpHeight, clickedContent) => {
+  const positions = []
+  const delays = []
+  const radius = Math.max(vpWidth, vpHeight) * 1.5 // Large enough to ensure skills go off screen
+  const angleStep = (2 * Math.PI) / (skills.length - 1) // Divide circle by number of non-clicked skills
+  let currentAngle = 0
+  const staggerDelay = 100 // Delay between each exploding skill
+
+  skills.forEach((skill, index) => {
+    if (skill.content === clickedContent) {
+      // Keep clicked skill in center
+      positions.push([0, 0, -5])
+      delays.push(0)
+    } else {
+      // Calculate position on circle for other skills
+      const x = Math.cos(currentAngle) * radius
+      const y = Math.sin(currentAngle) * radius
+      positions.push([x, y, -5])
+      delays.push(index * staggerDelay)
+      currentAngle += angleStep
+    }
+  })
+
+  return { positions, delays }
+}
