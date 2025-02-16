@@ -59,43 +59,46 @@ export const getLayoutConfig = (isPortrait) => {
 
 /**
  * Custom hook to handle viewport measurements with optimized updates
- * Uses R3F's useThree for consistent viewport calculations
+ * Uses window dimensions for viewport calculations
  * @returns {Object} Viewport measurements and aspect ratio
  */
 export const useViewportMeasurements = (shouldUpdate = false) => {
-  const { size, viewport } = useThree()
-
   // Store initial values in state
   const [initialMeasurements] = useState(() => ({
-    vpWidth: viewport.width,
-    vpHeight: viewport.height,
-    aspect: size.width / size.height,
-    width: size.width,
-    height: size.height,
+    vpWidth: typeof window !== 'undefined' ? window.innerWidth : 0,
+    vpHeight: typeof window !== 'undefined' ? window.innerHeight : 0,
+    aspect: typeof window !== 'undefined' ? window.innerWidth / window.innerHeight : 1,
+    width: typeof window !== 'undefined' ? window.innerWidth : 0,
+    height: typeof window !== 'undefined' ? window.innerHeight : 0,
   }))
 
-  // Only compute new measurements if shouldUpdate is true
-  return useMemo(
-    () =>
-      shouldUpdate
-        ? {
-            vpWidth: viewport.width,
-            vpHeight: viewport.height,
-            aspect: size.width / size.height,
-            width: size.width,
-            height: size.height,
-          }
-        : initialMeasurements,
-    // Only include dependencies if shouldUpdate is true
-    shouldUpdate ? [viewport.width, viewport.height, size.width, size.height] : [],
-  )
+  const [measurements, setMeasurements] = useState(initialMeasurements)
+
+  useEffect(() => {
+    if (!shouldUpdate) return
+
+    const handleResize = () => {
+      setMeasurements({
+        vpWidth: window.innerWidth,
+        vpHeight: window.innerHeight,
+        aspect: window.innerWidth / window.innerHeight,
+        width: window.innerWidth,
+        height: window.innerHeight,
+      })
+    }
+
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [shouldUpdate])
+
+  return shouldUpdate ? measurements : initialMeasurements
 }
 
-// Create a stable reference for viewport calculations
-export const getViewportMeasurements = (viewport, size) => ({
-  vpWidth: viewport.width,
-  vpHeight: viewport.height,
-  aspect: size.width / size.height,
-  width: size.width,
-  height: size.height,
+// Helper function for viewport calculations using window dimensions
+export const getViewportMeasurements = () => ({
+  vpWidth: typeof window !== 'undefined' ? window.innerWidth : 0,
+  vpHeight: typeof window !== 'undefined' ? window.innerHeight : 0,
+  aspect: typeof window !== 'undefined' ? window.innerWidth / window.innerHeight : 1,
+  width: typeof window !== 'undefined' ? window.innerWidth : 0,
+  height: typeof window !== 'undefined' ? window.innerHeight : 0,
 })

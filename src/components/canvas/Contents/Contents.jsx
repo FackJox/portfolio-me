@@ -1,13 +1,15 @@
 import * as THREE from 'three'
 import React, { useEffect, useRef, useState, useMemo } from 'react'
-import { useThree, useFrame } from '@react-three/fiber'
-import { useAspect, Text3D, OrthographicCamera } from '@react-three/drei'
+import { useFrame } from '@react-three/fiber'
+import { Text3D, OrthographicCamera } from '@react-three/drei'
 import { skills, transformSkillsConfig } from '@/helpers/contentsConfig'
 import { calculateStackPositions, performLerp } from '@/helpers/positionHelpers'
+import { useViewportMeasurements } from '@/helpers/deviceHelpers'
 import HKGroteskFont from './HKGrotesk-SemiBold.json'
 import LemonFont from './Lemon_Regular.json'
+import { useSetAtom } from 'jotai'
+import { styleMagazineAtom } from '@/helpers/atoms'
 
-// SkillText remains very similar so that the text material and pointer events work.
 function SkillText({ content, isEngineering, onClick, position, onHoverChange, scale = 1, opacity = 1 }) {
   const [hovered, setHovered] = useState(false)
   const [clicked, setClicked] = useState(false)
@@ -15,6 +17,7 @@ function SkillText({ content, isEngineering, onClick, position, onHoverChange, s
   const [textSize, setTextSize] = useState([1, 0.5, 0.25])
   const currentScaleRef = useRef(new THREE.Vector3(scale, scale, scale))
   const groupRef = useRef()
+  const setStyleMagazine = useSetAtom(styleMagazineAtom)
 
   const targetScale = hovered ? scale * 1.2 : scale
 
@@ -51,12 +54,14 @@ function SkillText({ content, isEngineering, onClick, position, onHoverChange, s
     e.stopPropagation()
     setHovered(true)
     onHoverChange && onHoverChange(true)
+    setStyleMagazine(isEngineering ? 'engineer' : 'smack')
   }
 
   const handlePointerOut = (e) => {
     e.stopPropagation()
     setHovered(false)
     onHoverChange && onHoverChange(false)
+    setStyleMagazine('vague')
   }
 
   return (
@@ -93,12 +98,14 @@ function SkillText({ content, isEngineering, onClick, position, onHoverChange, s
 
 // SkillStack component with lerping animation
 function SkillStack({ skills }) {
-  // Use the useThree hook normally to get the canvas size, then capture it once.
-  const { size } = useThree()
-  const [initialSize] = useState(() => size)
-  
-  // useAspect will now compute based on the captured initial size only.
-  const [vpWidth, vpHeight] = useAspect(initialSize.width, initialSize.height)
+  const { vpWidth: pixelWidth, vpHeight: pixelHeight } = useViewportMeasurements(false)
+
+  // Store the viewport measurements in a ref to avoid rerenders
+  const viewportRef = useRef({ width: 0, height: 0 })
+
+  // Convert pixel measurements to Three.js units
+  const vpWidth = pixelWidth / 35
+  const vpHeight = pixelHeight / 35
 
   const [activeSkills, setActiveSkills] = useState([])
   const [hoveredStates, setHoveredStates] = useState({})
@@ -109,7 +116,44 @@ function SkillStack({ skills }) {
   const startTimeRef = useRef(0)
   const skillRefs = useRef([])
   const positionRefs = useRef([])
-  const lerpSpeed = 0.05 // Increased for faster movement
+  const lerpSpeed = 0.05
+
+  // Handle viewport resize with debounce
+  useEffect(() => {
+    const handleResize = () => {
+      const newWidth = window.innerWidth / 35
+      const newHeight = window.innerHeight / 35
+
+      // Only update if the change is significant (more than 5%)
+      const widthDiff = Math.abs(newWidth - viewportRef.current.width) / viewportRef.current.width
+      const heightDiff = Math.abs(newHeight - viewportRef.current.height) / viewportRef.current.height
+
+      if (widthDiff > 0.05 || heightDiff > 0.05) {
+        viewportRef.current = { width: newWidth, height: newHeight }
+        if (skills.length > 0) {
+          const { positions, startPositions, delays } = calculateStackPositions(skills, newWidth, newHeight)
+          setTargetPositions(positions)
+          setCurrentPositions(startPositions)
+          setDelays(delays)
+        }
+      }
+    }
+
+    // Initialize viewport ref
+    viewportRef.current = { width: vpWidth, height: vpHeight }
+
+    let resizeTimeout
+    const debouncedResize = () => {
+      clearTimeout(resizeTimeout)
+      resizeTimeout = setTimeout(handleResize, 250) // 250ms debounce
+    }
+
+    window.addEventListener('resize', debouncedResize)
+    return () => {
+      window.removeEventListener('resize', debouncedResize)
+      clearTimeout(resizeTimeout)
+    }
+  }, [skills])
 
   useEffect(() => {
     if (skills.length > 0) {
@@ -128,7 +172,7 @@ function SkillStack({ skills }) {
 
       return () => clearTimeout(timer)
     }
-  }, [skills, vpWidth, vpHeight])
+  }, [skills]) // Remove vpWidth and vpHeight from dependencies
 
   const handleHoverChange = (index, isHovered) => {
     setHoveredStates((prev) => ({
@@ -148,11 +192,7 @@ function SkillStack({ skills }) {
         const target = targetPositions[index]
         const targetVec = new THREE.Vector3(target[0], target[1], target[2])
         performLerp(positionRefs.current[index], targetVec, lerpSpeed)
-        return [
-          positionRefs.current[index].x,
-          positionRefs.current[index].y,
-          positionRefs.current[index].z,
-        ]
+        return [positionRefs.current[index].x, positionRefs.current[index].y, positionRefs.current[index].z]
       })
       setCurrentPositions(newPositions)
     }
@@ -190,12 +230,36 @@ function SkillStackContent() {
   return <SkillStack skills={skillsContent} />
 }
 
+function HoverDetector({ vpWidth }) {
+  const setStyleMagazine = useSetAtom(styleMagazineAtom)
+  const columnOffset = vpWidth / 50 // Match the offset from calculateStackPositions
+
+  const handlePointerMove = (e) => {
+    // Convert pointer position to local space
+    const x = e.point.x
+
+    if (x < -columnOffset) {
+      setStyleMagazine('smack')
+    } else if (x > columnOffset) {
+      setStyleMagazine('engineer')
+    } else {
+      setStyleMagazine('vague')
+    }
+  }
+
+  return (
+    <mesh position={[0, 0, -5.5]} onPointerMove={handlePointerMove}>
+      <planeGeometry args={[vpWidth * 2, vpWidth * 2]} />
+      <meshBasicMaterial transparent opacity={0} />
+    </mesh>
+  )
+}
+
 export default function Contents() {
-  // We removed the useThree() hook here because reading viewport size
-  // in this render function causes re-renders on resize.
+  const { vpWidth } = useViewportMeasurements(false)
   return (
     <group position={[0, 0, 2]}>
-
+      <HoverDetector vpWidth={vpWidth / 35} />
       <SkillStackContent />
     </group>
   )
