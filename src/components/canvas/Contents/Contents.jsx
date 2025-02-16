@@ -15,6 +15,14 @@ import LemonFont from './Lemon_Regular.json'
 import { useSetAtom } from 'jotai'
 import { styleMagazineAtom } from '@/helpers/atoms'
 
+function hasSignificantChange(a, b, threshold = 0.001) {
+  if (!a || !b) return true
+  if (Array.isArray(a) && Array.isArray(b)) {
+    return a.some((val, i) => Math.abs(val - b[i]) > threshold)
+  }
+  return Math.abs(a - b) > threshold
+}
+
 function SkillText({
   content,
   isEngineering,
@@ -35,33 +43,52 @@ function SkillText({
   const currentScaleRef = useRef(new THREE.Vector3(scale, scale, scale))
   const currentHeightRef = useRef(0.01)
   const groupRef = useRef()
+  const meshRef = useRef()
+  const text3DRef = useRef()
+  const lastLoggedTimeRef = useRef(0)
+  const lastPositionsRef = useRef(null)
 
   // Cache vector objects for reuse in animation loop
   const targetScaleVec = useRef(new THREE.Vector3())
   const tempVec3 = useRef(new THREE.Vector3())
   const tempBox3 = useRef(new THREE.Box3())
+  const meshPositionRef = useRef(new THREE.Vector3())
+  const text3DPositionRef = useRef(new THREE.Vector3())
 
   const setStyleMagazine = useSetAtom(styleMagazineAtom)
 
   // Reset states when resetState changes
   useEffect(() => {
+    if (content === 'Three.js') {
+      console.log('SkillText state:', content, isBottomPosition, isStackPosition, resetState)
+    }
     if (resetState === true) {
-      setClicked(false)
+      // Only update stack position state immediately
       setIsStackPosition(true)
       setIsBottomPosition(false)
+      // Keep clicked state until movement is complete
+      if (!isMoving) {
+        setClicked(false)
+      }
     } else if (resetState && typeof resetState === 'object' && resetState.isBottomPosition) {
       setIsBottomPosition(true)
       setIsStackPosition(false)
     }
-  }, [resetState])
+  }, [resetState, content, isMoving])
 
   // Update position states based on isMoving
   useEffect(() => {
+    if (content === 'Three.js' && isMoving) {
+      console.log('SkillText moving:', content, isMoving, clicked, isBottomPosition, isStackPosition)
+    }
     if (isMoving && clicked) {
       setIsStackPosition(false)
       setIsBottomPosition(false)
+    } else if (!isMoving && isStackPosition && clicked) {
+      // Reset clicked state only when we've finished moving back to stack position
+      setClicked(false)
     }
-  }, [isMoving, clicked])
+  }, [isMoving, clicked, content, isStackPosition])
 
   // Calculate target scale based on states
   const targetScale = !isMoving && hovered && (!clicked || isBottomPosition) ? scale * 1.1 : scale
@@ -112,7 +139,36 @@ function SkillText({
   }
 
   useFrame(() => {
-    if (groupRef.current) {
+    if (groupRef.current && meshRef.current && text3DRef.current) {
+      const now = performance.now()
+      const shouldLog = content === 'Three.js' && now - lastLoggedTimeRef.current > 500
+
+      if (shouldLog) {
+        const currentPositions = {
+          group: groupRef.current.position.toArray(),
+          mesh: meshRef.current.position.toArray(),
+          text3D: text3DRef.current.position.toArray(),
+        }
+
+        const hasChanged =
+          !lastPositionsRef.current ||
+          hasSignificantChange(currentPositions.group, lastPositionsRef.current.group) ||
+          hasSignificantChange(currentPositions.mesh, lastPositionsRef.current.mesh) ||
+          hasSignificantChange(currentPositions.text3D, lastPositionsRef.current.text3D)
+
+        if (hasChanged) {
+          console.log(
+            'SkillText positions:',
+            content,
+            currentPositions.group.map((v) => v.toFixed(3)),
+            currentPositions.mesh.map((v) => v.toFixed(3)),
+            currentPositions.text3D.map((v) => v.toFixed(3)),
+          )
+          lastPositionsRef.current = currentPositions
+          lastLoggedTimeRef.current = now
+        }
+      }
+
       // Reuse cached vector for target scale
       targetScaleVec.current.set(targetScale, targetScale, targetScale)
       performLerp(currentScaleRef.current, targetScaleVec.current, 0.2)
@@ -123,6 +179,67 @@ function SkillText({
       const isIncreasing = targetHeight > prevHeight
       const lerpFactor = isIncreasing ? 0.1 : 0.02 // Slower when decreasing height
       currentHeightRef.current = THREE.MathUtils.lerp(currentHeightRef.current, targetHeight, lerpFactor)
+
+      // Calculate target positions for mesh and text3D based on state
+      const targetMeshX =
+        isMoving || clicked
+          ? isStackPosition
+            ? !isEngineering
+              ? -textSize[0] / 2
+              : textSize[0] / 2 // Moving back to stack
+            : 0 // Moving to/at bottom
+          : !isEngineering
+            ? -textSize[0] / 2
+            : textSize[0] / 2 // At stack
+
+      const targetText3DX =
+        isMoving || clicked
+          ? isStackPosition
+            ? !isEngineering
+              ? -textSize[0]
+              : 0 // Moving back to stack
+            : -textSize[0] / 2 // Moving to/at bottom
+          : !isEngineering
+            ? -textSize[0]
+            : 0 // At stack
+
+      // Lerp mesh position
+      meshPositionRef.current.set(targetMeshX, textSize[1] / 2 - textSize[1] * 0.15, 0)
+      const meshLerpSpeed = { x: 0.03, y: 0.1, z: 0.1 }
+      meshRef.current.position.x = THREE.MathUtils.lerp(
+        meshRef.current.position.x,
+        meshPositionRef.current.x,
+        meshLerpSpeed.x,
+      )
+      meshRef.current.position.y = THREE.MathUtils.lerp(
+        meshRef.current.position.y,
+        meshPositionRef.current.y,
+        meshLerpSpeed.y,
+      )
+      meshRef.current.position.z = THREE.MathUtils.lerp(
+        meshRef.current.position.z,
+        meshPositionRef.current.z,
+        meshLerpSpeed.z,
+      )
+
+      // Lerp text3D position
+      text3DPositionRef.current.set(targetText3DX, 0, 0)
+      const text3DLerpSpeed = { x: 0.03, y: 0.1, z: 0.1 }
+      text3DRef.current.position.x = THREE.MathUtils.lerp(
+        text3DRef.current.position.x,
+        text3DPositionRef.current.x,
+        text3DLerpSpeed.x,
+      )
+      text3DRef.current.position.y = THREE.MathUtils.lerp(
+        text3DRef.current.position.y,
+        text3DPositionRef.current.y,
+        text3DLerpSpeed.y,
+      )
+      text3DRef.current.position.z = THREE.MathUtils.lerp(
+        text3DRef.current.position.z,
+        text3DPositionRef.current.z,
+        text3DLerpSpeed.z,
+      )
     }
   })
 
@@ -140,27 +257,31 @@ function SkillText({
       <group ref={groupRef}>
         {/* Invisible mesh for hover detection */}
         <mesh
+          ref={meshRef}
           onClick={handleClick}
           onPointerOver={handlePointerOver}
           onPointerOut={handlePointerOut}
           position={[!isEngineering ? -textSize[0] / 2 : textSize[0] / 2, textSize[1] / 2 - textSize[1] * 0.15, 0]}
         >
           <boxGeometry args={[textSize[0], textSize[1], Math.max(0.01, textSize[2])]} />
-          <meshBasicMaterial transparent opacity={0} />
+          <meshBasicMaterial transparent opacity={0.3} />
         </mesh>
 
         <Text3D
-          ref={textRef}
+          ref={(ref) => {
+            textRef.current = ref
+            text3DRef.current = ref
+          }}
           font={isEngineering ? HKGroteskFont : LemonFont}
           size={isEngineering ? 0.5 : 0.6}
           height={currentHeightRef.current}
           curveSegments={12}
           bevelEnabled={false}
           letterSpacing={isEngineering ? -0.06 : 0}
-          position={!isEngineering ? [-textSize[0], 0, 0] : [0, 0, 0]}
+          position={[!isEngineering ? -textSize[0] : 0, 0, 0]}
         >
           {content}
-          <meshBasicMaterial color={getColor()} toneMapped={false} transparent opacity={opacity} />
+          <meshStandardMaterial color={getColor()} toneMapped={false} transparent opacity={opacity} />
         </Text3D>
       </group>
     </group>
@@ -191,6 +312,9 @@ function SkillStack({ skills }) {
   const movingSkillsRef = useRef(new Set())
   const resetStatesRef = useRef({})
   const isInitialAnimationRef = useRef(true)
+  const previousXPositionRef = useRef(null)
+  const lastLoggedTimeRef = useRef(0)
+  const lastStateRef = useRef(null)
 
   // Cache vector objects for reuse
   const tempVec3 = useRef(new THREE.Vector3())
@@ -222,9 +346,18 @@ function SkillStack({ skills }) {
 
   const handleSkillClick = (content, textWidth) => {
     isInitialAnimationRef.current = false
+    const now = performance.now()
+    if (content === 'Three.js') {
+      console.log('Click:', content, explodedSkill === content)
+      lastLoggedTimeRef.current = now
+    }
+
     if (explodedSkill === content) {
-      // Reset to original stack positions
       const { positions, delays } = calculateStackPositions(skills, vpWidth, vpHeight)
+      if (content === 'Three.js') {
+        const newPosition = positions.find((_, i) => skills[i].content === content)
+        console.log('Stack position:', content, newPosition)
+      }
       targetPositionsRef.current = positions
       delaysRef.current = delays
       setExplodedSkill(null)
@@ -246,11 +379,12 @@ function SkillStack({ skills }) {
         tempTargetPos.current.addScaledVector(tempForward.current, buttonConfig.hover.z)
         tempTargetPos.current.y = buttonConfig.hover.y
 
-        const skill = skills[clickedIndex]
-        const offset = skill.isEngineering ? textWidth / 2 : -textWidth / 2
-        tempTargetPos.current.x = -offset
+        // Set target position with x=0 for centering
+        positions[clickedIndex] = [0, tempTargetPos.current.y, tempTargetPos.current.z]
 
-        positions[clickedIndex] = [tempTargetPos.current.x, tempTargetPos.current.y, tempTargetPos.current.z]
+        if (content === 'Three.js') {
+          console.log('Bottom target:', content, positions[clickedIndex])
+        }
       }
 
       targetPositionsRef.current = positions
@@ -260,7 +394,6 @@ function SkillStack({ skills }) {
       resetStatesRef.current = {}
     }
     startTimeRef.current = performance.now()
-    // Trigger rerender to reflect new animation state
     setAnimationStateVersion((v) => v + 1)
   }
 
@@ -284,15 +417,61 @@ function SkillStack({ skills }) {
         if (elapsed < delaysRef.current[index]) return
 
         const target = targets[index]
-        tempVec3.current.set(target[0], target[1], target[2])
+        const skill = activeSkills[index]?.skill
         const currentPos = positionRefs.current[index]
         const prevPos = currentPos.clone()
 
-        performLerp(currentPos, tempVec3.current, lerpSpeed)
+        // Debug log for Three.js skill
+        const now = performance.now()
+        if (skill?.content === 'Three.js' && now - lastLoggedTimeRef.current > 500) {
+          const currentState = {
+            pos: currentPos.toArray(),
+            target,
+            isMoving: movingSkillsRef.current.has(skill.content),
+            isBottom: resetStatesRef.current[skill.content]?.isBottomPosition,
+          }
+
+          const hasChanged =
+            !lastStateRef.current ||
+            hasSignificantChange(currentState.pos, lastStateRef.current.pos) ||
+            hasSignificantChange(currentState.target, lastStateRef.current.target) ||
+            currentState.isMoving !== lastStateRef.current.isMoving ||
+            currentState.isBottom !== lastStateRef.current.isBottom
+
+          if (hasChanged) {
+            console.log(
+              'Position:',
+              skill.content,
+              currentState.pos.map((v) => v.toFixed(3)),
+              currentState.target.map((v) => v.toFixed(3)),
+            )
+            if (
+              currentState.isMoving !== lastStateRef.current?.isMoving ||
+              currentState.isBottom !== lastStateRef.current?.isBottom
+            ) {
+              console.log('State:', skill.content, currentState.isMoving, currentState.isBottom)
+            }
+            lastStateRef.current = currentState
+            lastLoggedTimeRef.current = now
+          }
+        }
+
+        // Set target position
+        tempVec3.current.set(target[0], target[1], target[2])
+
+        // Apply lerp with different speeds for x and y/z
+        const xLerpSpeed = 0.03 // Much slower for x-axis
+        const normalLerpSpeed = 0.05 // Normal speed for y and z
+
+        // Lerp x separately
+        currentPos.x = THREE.MathUtils.lerp(currentPos.x, tempVec3.current.x, xLerpSpeed)
+
+        // Lerp y and z
+        currentPos.y = THREE.MathUtils.lerp(currentPos.y, tempVec3.current.y, normalLerpSpeed)
+        currentPos.z = THREE.MathUtils.lerp(currentPos.z, tempVec3.current.z, normalLerpSpeed)
 
         // Check if this skill has reached its target position
         if (currentPos.distanceTo(tempVec3.current) < 0.001) {
-          const skill = activeSkills[index].skill
           if (movingSkillsRef.current.has(skill.content)) {
             movingSkillsRef.current.delete(skill.content)
             significantChanges = true
@@ -302,6 +481,13 @@ function SkillStack({ skills }) {
             if (target[1] === buttonY && !resetStatesRef.current[skill.content]?.isBottomPosition) {
               resetStatesRef.current[skill.content] = {
                 isBottomPosition: true,
+              }
+              if (skill.content === 'Three.js') {
+                console.log(
+                  'Bottom reached:',
+                  skill.content,
+                  currentPos.toArray().map((v) => v.toFixed(3)),
+                )
               }
               significantChanges = true
             }
@@ -343,9 +529,9 @@ function SkillStack({ skills }) {
             key={`skill-${skill.content}-${index}`}
             content={skill.content}
             isEngineering={skill.isEngineering}
+            onClick={handleSkillClick}
             position={currentPos}
             onHoverChange={(isHovered) => handleHoverChange(index, isHovered)}
-            onClick={handleSkillClick}
             scale={scale}
             opacity={opacity}
             isMoving={isMoving}
@@ -396,3 +582,5 @@ export default function Contents() {
     </group>
   )
 }
+
+export { SkillStack }

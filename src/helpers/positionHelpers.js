@@ -646,17 +646,15 @@ export const calculateExplosionPositions = (skills, vpWidth, vpHeight, clickedCo
   const positions = []
   const delays = []
   const radius = Math.max(vpWidth, vpHeight) * 1.5 // Large enough to ensure skills go off screen
-  const angleStep = (2 * Math.PI) / (skills.length - 1) // Divide circle by number of non-clicked skills
+  const nonClickedSkills = skills.filter((skill) => skill.content !== clickedContent)
+  const angleStep = (2 * Math.PI) / nonClickedSkills.length // Divide circle by number of non-clicked skills
   let currentAngle = 0
   const staggerDelay = 50 // Delay between each exploding skill
 
-  // Get button position config
-  const buttonConfig = getSpacingConfig(false).positions.button
-
   skills.forEach((skill, index) => {
     if (skill.content === clickedContent) {
-      // Position clicked skill at bottom center like the buttons
-      positions.push([buttonConfig.x, buttonConfig.hover.y, buttonConfig.hover.z])
+      // Reserve space for clicked skill, but let handleSkillClick set the actual position
+      positions.push([0, 0, 0])
       delays.push(0)
     } else {
       // Calculate position on circle for other skills
