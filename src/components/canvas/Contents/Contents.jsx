@@ -291,7 +291,7 @@ function SkillStack({ skills }) {
         performLerp(currentPos, tempVec3.current, lerpSpeed)
 
         // Check if this skill has reached its target position
-        if (currentPos.distanceTo(tempVec3.current) < 0.01) {
+        if (currentPos.distanceTo(tempVec3.current) < 0.001) {
           const skill = activeSkills[index].skill
           if (movingSkillsRef.current.has(skill.content)) {
             movingSkillsRef.current.delete(skill.content)
@@ -312,7 +312,7 @@ function SkillStack({ skills }) {
         positions[index] = [currentPos.x, currentPos.y, currentPos.z]
 
         // Check if position changed significantly
-        if (prevPos.distanceTo(currentPos) > 0.1) {
+        if (prevPos.distanceTo(currentPos) > 0.001) {
           significantChanges = true
         }
       })
