@@ -19,7 +19,7 @@ function SkillText({ content, isEngineering, onClick, position, onHoverChange, s
   const groupRef = useRef()
   const setStyleMagazine = useSetAtom(styleMagazineAtom)
 
-  const targetScale = hovered ? scale * 1.2 : scale
+  const targetScale = hovered ? scale * 1.1 : scale
 
   useEffect(() => {
     if (textRef.current) {
@@ -32,7 +32,7 @@ function SkillText({ content, isEngineering, onClick, position, onHoverChange, s
   useFrame(() => {
     if (groupRef.current) {
       const targetScaleVec = new THREE.Vector3(targetScale, targetScale, targetScale)
-      performLerp(currentScaleRef.current, targetScaleVec, 0.1)
+      performLerp(currentScaleRef.current, targetScaleVec, 0.2)
       groupRef.current.scale.copy(currentScaleRef.current)
     }
   })
