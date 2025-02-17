@@ -59,7 +59,10 @@ export default function RootLayout({ children }) {
       <head />
       <body>
         <Provider>
+     
+
           <Layout>{children}</Layout>
+        
         </Provider>
       </body>
     </html>

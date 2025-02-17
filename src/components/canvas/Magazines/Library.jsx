@@ -24,7 +24,7 @@ import { handleLibraryDrag, isTapInteraction, isSwipeInteraction } from '@/helpe
 import { ANIMATION_CONFIG } from '@/helpers/animationConfigs'
 import { GESTURE_CONFIG } from '@/helpers/gestureHelpers'
 import { Magazine } from './Magazine'
-import { VagueButton, EngineerButton, SmackButton } from '../Buttons'
+import { VagueButton, EngineerButton, SmackButton } from './Buttons'
 
 const picturesSmack = [
   '02Contents',

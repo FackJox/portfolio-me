@@ -4,6 +4,8 @@ import dynamic from 'next/dynamic'
 import { Suspense, useState, useEffect, useRef } from 'react'
 import { useAtom } from 'jotai'
 import { motion, AnimatePresence } from 'motion/react'
+import Scroll from '@/templates/Scroll'
+
 import {
   styleMagazineAtom,
   texturesLoadedAtom,
@@ -32,6 +34,7 @@ import { layoutAnimations, backgroundTransitions } from '@/helpers/animationConf
 import { SmackHeader, SmackButtons, SmackLabel, SmackTopBar } from '@/components/dom/SmackUI'
 import { EngineerHeader, EngineerButtons, EngineerLabel, EngineerTopBar } from '@/components/dom/EngineerUI'
 import { VagueHeader, VagueButtons, VagueLabel, VagueTopBar } from '@/components/dom/VagueUI'
+import TitleSlider from '@/components/dom/TitleSlider'
 import Contents from '../src/components/canvas/Contents/Contents' // Import the contents component
 import { PerspectiveCamera } from '@react-three/drei'
 import React from 'react'
@@ -140,46 +143,49 @@ export default function Page() {
 
   return (
     <PreloadComponents>
-      <motion.div
-        className='relative flex min-h-[100dvh] w-full flex-col items-center'
-        animate={{
-          backgroundColor: backgroundTransitions.colors[styleMagazine],
-        }}
-        transition={{ duration: backgroundTransitions.duration, ease: backgroundTransitions.ease }}
-      >
-        {/* TopBar for landscape */}
-        <motion.div layout className={layout.showTopBar ? 'block w-full' : 'hidden'}>
-          <AnimatePresence mode='wait'>
-            <motion.div key={`top-${styleMagazine}`} {...layoutAnimations.topBar}>
-              {styleMagazine === 'smack' && <SmackTopBar />}
-              {styleMagazine === 'engineer' && <EngineerTopBar />}
-              {styleMagazine === 'vague' && <VagueTopBar />}
-            </motion.div>
-          </AnimatePresence>
-        </motion.div>
+      <Scroll>
+        <motion.div
+          className='relative flex min-h-[100dvh] w-full flex-col items-center'
+          animate={{
+            backgroundColor: backgroundTransitions.colors[styleMagazine],
+          }}
+          transition={{ duration: backgroundTransitions.duration, ease: backgroundTransitions.ease }}
+        >
+          {/* TopBar for landscape */}
+          <motion.div layout className={layout.showTopBar ? 'block w-full' : 'hidden'}>
+            <AnimatePresence mode='wait'>
+              <motion.div key={`top-${styleMagazine}`} {...layoutAnimations.topBar}>
+                {styleMagazine === 'smack' && <SmackTopBar />}
+                {styleMagazine === 'engineer' && <EngineerTopBar />}
+                {styleMagazine === 'vague' && <VagueTopBar />}
+              </motion.div>
+            </AnimatePresence>
+          </motion.div>
 
-        {/* Header for portrait */}
-        <motion.div layout className={layout.showHeader ? 'block w-full' : 'hidden'}>
-          <AnimatePresence mode='wait'>
-            <motion.div className='w-full' key={`header-${styleMagazine}`} {...layoutAnimations.header}>
-              {styleMagazine === 'smack' && <SmackHeader />}
-              {styleMagazine === 'engineer' && <EngineerHeader />}
-              {styleMagazine === 'vague' && <VagueHeader />}
-            </motion.div>
-          </AnimatePresence>
-        </motion.div>
+          {/* Header for portrait */}
+          <motion.div layout className={layout.showHeader ? 'block w-full' : 'hidden'}>
+            <AnimatePresence mode='wait'>
+              <motion.div className='w-full' key={`header-${styleMagazine}`} {...layoutAnimations.header}>
+                {styleMagazine === 'smack' && <SmackHeader />}
+                {styleMagazine === 'engineer' && <EngineerHeader />}
+                {styleMagazine === 'vague' && <VagueHeader />}
+              </motion.div>
+            </AnimatePresence>
+          </motion.div>
 
-        {/* Buttons Section */}
-        <motion.div layout className={layout.showButtons ? 'block w-full' : 'hidden'}>
-          <AnimatePresence mode='wait'>
-            <motion.div key={`buttons-${styleMagazine}`} {...layoutAnimations.buttons}>
-              {styleMagazine === 'smack' && <SmackButtons />}
-              {styleMagazine === 'engineer' && <EngineerButtons />}
-              {styleMagazine === 'vague' && <VagueButtons />}
-            </motion.div>
-          </AnimatePresence>
-        </motion.div>
-        {/* 
+          <TitleSlider titles={['Welcome to My Portfolio', 'Explore My Work', 'Get in Touch']} />
+
+          {/* Buttons Section */}
+          <motion.div layout className={layout.showButtons ? 'block w-full' : 'hidden'}>
+            <AnimatePresence mode='wait'>
+              <motion.div key={`buttons-${styleMagazine}`} {...layoutAnimations.buttons}>
+                {styleMagazine === 'smack' && <SmackButtons />}
+                {styleMagazine === 'engineer' && <EngineerButtons />}
+                {styleMagazine === 'vague' && <VagueButtons />}
+              </motion.div>
+            </AnimatePresence>
+          </motion.div>
+          {/* 
         <motion.div layout className='relative w-full flex-1'>
           <View className='absolute w-full inset-0 flex items-center justify-center'>
             <Suspense fallback={null}>
@@ -191,25 +197,26 @@ export default function Page() {
           </View>
         </motion.div> */}
 
-        <motion.div layout className='relative w-full flex-1'>
-          <View className='absolute w-full inset-0 flex items-center justify-center'>
-            <Suspense fallback={null}>
-              <Contents />
-              <Common />
-            </Suspense>
-          </View>
-        </motion.div>
+          <motion.div layout className='relative w-full flex-1'>
+            <View className='absolute w-full inset-0 flex items-center justify-center'>
+              <Suspense fallback={null}>
+                <Contents />
+                <Common />
+              </Suspense>
+            </View>
+          </motion.div>
 
-        <motion.div layout className={layout.showCTA ? 'block w-full' : 'hidden'}>
-          <AnimatePresence mode='wait'>
-            <motion.div key={`cta-${styleMagazine}`} {...layoutAnimations.cta}>
-              {styleMagazine === 'smack' && <SmackLabel />}
-              {styleMagazine === 'engineer' && <EngineerLabel />}
-              {styleMagazine === 'vague' && <VagueLabel />}
-            </motion.div>
-          </AnimatePresence>
+          <motion.div layout className={layout.showCTA ? 'block w-full' : 'hidden'}>
+            <AnimatePresence mode='wait'>
+              <motion.div key={`cta-${styleMagazine}`} {...layoutAnimations.cta}>
+                {styleMagazine === 'smack' && <SmackLabel />}
+                {styleMagazine === 'engineer' && <EngineerLabel />}
+                {styleMagazine === 'vague' && <VagueLabel />}
+              </motion.div>
+            </AnimatePresence>
+          </motion.div>
         </motion.div>
-      </motion.div>
+      </Scroll>
     </PreloadComponents>
   )
 }

@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import React, { useEffect, useRef, useState, useMemo } from 'react'
+import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import { Text3D, OrthographicCamera } from '@react-three/drei'
 import { skills, transformSkillsConfig } from '@/helpers/contentsConfig'
@@ -10,18 +10,12 @@ import {
   getSpacingConfig,
 } from '@/helpers/positionHelpers'
 import { useViewportMeasurements } from '@/helpers/deviceHelpers'
+import { throttle } from '@/helpers/throttleHelpers'
 import HKGroteskFont from './HKGrotesk-SemiBold.json'
 import LemonFont from './Lemon_Regular.json'
 import { useSetAtom } from 'jotai'
 import { styleMagazineAtom } from '@/helpers/atoms'
-
-function hasSignificantChange(a, b, threshold = 0.001) {
-  if (!a || !b) return true
-  if (Array.isArray(a) && Array.isArray(b)) {
-    return a.some((val, i) => Math.abs(val - b[i]) > threshold)
-  }
-  return Math.abs(a - b) > threshold
-}
+import { PageCarousel } from '@/components/canvas/PageCarousel/PageCarousel'
 
 function SkillText({
   content,
@@ -59,9 +53,6 @@ function SkillText({
 
   // Reset states when resetState changes
   useEffect(() => {
-    if (content === 'Three.js') {
-      console.log('SkillText state:', content, isBottomPosition, isStackPosition, resetState)
-    }
     if (resetState === true) {
       // Only update stack position state immediately
       setIsStackPosition(true)
@@ -121,54 +112,30 @@ function SkillText({
     onClick && onClick(content, textSize[0])
   }
 
+  // Create throttled hover handlers
+  const handleHoverChange = useCallback(
+    throttle((isHovered) => {
+      if (!isMoving && (!clicked || isBottomPosition)) {
+        setHovered(isHovered)
+        onHoverChange && onHoverChange(isHovered)
+        setStyleMagazine(isHovered ? (isEngineering ? 'engineer' : 'smack') : 'vague')
+      }
+    }, 100),
+    [isMoving, clicked, isBottomPosition, isEngineering, onHoverChange],
+  )
+
   const handlePointerOver = (e) => {
     e.stopPropagation()
-    // Allow hover effects if not moving and either not clicked or in bottom position
-    if (!isMoving && (!clicked || isBottomPosition)) {
-      setHovered(true)
-      onHoverChange && onHoverChange(true)
-      setStyleMagazine(isEngineering ? 'engineer' : 'smack')
-    }
+    handleHoverChange(true)
   }
 
   const handlePointerOut = (e) => {
     e.stopPropagation()
-    setHovered(false)
-    onHoverChange && onHoverChange(false)
-    setStyleMagazine('vague')
+    handleHoverChange(false)
   }
 
   useFrame(() => {
     if (groupRef.current && meshRef.current && text3DRef.current) {
-      const now = performance.now()
-      const shouldLog = content === 'Three.js' && now - lastLoggedTimeRef.current > 500
-
-      if (shouldLog) {
-        const currentPositions = {
-          group: groupRef.current.position.toArray(),
-          mesh: meshRef.current.position.toArray(),
-          text3D: text3DRef.current.position.toArray(),
-        }
-
-        const hasChanged =
-          !lastPositionsRef.current ||
-          hasSignificantChange(currentPositions.group, lastPositionsRef.current.group) ||
-          hasSignificantChange(currentPositions.mesh, lastPositionsRef.current.mesh) ||
-          hasSignificantChange(currentPositions.text3D, lastPositionsRef.current.text3D)
-
-        if (hasChanged) {
-          console.log(
-            'SkillText positions:',
-            content,
-            currentPositions.group.map((v) => v.toFixed(3)),
-            currentPositions.mesh.map((v) => v.toFixed(3)),
-            currentPositions.text3D.map((v) => v.toFixed(3)),
-          )
-          lastPositionsRef.current = currentPositions
-          lastLoggedTimeRef.current = now
-        }
-      }
-
       // Reuse cached vector for target scale
       targetScaleVec.current.set(targetScale, targetScale, targetScale)
       performLerp(currentScaleRef.current, targetScaleVec.current, 0.2)
@@ -203,42 +170,65 @@ function SkillText({
             ? -textSize[0]
             : 0 // At stack
 
+      // Lerp mesh and text3D positions with synchronized speeds
+      const xLerpSpeed = 0.03 // Speed for x-axis when near stack
+      const normalLerpSpeed = 0.1 // Speed for y and z
+
+      // Determine if we're near the bottom position (using y coordinate as reference)
+      const isNearBottom = Math.abs(groupRef.current.position.y - -0.807) < 0.5 // Threshold of 0.5 units
+
       // Lerp mesh position
       meshPositionRef.current.set(targetMeshX, textSize[1] / 2 - textSize[1] * 0.15, 0)
-      const meshLerpSpeed = { x: 0.03, y: 0.1, z: 0.1 }
-      meshRef.current.position.x = THREE.MathUtils.lerp(
-        meshRef.current.position.x,
-        meshPositionRef.current.x,
-        meshLerpSpeed.x,
-      )
+      const prevMeshX = meshRef.current.position.x
+
+      // Only lerp x when not near bottom
+      if (!isNearBottom) {
+        meshRef.current.position.x = THREE.MathUtils.lerp(
+          meshRef.current.position.x,
+          meshPositionRef.current.x,
+          xLerpSpeed,
+        )
+      } else {
+        // Instantly set x position when near bottom
+        meshRef.current.position.x = targetMeshX
+      }
+
       meshRef.current.position.y = THREE.MathUtils.lerp(
         meshRef.current.position.y,
         meshPositionRef.current.y,
-        meshLerpSpeed.y,
+        normalLerpSpeed,
       )
       meshRef.current.position.z = THREE.MathUtils.lerp(
         meshRef.current.position.z,
         meshPositionRef.current.z,
-        meshLerpSpeed.z,
+        normalLerpSpeed,
       )
 
-      // Lerp text3D position
+      // Lerp text3D position with the same approach
       text3DPositionRef.current.set(targetText3DX, 0, 0)
-      const text3DLerpSpeed = { x: 0.03, y: 0.1, z: 0.1 }
-      text3DRef.current.position.x = THREE.MathUtils.lerp(
-        text3DRef.current.position.x,
-        text3DPositionRef.current.x,
-        text3DLerpSpeed.x,
-      )
+      const prevText3DX = text3DRef.current.position.x
+
+      // Only lerp x when not near bottom
+      if (!isNearBottom) {
+        text3DRef.current.position.x = THREE.MathUtils.lerp(
+          text3DRef.current.position.x,
+          text3DPositionRef.current.x,
+          xLerpSpeed,
+        )
+      } else {
+        // Instantly set x position when near bottom
+        text3DRef.current.position.x = targetText3DX
+      }
+
       text3DRef.current.position.y = THREE.MathUtils.lerp(
         text3DRef.current.position.y,
         text3DPositionRef.current.y,
-        text3DLerpSpeed.y,
+        normalLerpSpeed,
       )
       text3DRef.current.position.z = THREE.MathUtils.lerp(
         text3DRef.current.position.z,
         text3DPositionRef.current.z,
-        text3DLerpSpeed.z,
+        normalLerpSpeed,
       )
     }
   })
@@ -421,50 +411,24 @@ function SkillStack({ skills }) {
         const currentPos = positionRefs.current[index]
         const prevPos = currentPos.clone()
 
-        // Debug log for Three.js skill
-        const now = performance.now()
-        if (skill?.content === 'Three.js' && now - lastLoggedTimeRef.current > 500) {
-          const currentState = {
-            pos: currentPos.toArray(),
-            target,
-            isMoving: movingSkillsRef.current.has(skill.content),
-            isBottom: resetStatesRef.current[skill.content]?.isBottomPosition,
-          }
-
-          const hasChanged =
-            !lastStateRef.current ||
-            hasSignificantChange(currentState.pos, lastStateRef.current.pos) ||
-            hasSignificantChange(currentState.target, lastStateRef.current.target) ||
-            currentState.isMoving !== lastStateRef.current.isMoving ||
-            currentState.isBottom !== lastStateRef.current.isBottom
-
-          if (hasChanged) {
-            console.log(
-              'Position:',
-              skill.content,
-              currentState.pos.map((v) => v.toFixed(3)),
-              currentState.target.map((v) => v.toFixed(3)),
-            )
-            if (
-              currentState.isMoving !== lastStateRef.current?.isMoving ||
-              currentState.isBottom !== lastStateRef.current?.isBottom
-            ) {
-              console.log('State:', skill.content, currentState.isMoving, currentState.isBottom)
-            }
-            lastStateRef.current = currentState
-            lastLoggedTimeRef.current = now
-          }
-        }
-
         // Set target position
         tempVec3.current.set(target[0], target[1], target[2])
 
         // Apply lerp with different speeds for x and y/z
-        const xLerpSpeed = 0.03 // Much slower for x-axis
+        const xLerpSpeed = 0.05 // Much slower for x-axis
         const normalLerpSpeed = 0.05 // Normal speed for y and z
 
-        // Lerp x separately
-        currentPos.x = THREE.MathUtils.lerp(currentPos.x, tempVec3.current.x, xLerpSpeed)
+        // Determine if we're near the bottom position (using y coordinate as reference)
+        const buttonY = getSpacingConfig(false).positions.button.hover.y
+        const isNearBottom = Math.abs(currentPos.y - buttonY) < 0.5 // Threshold of 0.5 units
+
+        // Only lerp x when not near bottom
+        if (!isNearBottom) {
+          currentPos.x = THREE.MathUtils.lerp(currentPos.x, tempVec3.current.x, xLerpSpeed)
+        } else {
+          // Instantly set x position when near bottom
+          currentPos.x = tempVec3.current.x
+        }
 
         // Lerp y and z
         currentPos.y = THREE.MathUtils.lerp(currentPos.y, tempVec3.current.y, normalLerpSpeed)
@@ -552,18 +516,22 @@ function HoverDetector({ vpWidth }) {
   const setStyleMagazine = useSetAtom(styleMagazineAtom)
   const columnOffset = vpWidth / 50 // Match the offset from calculateStackPositions
 
-  const handlePointerMove = (e) => {
-    // Convert pointer position to local space
-    const x = e.point.x
+  // Create throttled pointer move handler
+  const handlePointerMove = useCallback(
+    throttle((e) => {
+      // Convert pointer position to local space
+      const x = e.point.x
 
-    if (x < -columnOffset) {
-      setStyleMagazine('smack')
-    } else if (x > columnOffset) {
-      setStyleMagazine('engineer')
-    } else {
-      setStyleMagazine('vague')
-    }
-  }
+      if (x < -columnOffset) {
+        setStyleMagazine('smack')
+      } else if (x > columnOffset) {
+        setStyleMagazine('engineer')
+      } else {
+        setStyleMagazine('vague')
+      }
+    }, 100),
+    [columnOffset, setStyleMagazine],
+  )
 
   return (
     <mesh position={[0, 0, -5.5]} onPointerMove={handlePointerMove}>
@@ -577,8 +545,19 @@ export default function Contents() {
   const { vpWidth } = useViewportMeasurements(false)
   return (
     <group position={[0, 0, 2]}>
-      <HoverDetector vpWidth={vpWidth / 35} />
-      <SkillStackContent />
+      {/* <HoverDetector vpWidth={vpWidth / 35} /> */}
+      <PageCarousel
+        images={[
+          '/textures/engineer/01Front.png',
+          '/textures/engineer/02Contents.png',
+          '/textures/engineer/03Contents.png',
+          '/textures/engineer/04Editorial.png',
+          '/textures/engineer/05Editorial.png',
+          '/textures/engineer/06DigitalTwins.png',
+          '/textures/engineer/07DigitalTwins.png',
+        ]}
+      />
+      {/* <SkillStackContent /> */}
     </group>
   )
 }
