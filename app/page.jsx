@@ -173,7 +173,6 @@ export default function Page() {
             </AnimatePresence>
           </motion.div>
 
-        
           {/* Buttons Section */}
           <motion.div layout className={layout.showButtons ? 'block w-full' : 'hidden'}>
             <AnimatePresence mode='wait'>
@@ -184,19 +183,18 @@ export default function Page() {
               </motion.div>
             </AnimatePresence>
           </motion.div>
-                    
-        <motion.div layout className='relative w-full flex-1'>
-          <View className='absolute w-full inset-0 flex items-center justify-center'>
-            <Suspense fallback={null}>
-              <AllAssetsLoader>
-                <Library position={[0, 0, -3]} />
-              </AllAssetsLoader>
-              <Common />
-            </Suspense>
-          </View>
-        </motion.div>
 
-        
+          <motion.div layout className='relative w-full flex-1'>
+            <View className='absolute w-full inset-0 flex items-center justify-center'>
+              <Suspense fallback={null}>
+                <AllAssetsLoader>
+                  <Library position={[0, 0, 0]} />
+                </AllAssetsLoader>
+                <Common />
+              </Suspense>
+            </View>
+          </motion.div>
+
           <motion.div layout className={layout.showCTA ? 'block w-full' : 'hidden'}>
             <AnimatePresence mode='wait'>
               <motion.div key={`cta-${styleMagazine}`} {...layoutAnimations.cta}>
