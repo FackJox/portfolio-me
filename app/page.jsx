@@ -173,7 +173,17 @@ export default function Page() {
             </AnimatePresence>
           </motion.div>
 
-          <TitleSlider titles={['Welcome to My Portfolio', 'Explore My Work', 'Get in Touch']} />
+          <TitleSlider
+            titles={[
+              'Welcome to My Portfolio1',
+              'Explore My Work2',
+              'Get in Touch3',
+              'Welcome to My Portfolio4',
+              'Explore My Work5',
+              'Get in Touch6',
+              'Welcome to My Portfolio7',
+            ]}
+          />
 
           {/* Buttons Section */}
           <motion.div layout className={layout.showButtons ? 'block w-full' : 'hidden'}>
@@ -185,7 +195,7 @@ export default function Page() {
               </motion.div>
             </AnimatePresence>
           </motion.div>
-{/*           
+          {/*           
         <motion.div layout className='relative w-full flex-1'>
           <View className='absolute w-full inset-0 flex items-center justify-center'>
             <Suspense fallback={null}>

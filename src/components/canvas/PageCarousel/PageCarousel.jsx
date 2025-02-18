@@ -9,6 +9,8 @@ export const PageCarousel = ({ images = [] }) => {
   const meshesRef = useRef([])
   const scrollRef = useRef(0)
   const camera = useRef()
+  const initialAnimationRef = useRef(-10) // Start at -10
+  const hasLoggedReady = useRef(false) // Track if we've logged ready
 
   useEffect(() => {
     if (!images.length) return
@@ -38,7 +40,7 @@ export const PageCarousel = ({ images = [] }) => {
       // Custom shader injection
       material.onBeforeCompile = (shader) => {
         shader.uniforms.time = { value: 0 }
-        shader.uniforms.progress = { value: 0 }
+        shader.uniforms.progress = { value: -10 - i * 1.75 } // Set initial progress based on starting position
 
         // Inject custom varying declarations and functions at the top of vertex shader
         shader.vertexShader = `
@@ -96,12 +98,13 @@ export const PageCarousel = ({ images = [] }) => {
 
       return {
         mesh,
-        progress: 0,
-        pos: i * 2,
+        progress: -10, // Set initial progress to match initialAnimationRef
+        pos: i * 1.75,
       }
     })
 
     return () => {
+      if (!groupRef.current) return // Add null check for cleanup
       meshesRef.current.forEach(({ mesh }) => {
         mesh.geometry.dispose()
         mesh.material.dispose()
@@ -117,13 +120,36 @@ export const PageCarousel = ({ images = [] }) => {
     const scrollSpeed = 5.1
     scrollRef.current = scrollState.progress * scrollSpeed
 
+    // Lerp initial animation
+    initialAnimationRef.current = THREE.MathUtils.lerp(initialAnimationRef.current, 0, 0.05)
+
+    // Check if initial animation is complete
+    if (!hasLoggedReady.current && Math.abs(initialAnimationRef.current) < 0.01) {
+      console.log('ready')
+      hasLoggedReady.current = true
+    }
+
+    // Check if all meshes are finished
+    let allFinished = true
+
     // Update each mesh
     meshesRef.current.forEach(({ mesh, pos }) => {
+      const finalProgress = -scrollRef.current - pos + initialAnimationRef.current
+
+      // Check if this mesh is still visible (progress < 2 means it's still in view)
+      if (finalProgress < 2) {
+        allFinished = false
+      }
+
       if (mesh.material.userData.shader) {
-        mesh.material.userData.shader.uniforms.progress.value = -scrollRef.current - pos
+        mesh.material.userData.shader.uniforms.progress.value = finalProgress
         mesh.material.userData.shader.uniforms.time.value += delta
       }
     })
+
+    if (allFinished) {
+      console.log('finished')
+    }
   })
 
   return <group ref={groupRef} />
