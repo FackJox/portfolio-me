@@ -35,7 +35,7 @@ import { SmackHeader, SmackButtons, SmackLabel, SmackTopBar } from '@/components
 import { EngineerHeader, EngineerButtons, EngineerLabel, EngineerTopBar } from '@/components/dom/EngineerUI'
 import { VagueHeader, VagueButtons, VagueLabel, VagueTopBar } from '@/components/dom/VagueUI'
 import TitleSlider from '@/components/dom/TitleSlider'
-import Contents from '../src/components/canvas/Contents/Contents' // Import the contents component
+import Contents from '@/components/canvas/Contents/Contents' // Import the contents component
 import { PerspectiveCamera } from '@react-three/drei'
 import React from 'react'
 

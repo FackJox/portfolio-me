@@ -546,6 +546,8 @@ export default function Contents() {
   return (
     <group position={[0, 0, 4]}>
       <HoverDetector vpWidth={vpWidth / 35} />
+      <group position={[0, 0, 4]}>
+
       <PageCarousel
         images={[
           '/textures/engineer/01Front.png',
@@ -556,7 +558,8 @@ export default function Contents() {
           '/textures/engineer/06DigitalTwins.png',
           '/textures/engineer/07DigitalTwins.png',
         ]}
-      />
+        />
+        </group>
       <group position={[0, 0, -3]}>
 
       <SkillStackContent />
