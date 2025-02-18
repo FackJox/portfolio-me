@@ -26,7 +26,7 @@ export const Common = ({ color }) => {
     <Suspense fallback={null}>
       {color && <color attach='background' args={[color]} />}
       <PerspectiveCamera makeDefault fov={40} position={[0, 0, 10]} />
-      {process.env.NODE_ENV === 'development' && <Perf position='top-left' />}
+      {process.env.NODE_ENV === 'development' && <Perf position='bottom-right' />}
       {hdrLoaded && <Environment map={hdrLoader.loadedHDR} environmentIntensity={0.5} resolution={256} />}
       <ambientLight intensity={0.1} />
       <directionalLight

@@ -1,4 +1,5 @@
 import { motion } from 'motion/react'
+import { useRouter } from 'next/navigation'
 import { layoutAnimations } from '@/helpers/animationConfigs'
 import { contentsVisibleAtom } from '@/helpers/atoms'
 import { useAtom } from 'jotai'
@@ -66,20 +67,20 @@ export const SmackLabel = () => {
 }
 
 export const SmackTopBar = () => {
-  const [contentsVisible, setContentsVisible] = useAtom(contentsVisibleAtom)
+  const router = useRouter()
 
   return (
     <div className='w-full h-10 flex items-center justify-between pt-6 pb-6 pl-6 pr-8 relative'>
       <motion.div layoutId='topbar-border' className='absolute bottom-0 left-0 w-full h-[1px] bg-[#FABE7F]' />
       <motion.div className='flex-1 flex items-center justify-between' {...layoutAnimations.topBarText}>
-        <h1 className='font-[YoungSerif] text-[#FABE7F] text-3xl tracking-[-0.04em] whitespace-nowrap'>
+        <h1
+          className='font-[YoungSerif] text-[#FABE7F] text-3xl tracking-[-0.04em] whitespace-nowrap cursor-pointer'
+          onClick={() => router.push('/')}
+        >
           Jack Foxcroft
         </h1>
         <div className='flex items-center gap-8'>
-          <button
-            className='font-[lemon-regular] text-[#F5E4F8] text-3xl'
-            onClick={() => setContentsVisible((prev) => !prev)}
-          >
+          <button className='font-[lemon-regular] text-[#F5E4F8] text-3xl' onClick={() => router.push('/contents')}>
             CONTENTS
           </button>
         </div>

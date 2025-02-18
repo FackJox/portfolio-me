@@ -1,4 +1,5 @@
 import { motion } from 'motion/react'
+import { useRouter } from 'next/navigation'
 import { layoutAnimations } from '@/helpers/animationConfigs'
 import { contentsVisibleAtom } from '@/helpers/atoms'
 import { useAtom } from 'jotai'
@@ -65,19 +66,22 @@ export const VagueLabel = () => {
 }
 
 export const VagueTopBar = () => {
-  const [contentsVisible, setContentsVisible] = useAtom(contentsVisibleAtom)
+  const router = useRouter()
 
   return (
     <div className='w-full h-10 flex items-center justify-between pt-6 pb-6 pl-6 pr-8 relative'>
       <motion.div layoutId='topbar-border' className='absolute bottom-0 left-0 w-full h-[1px] bg-[#F7F6F7]' />
       <motion.div className='flex-1 flex items-center justify-between' {...layoutAnimations.topBarText}>
-        <h1 className='font-[Vogue] text-[#F7F6F7] text-[2.5rem] tracking-[-0.07em] whitespace-nowrap'>
+        <h1
+          className='font-[Vogue] text-[#F7F6F7] text-[2.5rem] tracking-[-0.07em] whitespace-nowrap cursor-pointer'
+          onClick={() => router.push('/')}
+        >
           Jack Foxcroft
         </h1>
         <div className='flex items-center gap-8'>
           <button
             className='font-[HKGrotesk-Regular] text-[#F7F6F7] text-xl tracking-[-0.12em]'
-            onClick={() => setContentsVisible((prev) => !prev)}
+            onClick={() => router.push('/contents')}
           >
             CONTENTS
           </button>
