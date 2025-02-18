@@ -20,6 +20,8 @@ export const Common = ({ color }) => {
     }
   }, [hdrLoaded, scene])
 
+  if (!hdrLoaded) return null
+
   return (
     <Suspense fallback={null}>
       {color && <color attach='background' args={[color]} />}

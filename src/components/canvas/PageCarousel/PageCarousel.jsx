@@ -1,6 +1,5 @@
 import { useRef, useEffect } from 'react'
 import * as THREE from 'three'
-import { UniformsUtils } from 'three'
 import { useFrame } from '@react-three/fiber'
 import { scrollState } from '@/templates/Scroll'
 import fragmentShader from './glsl/shader.frag'
@@ -27,26 +26,20 @@ export const PageCarousel = ({ images = [] }) => {
       texture.magFilter = THREE.LinearFilter
       texture.needsUpdate = true
 
-      // Merge built-in uniforms for lighting with our custom uniforms:
       const material = new THREE.ShaderMaterial({
         extensions: {
           derivatives: '#extension GL_OES_standard_derivatives : enable',
         },
         side: THREE.DoubleSide,
-        uniforms: UniformsUtils.merge([
-          THREE.UniformsLib.common,
-          THREE.UniformsLib.lights,
-          {
-            time: { value: 0 },
-            uTexture: { value: texture },
-            progress: { value: 0 },
-            resolution: { value: new THREE.Vector4(1, 1, 1, 1) },
-          },
-        ]),
+        uniforms: {
+          time: { value: 0 },
+          uTexture: { value: texture },
+          progress: { value: 0 },
+          resolution: { value: new THREE.Vector4(1, 1, 1, 1) },
+        },
         transparent: true,
         vertexShader,
         fragmentShader,
-        lights: true, // This tells Three.js to inject the lighting uniforms.
       })
 
       const mesh = new THREE.Mesh(geometry, material)
