@@ -255,7 +255,7 @@ function SkillText({
           position={[!isEngineering ? -textSize[0] / 2 : textSize[0] / 2, textSize[1] / 2 - textSize[1] * 0.15, 0]}
         >
           <boxGeometry args={[textSize[0], textSize[1], Math.max(0.01, textSize[2])]} />
-          <meshBasicMaterial transparent opacity={0.3} />
+          <meshBasicMaterial transparent opacity={0} />
         </mesh>
 
         <Text3D

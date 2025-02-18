@@ -191,9 +191,18 @@ export const PageCarousel = ({ images = [], onFinish, isExiting = false }) => {
       }
     }
 
+    // Check if all meshes are finished (for normal scrolling)
+    let allFinished = true
+
     // Update each mesh
     meshesRef.current.forEach(({ mesh, pos }, index) => {
       const finalProgress = -scrollRef.current - pos + initialAnimationRef.current
+
+      // Check if this mesh is still visible (progress < 2 means it's still in view)
+      // Only check during normal scrolling, not during exit animation
+      if (!isExiting && finalProgress < 2) {
+        allFinished = false
+      }
 
       // Log first and last mesh positions during exit (throttled)
       if (isExiting && (index === 0 || index === meshesRef.current.length - 1)) {
@@ -213,6 +222,16 @@ export const PageCarousel = ({ images = [], onFinish, isExiting = false }) => {
         mesh.material.userData.shader.uniforms.time.value += delta
       }
     })
+
+    // Check if finished scrolling normally (not during exit animation)
+    if (!isExiting && allFinished && !hasFinished.current) {
+      console.log('Normal scroll finished')
+      hasFinished.current = true
+      // Reset scroll state before calling onFinish
+      scrollState.top = 0
+      scrollState.progress = 0
+      onFinish?.()
+    }
   })
 
   return <group ref={groupRef} />
