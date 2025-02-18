@@ -544,7 +544,7 @@ function HoverDetector({ vpWidth }) {
 export default function Contents() {
   const { vpWidth } = useViewportMeasurements(false)
   return (
-    <group position={[0, 0, 2]}>
+    <group position={[0, 0, 4]}>
       {/* <HoverDetector vpWidth={vpWidth / 35} /> */}
       <PageCarousel
         images={[
