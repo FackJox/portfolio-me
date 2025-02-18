@@ -545,7 +545,7 @@ export default function Contents() {
   const { vpWidth } = useViewportMeasurements(false)
   return (
     <group position={[0, 0, 4]}>
-      {/* <HoverDetector vpWidth={vpWidth / 35} /> */}
+      <HoverDetector vpWidth={vpWidth / 35} />
       <PageCarousel
         images={[
           '/textures/engineer/01Front.png',
@@ -557,7 +557,10 @@ export default function Contents() {
           '/textures/engineer/07DigitalTwins.png',
         ]}
       />
-      {/* <SkillStackContent /> */}
+      <group position={[0, 0, -3]}>
+
+      <SkillStackContent />
+      </group>
     </group>
   )
 }
