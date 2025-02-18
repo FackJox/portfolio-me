@@ -53,3 +53,6 @@ export const pagesAtom = atom(0)
 
 // Shared scroll state atom
 export const scrollState = atom({ top: 0 })
+
+export const carouselReadyAtom = atom(false)
+export const titleSlidesAtom = atom([])

@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { useAtom } from 'jotai'
 import { motion, AnimatePresence } from 'motion/react'
+import Scroll from '@/templates/Scroll'
 
 import {
   styleMagazineAtom,
@@ -107,16 +108,11 @@ const Layout = ({ children }) => {
   const [styleMagazine] = useAtom(styleMagazineAtom)
   const isPortrait = useDeviceOrientation()
   const layout = getLayoutConfig(isPortrait)
-  const [, setScrollTop] = useAtom(scrollTopAtom)
-
-  const onScroll = (e) => {
-    const scrollTop = e.target.scrollTop
-    scrollState.top = scrollTop
-    setScrollTop(scrollTop)
-  }
 
   return (
     <PreloadComponents>
+            <Scroll>
+
       <div
         ref={ref}
         style={{
@@ -126,7 +122,6 @@ const Layout = ({ children }) => {
           overflow: 'auto',
           touchAction: 'none',
         }}
-        onScroll={onScroll}
       >
         <motion.div
           className='relative flex min-h-[100dvh] w-full flex-col items-center'
@@ -192,8 +187,9 @@ const Layout = ({ children }) => {
           }}
           eventSource={ref}
           eventPrefix='client'
-        />
+          />
       </div>
+          </Scroll>
     </PreloadComponents>
   )
 }

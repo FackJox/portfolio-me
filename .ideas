@@ -3,23 +3,9 @@ Skills -
 set up like a vertical timeline in portait mode with ones either side of a vertical line, user can scroll through
 ---
 
-When I click on a skill, all others fly off the screen
-
-The skill text moves to the bottom of center of the viewport
-
-it increases in depth
-
-It changes angle to show the 3D depth
-
-the relevant books come into view
-
-Turn to the relevant page
-
----
-
 Pages
 
-2D of article pages to flick through
+2D of article pages to flick through - accsessible mode 
 Books view
 Contents view
 
@@ -30,18 +16,25 @@ On portrait landscape orientation change the viewing left/right page state is no
 
 restore to last page on swipe close and refocus
 
+Restore state on contents -
+
+Skilltext slide to right before moving backwards
+
 can drag magazines in landscape ??
+
+Why does my vertical viewport resize resize the canvas but not the horizontal resize?
 
 ---
 
 Performance
 suspense all pages until the magazine is selected in focus mode
+LOD?
 
 ---
 
 Styling
-Blueprint effects on engineer background
-repeated text on smack background
+<!-- Blueprint effects on engineer background
+repeated text on smack background -->
 Add brief tool tips for gesture use, swipe click
 change Vague button hover colour based on magazine cover
 On hover make the buttons come to the centre of the viewport, on focus, make the buttons slide off the bottom
@@ -63,24 +56,39 @@ Different text size for landscape mobile mode
 landscape mode in mobile different layout to ipad mode - aspect ratio
 Change landscape carosuel spacing for different aspect ratios
 zoom??
+vertical page carousel and css
 
 ---
 
 Features
 Menu and connect elements
 
-a website loader of all of the pages flying around
-
-search / keyword cloud to list projects that can then be flicked to - 3d with react three flex
-Different font for each type of cloud - filter clouds by Technical and Creative
+a website loader of all of the pages and skilltexts flying around
 
 If can do clickable website -  
 
-Contents -> Book transition - https://www.youtube.com/watch?v=AS1Zb26o3ss - <> book page explode when click on content
+Contents -> Book transition -- <> book page explode when click on 
+
+Book -> content tansition - books explode pages go off screen, 
+the "pages" float around in the background down from the topLOD?
+When click on contents skilltext, the, a few of the pages zoom in to where the start of the carousel is
+
+Skilltexts in background on Book page
+pages in background on 
+
+Background - turn off Environment effects and just use ambient light for both texts and 
 
 Pages carousel https://www.youtube.com/watch?v=yFmtpm4kmP4
 
 ---
+
+--
+
+Drumcult
+
+3D Model the drumkit
+ https://www.youtube.com/watch?v=AS1Zb26o3ss transition from About to Gigs
+
 
 Content
 

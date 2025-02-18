@@ -3,6 +3,8 @@ import * as THREE from 'three'
 import { useFrame } from '@react-three/fiber'
 import { scrollState } from '@/templates/Scroll'
 import { useTexture } from '@react-three/drei'
+import { useSetAtom } from 'jotai'
+import { carouselReadyAtom } from '@/helpers/atoms'
 
 export const PageCarousel = ({ images = [] }) => {
   const groupRef = useRef()
@@ -11,6 +13,13 @@ export const PageCarousel = ({ images = [] }) => {
   const camera = useRef()
   const initialAnimationRef = useRef(-10) // Start at -10
   const hasLoggedReady = useRef(false) // Track if we've logged ready
+  const setCarouselReady = useSetAtom(carouselReadyAtom)
+
+  useEffect(() => {
+    // Reset ready state when component mounts or images change
+    setCarouselReady(false)
+    return () => setCarouselReady(false)
+  }, [images])
 
   useEffect(() => {
     if (!images.length) return
@@ -127,6 +136,7 @@ export const PageCarousel = ({ images = [] }) => {
     if (!hasLoggedReady.current && Math.abs(initialAnimationRef.current) < 0.01) {
       console.log('ready')
       hasLoggedReady.current = true
+      setCarouselReady(true)
     }
 
     // Check if all meshes are finished

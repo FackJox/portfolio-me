@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import { Text3D, OrthographicCamera } from '@react-three/drei'
-import { skills, transformSkillsConfig } from '@/helpers/contentsConfig'
+import { skills, transformSkillsConfig, SmackContents, EngineerContents } from '@/helpers/contentsConfig'
 import {
   calculateStackPositions,
   performLerp,
@@ -14,8 +14,9 @@ import { throttle } from '@/helpers/throttleHelpers'
 import HKGroteskFont from './HKGrotesk-SemiBold.json'
 import LemonFont from './Lemon_Regular.json'
 import { useSetAtom } from 'jotai'
-import { styleMagazineAtom } from '@/helpers/atoms'
+import { styleMagazineAtom, titleSlidesAtom } from '@/helpers/atoms'
 import { PageCarousel } from '@/components/canvas/PageCarousel/PageCarousel'
+import { getTexturePath } from '@/helpers/textureLoaders'
 
 function SkillText({
   content,
@@ -279,7 +280,7 @@ function SkillText({
 }
 
 // SkillStack component with lerping animation
-function SkillStack({ skills }) {
+function SkillStack({ skills, onSkillClick }) {
   const { camera } = useThree()
   const { vpWidth: pixelWidth, vpHeight: pixelHeight } = useViewportMeasurements(false)
 
@@ -352,6 +353,7 @@ function SkillStack({ skills }) {
       delaysRef.current = delays
       setExplodedSkill(null)
       movingSkillsRef.current = new Set([...skills.map((skill) => skill.content)])
+      onSkillClick(null) // Clear carousel when collapsing
 
       // Update reset states
       resetStatesRef.current = {}
@@ -382,6 +384,7 @@ function SkillStack({ skills }) {
       setExplodedSkill(content)
       movingSkillsRef.current = new Set([...skills.map((skill) => skill.content)])
       resetStatesRef.current = {}
+      onSkillClick(content) // Pass clicked skill to parent
     }
     startTimeRef.current = performance.now()
     setAnimationStateVersion((v) => v + 1)
@@ -509,7 +512,83 @@ function SkillStack({ skills }) {
 
 function SkillStackContent() {
   const skillsContent = useMemo(() => transformSkillsConfig(skills), [])
-  return <SkillStack skills={skillsContent} />
+  const [carouselPages, setCarouselPages] = useState(null)
+  const [carouselType, setCarouselType] = useState(null)
+  const setStyleMagazine = useSetAtom(styleMagazineAtom)
+  const setTitles = useSetAtom(titleSlidesAtom)
+
+  const findRelevantContent = useCallback((clickedSkill) => {
+    // Search through SmackContents and EngineerContents
+    const searchContents = (contents, type) => {
+      const relevantSections = []
+      for (const [key, section] of Object.entries(contents)) {
+        if (section.skills && section.skills.length > 0) {
+          const hasSkill = section.skills.some((skill) => skill && skill.title === clickedSkill)
+          if (hasSkill) {
+            relevantSections.push({
+              ...section,
+              type,
+            })
+          }
+        }
+      }
+      return relevantSections
+    }
+
+    // Search in both content types
+    const smackSections = searchContents(SmackContents, 'smack')
+    const engineerSections = searchContents(EngineerContents, 'engineer')
+
+    // Combine and return all relevant sections
+    return [...smackSections, ...engineerSections]
+  }, [])
+
+  const handleSkillClick = useCallback(
+    (content) => {
+      if (!content) {
+        // Reset everything when unclicking
+        setCarouselPages(null)
+        setCarouselType(null)
+        setTitles([])
+        return
+      }
+
+      const relevantSections = findRelevantContent(content)
+      if (relevantSections.length > 0) {
+        // Get all titles from relevant sections
+        const sectionTitles = relevantSections.map((section) => section.title)
+        setTitles(sectionTitles)
+
+        // Collect all pages from all relevant sections
+        const allPages = relevantSections.reduce((acc, section) => {
+          const pages = Array.isArray(section.pages) ? section.pages : [section.pages]
+          return [...acc, ...pages.map((page) => getTexturePath(section.type, page))]
+        }, [])
+
+        // Use the first section's type for the magazine style
+        const firstSection = relevantSections[0]
+        setCarouselType(firstSection.type)
+        setCarouselPages(allPages)
+        setStyleMagazine(firstSection.type)
+      } else {
+        setCarouselPages(null)
+        setCarouselType(null)
+        setTitles([])
+      }
+    },
+    [findRelevantContent, setStyleMagazine, setTitles],
+  )
+
+  return (
+    <>
+      <SkillStack skills={skillsContent} onSkillClick={handleSkillClick} />
+      {carouselPages && (
+        <group position={[0, 0, 6]}>
+          <PageCarousel images={carouselPages} />
+        </group>
+      )}
+    </>
+  )
 }
 
 function HoverDetector({ vpWidth }) {
@@ -546,23 +625,8 @@ export default function Contents() {
   return (
     <group position={[0, 0, 4]}>
       <HoverDetector vpWidth={vpWidth / 35} />
-      <group position={[0, 0, 4]}>
-
-      <PageCarousel
-        images={[
-          '/textures/engineer/01Front.png',
-          '/textures/engineer/02Contents.png',
-          '/textures/engineer/03Contents.png',
-          '/textures/engineer/04Editorial.png',
-          '/textures/engineer/05Editorial.png',
-          '/textures/engineer/06DigitalTwins.png',
-          '/textures/engineer/07DigitalTwins.png',
-        ]}
-        />
-        </group>
       <group position={[0, 0, -3]}>
-
-      <SkillStackContent />
+        <SkillStackContent />
       </group>
     </group>
   )
