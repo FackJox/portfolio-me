@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react'
+import React, { useEffect, useRef, useState, useMemo, useCallback, forwardRef, useImperativeHandle } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import { Text3D, OrthographicCamera } from '@react-three/drei'
 import { skills, transformSkillsConfig, SmackContents, EngineerContents } from '@/helpers/contentsConfig'
@@ -280,7 +280,7 @@ function SkillText({
 }
 
 // SkillStack component with lerping animation
-function SkillStack({ skills, onSkillClick }) {
+const SkillStack = forwardRef(({ skills, onSkillClick }, ref) => {
   const { camera } = useThree()
   const { vpWidth: pixelWidth, vpHeight: pixelHeight } = useViewportMeasurements(false)
 
@@ -335,60 +335,87 @@ function SkillStack({ skills, onSkillClick }) {
     }
   }, [skills])
 
-  const handleSkillClick = (content, textWidth) => {
-    isInitialAnimationRef.current = false
-    const now = performance.now()
-    if (content === 'Three.js') {
-      console.log('Click:', content, explodedSkill === content)
-      lastLoggedTimeRef.current = now
-    }
-
-    if (explodedSkill === content) {
-      const { positions, delays } = calculateStackPositions(skills, vpWidth, vpHeight)
+  const handleSkillClick = useCallback(
+    (content, textWidth) => {
+      isInitialAnimationRef.current = false
+      const now = performance.now()
       if (content === 'Three.js') {
-        const newPosition = positions.find((_, i) => skills[i].content === content)
-        console.log('Stack position:', content, newPosition)
+        console.log('Click:', content, explodedSkill === content)
+        lastLoggedTimeRef.current = now
       }
-      targetPositionsRef.current = positions
-      delaysRef.current = delays
-      setExplodedSkill(null)
-      movingSkillsRef.current = new Set([...skills.map((skill) => skill.content)])
-      onSkillClick(null) // Clear carousel when collapsing
 
-      // Update reset states
-      resetStatesRef.current = {}
-      skills.forEach((skill) => {
-        resetStatesRef.current[skill.content] = true
-      })
-    } else {
-      const { positions, delays } = calculateExplosionPositions(skills, vpWidth, vpHeight, content)
-
-      const clickedIndex = skills.findIndex((skill) => skill.content === content)
-      if (clickedIndex !== -1) {
-        tempForward.current.set(0, 0, -1).applyQuaternion(camera.quaternion).normalize()
-        tempTargetPos.current.copy(camera.position)
-        const buttonConfig = getSpacingConfig(false).positions.button
-        tempTargetPos.current.addScaledVector(tempForward.current, buttonConfig.hover.z)
-        tempTargetPos.current.y = buttonConfig.hover.y
-
-        // Set target position with x=0 for centering
-        positions[clickedIndex] = [0, tempTargetPos.current.y, tempTargetPos.current.z]
-
+      if (explodedSkill === content) {
+        const { positions, delays } = calculateStackPositions(skills, vpWidth, vpHeight)
         if (content === 'Three.js') {
-          console.log('Bottom target:', content, positions[clickedIndex])
+          const newPosition = positions.find((_, i) => skills[i].content === content)
+          console.log('Stack position:', content, newPosition)
         }
-      }
+        targetPositionsRef.current = positions
+        delaysRef.current = delays
+        setExplodedSkill(null)
+        movingSkillsRef.current = new Set([...skills.map((skill) => skill.content)])
+        onSkillClick(null) // Clear carousel when collapsing
 
-      targetPositionsRef.current = positions
-      delaysRef.current = delays
-      setExplodedSkill(content)
-      movingSkillsRef.current = new Set([...skills.map((skill) => skill.content)])
-      resetStatesRef.current = {}
-      onSkillClick(content) // Pass clicked skill to parent
-    }
+        // Update reset states
+        resetStatesRef.current = {}
+        skills.forEach((skill) => {
+          resetStatesRef.current[skill.content] = true
+        })
+      } else {
+        const { positions, delays } = calculateExplosionPositions(skills, vpWidth, vpHeight, content)
+
+        const clickedIndex = skills.findIndex((skill) => skill.content === content)
+        if (clickedIndex !== -1) {
+          tempForward.current.set(0, 0, -1).applyQuaternion(camera.quaternion).normalize()
+          tempTargetPos.current.copy(camera.position)
+          const buttonConfig = getSpacingConfig(false).positions.button
+          tempTargetPos.current.addScaledVector(tempForward.current, buttonConfig.hover.z)
+          tempTargetPos.current.y = buttonConfig.hover.y
+
+          // Set target position with x=0 for centering
+          positions[clickedIndex] = [0, tempTargetPos.current.y, tempTargetPos.current.z]
+
+          if (content === 'Three.js') {
+            console.log('Bottom target:', content, positions[clickedIndex])
+          }
+        }
+
+        targetPositionsRef.current = positions
+        delaysRef.current = delays
+        setExplodedSkill(content)
+        movingSkillsRef.current = new Set([...skills.map((skill) => skill.content)])
+        resetStatesRef.current = {}
+        onSkillClick(content) // Pass clicked skill to parent
+      }
+      startTimeRef.current = performance.now()
+      setAnimationStateVersion((v) => v + 1)
+    },
+    [camera, explodedSkill, onSkillClick, skills, vpHeight, vpWidth],
+  )
+
+  // Function to trigger stack animation
+  const triggerStackAnimation = useCallback(() => {
+    const { positions, delays } = calculateStackPositions(skills, vpWidth, vpHeight)
+    targetPositionsRef.current = positions
+    delaysRef.current = delays
+    movingSkillsRef.current = new Set([...skills.map((skill) => skill.content)])
+    resetStatesRef.current = {}
+    skills.forEach((skill) => {
+      resetStatesRef.current[skill.content] = true
+    })
     startTimeRef.current = performance.now()
     setAnimationStateVersion((v) => v + 1)
-  }
+  }, [skills, vpWidth, vpHeight])
+
+  // Expose methods through ref
+  useImperativeHandle(
+    ref,
+    () => ({
+      handleSkillClick,
+      triggerStackAnimation,
+    }),
+    [handleSkillClick, triggerStackAnimation],
+  )
 
   const handleHoverChange = (index, isHovered) => {
     setHoveredStates((prev) => ({
@@ -508,14 +535,25 @@ function SkillStack({ skills, onSkillClick }) {
       })}
     </>
   )
-}
+})
 
 function SkillStackContent() {
   const skillsContent = useMemo(() => transformSkillsConfig(skills), [])
   const [carouselPages, setCarouselPages] = useState(null)
   const [carouselType, setCarouselType] = useState(null)
+  const [currentSkill, setCurrentSkill] = useState(null)
+  const [isExitingCarousel, setIsExitingCarousel] = useState(false)
   const setStyleMagazine = useSetAtom(styleMagazineAtom)
   const setTitles = useSetAtom(titleSlidesAtom)
+  const skillStackRef = useRef(null)
+
+  // Function to reset all carousel-related state
+  const resetCarouselState = useCallback(() => {
+    setCarouselPages(null)
+    setCarouselType(null)
+    setTitles([])
+    setIsExitingCarousel(false)
+  }, [setTitles])
 
   const findRelevantContent = useCallback((clickedSkill) => {
     // Search through SmackContents and EngineerContents
@@ -546,12 +584,23 @@ function SkillStackContent() {
   const handleSkillClick = useCallback(
     (content) => {
       if (!content) {
-        // Reset everything when unclicking
-        setCarouselPages(null)
-        setCarouselType(null)
-        setTitles([])
+        // If we have a current skill, trigger the exit animation
+        if (currentSkill && skillStackRef.current) {
+          setIsExitingCarousel(true)
+        } else {
+          resetCarouselState()
+        }
         return
       }
+
+      // If clicking the same skill that's already expanded, start exit animation
+      if (content === currentSkill) {
+        setIsExitingCarousel(true)
+        return
+      }
+
+      // Store the clicked skill
+      setCurrentSkill(content)
 
       const relevantSections = findRelevantContent(content)
       if (relevantSections.length > 0) {
@@ -571,20 +620,31 @@ function SkillStackContent() {
         setCarouselPages(allPages)
         setStyleMagazine(firstSection.type)
       } else {
-        setCarouselPages(null)
-        setCarouselType(null)
-        setTitles([])
+        resetCarouselState()
       }
     },
-    [findRelevantContent, setStyleMagazine, setTitles],
+    [findRelevantContent, setStyleMagazine, setTitles, currentSkill, resetCarouselState],
   )
+
+  // Handle carousel finish
+  const handleCarouselFinish = useCallback(() => {
+    if (currentSkill && skillStackRef.current) {
+      const skillToReset = currentSkill
+      setCurrentSkill(null)
+      resetCarouselState()
+      // Trigger stack animation through the ref
+      skillStackRef.current.triggerStackAnimation()
+    } else {
+      resetCarouselState()
+    }
+  }, [currentSkill, resetCarouselState])
 
   return (
     <>
-      <SkillStack skills={skillsContent} onSkillClick={handleSkillClick} />
+      <SkillStack skills={skillsContent} onSkillClick={handleSkillClick} ref={skillStackRef} />
       {carouselPages && (
         <group position={[0, 0, 6]}>
-          <PageCarousel images={carouselPages} />
+          <PageCarousel images={carouselPages} onFinish={handleCarouselFinish} isExiting={isExitingCarousel} />
         </group>
       )}
     </>

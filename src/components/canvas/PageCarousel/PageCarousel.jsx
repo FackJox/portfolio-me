@@ -6,19 +6,37 @@ import { useTexture } from '@react-three/drei'
 import { useSetAtom } from 'jotai'
 import { carouselReadyAtom } from '@/helpers/atoms'
 
-export const PageCarousel = ({ images = [] }) => {
+export const PageCarousel = ({ images = [], onFinish, isExiting = false }) => {
   const groupRef = useRef()
   const meshesRef = useRef([])
   const scrollRef = useRef(0)
   const camera = useRef()
   const initialAnimationRef = useRef(-10) // Start at -10
   const hasLoggedReady = useRef(false) // Track if we've logged ready
+  const hasFinished = useRef(false) // Track if we've finished
   const setCarouselReady = useSetAtom(carouselReadyAtom)
+  const exitProgressRef = useRef(0) // Track exit animation progress
+  const lastLogTimeRef = useRef(0) // For throttling logs
+
+  // Reset scroll state when unmounting
+  useEffect(() => {
+    return () => {
+      scrollState.top = 0
+      scrollState.progress = 0
+    }
+  }, [])
 
   useEffect(() => {
-    // Reset ready state when component mounts or images change
+    // Reset ready state and scroll when component mounts or images change
     setCarouselReady(false)
-    return () => setCarouselReady(false)
+    hasFinished.current = false
+    scrollState.top = 0
+    scrollState.progress = 0
+    return () => {
+      setCarouselReady(false)
+      scrollState.top = 0
+      scrollState.progress = 0
+    }
   }, [images])
 
   useEffect(() => {
@@ -129,26 +147,65 @@ export const PageCarousel = ({ images = [] }) => {
     const scrollSpeed = 5.1
     scrollRef.current = scrollState.progress * scrollSpeed
 
-    // Lerp initial animation
-    initialAnimationRef.current = THREE.MathUtils.lerp(initialAnimationRef.current, 0, 0.05)
+    // Handle entrance and exit animations
+    if (isExiting) {
+      // When exiting, animate the scroll progress to move all pages off screen
+      const targetProgress = images.length * 1.75
+      const prevExitProgress = exitProgressRef.current
+      exitProgressRef.current = THREE.MathUtils.lerp(exitProgressRef.current, targetProgress, 0.05)
+      scrollRef.current = exitProgressRef.current
 
-    // Check if initial animation is complete
-    if (!hasLoggedReady.current && Math.abs(initialAnimationRef.current) < 0.01) {
-      console.log('ready')
-      hasLoggedReady.current = true
-      setCarouselReady(true)
+      // Throttled logging (every 500ms) during exit animation
+      const now = performance.now()
+      if (now - lastLogTimeRef.current > 500) {
+        console.log('Exit animation progress:', {
+          current: exitProgressRef.current.toFixed(2),
+          target: targetProgress.toFixed(2),
+          delta: (exitProgressRef.current - prevExitProgress).toFixed(4),
+          distance: Math.abs(exitProgressRef.current - targetProgress).toFixed(4),
+        })
+        lastLogTimeRef.current = now
+      }
+
+      // Check if exit animation is complete (all pages have moved off screen)
+      if (!hasFinished.current && Math.abs(exitProgressRef.current - targetProgress) < 0.01) {
+        console.log('Exit animation complete!', {
+          finalProgress: exitProgressRef.current.toFixed(2),
+          target: targetProgress.toFixed(2),
+        })
+        hasFinished.current = true
+        // Reset scroll state before calling onFinish
+        scrollState.top = 0
+        scrollState.progress = 0
+        onFinish?.()
+      }
+    } else {
+      // Normal entrance animation
+      initialAnimationRef.current = THREE.MathUtils.lerp(initialAnimationRef.current, 0, 0.05)
+
+      // Check if initial animation is complete
+      if (!hasLoggedReady.current && Math.abs(initialAnimationRef.current) < 0.01) {
+        console.log('Entrance animation complete')
+        hasLoggedReady.current = true
+        setCarouselReady(true)
+      }
     }
 
-    // Check if all meshes are finished
-    let allFinished = true
-
     // Update each mesh
-    meshesRef.current.forEach(({ mesh, pos }) => {
+    meshesRef.current.forEach(({ mesh, pos }, index) => {
       const finalProgress = -scrollRef.current - pos + initialAnimationRef.current
 
-      // Check if this mesh is still visible (progress < 2 means it's still in view)
-      if (finalProgress < 2) {
-        allFinished = false
+      // Log first and last mesh positions during exit (throttled)
+      if (isExiting && (index === 0 || index === meshesRef.current.length - 1)) {
+        const now = performance.now()
+        if (now - lastLogTimeRef.current > 500) {
+          console.log(`Mesh ${index} position:`, {
+            finalProgress: finalProgress.toFixed(2),
+            scrollRef: scrollRef.current.toFixed(2),
+            pos: pos.toFixed(2),
+            initialAnim: initialAnimationRef.current.toFixed(2),
+          })
+        }
       }
 
       if (mesh.material.userData.shader) {
@@ -156,10 +213,6 @@ export const PageCarousel = ({ images = [] }) => {
         mesh.material.userData.shader.uniforms.time.value += delta
       }
     })
-
-    if (allFinished) {
-      console.log('finished')
-    }
   })
 
   return <group ref={groupRef} />
