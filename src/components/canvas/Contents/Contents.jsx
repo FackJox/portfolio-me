@@ -3,7 +3,10 @@ import React, { useEffect, useRef, useState, useMemo, useCallback, forwardRef, u
 import { useFrame, useThree } from '@react-three/fiber'
 import { Text3D, OrthographicCamera } from '@react-three/drei'
 import { skills, transformSkillsConfig, SmackContents, EngineerContents } from '@/helpers/contentsConfig'
-import { calculateStackPositions, calculateExplosionPositions } from '@/helpers/contentsPositionHelpers'
+import {
+  calculateStackPositions,
+  calculateExplosionPositions,
+} from '@/helpers/contentsPositionHelpers'
 import { performLerp, getSpacingConfig } from '@/helpers/magazinePositionHelpers'
 import { useViewportMeasurements } from '@/helpers/deviceHelpers'
 import { throttle } from '@/helpers/throttleHelpers'
