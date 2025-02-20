@@ -18,7 +18,7 @@ import {
   updateMagazineCarousel,
   calculateMiddleMagazine,
   getSpacingConfig,
-} from '@/helpers/positionHelpers'
+} from '@/helpers/magazinePositionHelpers'
 import { useDeviceOrientation } from '@/helpers/deviceHelpers'
 import { handleLibraryDrag, isTapInteraction, isSwipeInteraction } from '@/helpers/gestureHelpers'
 import { ANIMATION_CONFIG } from '@/helpers/animationConfigs'

@@ -47,7 +47,7 @@ export const GESTURE_CONFIG = {
   },
 }
 
-import { handlePageViewTransition } from '@/helpers/positionHelpers'
+import { handlePageViewTransition } from '@/helpers/magazinePositionHelpers'
 import { lastCarouselMoveAtom } from '@/helpers/atoms'
 
 // Helper function to get gesture config based on orientation

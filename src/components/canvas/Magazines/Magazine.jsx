@@ -13,7 +13,7 @@ import {
   getSpacingConfig,
   applyFloatNullification,
   calculateButtonPosition,
-} from '@/helpers/positionHelpers'
+} from '@/helpers/magazinePositionHelpers'
 import { useDeviceOrientation } from '@/helpers/deviceHelpers'
 import { handleMagazineInteraction, isTapInteraction } from '@/helpers/gestureHelpers'
 import { ANIMATION_CONFIG } from '@/helpers/animationConfigs'

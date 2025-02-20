@@ -1,4 +1,4 @@
-// portfolio-me/src/utils/positionHelper.js
+// portfolio-me/src/utils/magazinePositionHelpers.js
 import * as THREE from 'three'
 import { ANIMATION_CONFIG } from './animationConfigs'
 import { GESTURE_CONFIG } from './gestureHelpers'
@@ -73,8 +73,6 @@ const SPACING_CONFIG = {
 
 /**
  * Gets the appropriate spacing configuration based on view mode
- * @param {boolean} isPortrait - Whether the view is in portrait mode
- * @returns {Object} The spacing configuration
  */
 export const getSpacingConfig = (isPortrait) => {
   return isPortrait ? SPACING_CONFIG.portrait : SPACING_CONFIG.landscape
@@ -82,8 +80,6 @@ export const getSpacingConfig = (isPortrait) => {
 
 /**
  * Gets the appropriate animation configuration based on view mode
- * @param {boolean} isPortrait - Whether the view is in portrait mode
- * @returns {Object} The animation configuration
  */
 export const getAnimationConfig = (isPortrait) => {
   return isPortrait ? ANIMATION_CONFIG.portrait : ANIMATION_CONFIG.landscape
@@ -91,8 +87,6 @@ export const getAnimationConfig = (isPortrait) => {
 
 /**
  * Gets the appropriate gesture configuration based on view mode
- * @param {boolean} isPortrait - Whether the view is in portrait mode
- * @returns {Object} The gesture configuration
  */
 export const getGestureConfig = (isPortrait) => {
   return isPortrait ? GESTURE_CONFIG.portrait : GESTURE_CONFIG.landscape
@@ -100,12 +94,6 @@ export const getGestureConfig = (isPortrait) => {
 
 /**
  * Handles the page viewing state transitions based on swipe direction
- * @param {Object} params - Parameters for state transition
- * @param {number} params.deltaX - Horizontal swipe delta
- * @param {boolean} params.isViewingRightPage - Current right page viewing state
- * @param {number} params.currentPage - Current page number
- * @param {number} params.maxPages - Maximum number of pages
- * @returns {Object} New state { newPage, newViewingRightPage }
  */
 export const handlePageViewTransition = ({ deltaX, isViewingRightPage, currentPage, maxPages }) => {
   // Going backward (swipe right)
@@ -145,17 +133,6 @@ export const handlePageViewTransition = ({ deltaX, isViewingRightPage, currentPa
 
 /**
  * Calculates the horizontal offset for page viewing transitions
- * @param {Object} params - Parameters for offset calculation
- * @param {THREE.Vector3} params.position - Current position vector
- * @param {THREE.Vector3} params.right - Right direction vector
- * @param {number} params.currentOffset - Current horizontal offset
- * @param {number} params.targetOffset - Target horizontal offset
- * @param {boolean} params.isPortrait - Whether the view is in portrait mode
- * @param {boolean} params.viewingRightPage - Whether viewing the right page
- * @param {number} params.page - Current page number
- * @param {number} params.delayedPage - Delayed page number for animations
- * @param {number} [params.lerpFactor=0.03] - Linear interpolation factor
- * @returns {number} The new horizontal offset
  */
 export const calculatePageViewOffset = ({
   position,
@@ -194,13 +171,6 @@ export const calculatePageViewOffset = ({
 
 /**
  * Calculates the focus position of a magazine relative to the camera
- * @param {Object} params - Parameters for focus position calculation
- * @param {THREE.Camera} params.camera - The camera object
- * @param {string} params.focusedMagazine - Currently focused magazine ID
- * @param {string} params.magazine - Magazine ID to calculate position for
- * @param {number[]} [params.layoutPosition] - Optional layout position offset [x, y, z]
- * @param {boolean} params.isPortrait - Whether the view is in portrait mode
- * @returns {THREE.Vector3} The calculated focus position
  */
 export const calculateFocusPosition = ({ camera, focusedMagazine, magazine, layoutPosition, isPortrait }) => {
   // Different z-distances for portrait and landscape
@@ -233,9 +203,6 @@ export const calculateFocusPosition = ({ camera, focusedMagazine, magazine, layo
 
 /**
  * Calculates which magazine should be in the middle position based on carousel offset
- * @param {number} targetOffset - The current carousel offset
- * @param {boolean} isPortrait - Whether the view is in portrait mode
- * @returns {string} The ID of the magazine that should be in the middle ('engineer', 'vague', or 'smack')
  */
 export const calculateMiddleMagazine = (targetOffset, isPortrait) => {
   const { magazine: spacing, total: totalSpacing } = getSpacingConfig(isPortrait)
@@ -248,8 +215,6 @@ export const calculateMiddleMagazine = (targetOffset, isPortrait) => {
 
 /**
  * Gets the base index for a magazine in the carousel
- * @param {string} magazine - Magazine ID
- * @returns {number} Base index for the magazine
  */
 const getBaseIndex = (magazine) => {
   switch (magazine) {
@@ -266,20 +231,6 @@ const getBaseIndex = (magazine) => {
 
 /**
  * Updates magazine position and rotation in the carousel or focused state
- * @param {Object} params - Parameters for magazine position update
- * @param {THREE.Object3D} params.magazineRef - Reference to the magazine mesh
- * @param {THREE.Vector3} params.targetPosition - Target position for focused state
- * @param {THREE.Camera} params.camera - The camera object
- * @param {string} params.focusedMagazine - Currently focused magazine ID
- * @param {string} params.magazine - Magazine ID being updated
- * @param {boolean} params.isPortrait - Whether the view is in portrait mode
- * @param {number} params.dragOffset - Current drag offset
- * @param {number} params.page - Current page number
- * @param {React.MutableRefObject} params.targetOffsetRef - Reference to target offset
- * @param {string} params.currentMiddleMagazine - Currently middle magazine ID
- * @param {Function} params.setMiddleMagazine - Function to update middle magazine
- * @param {Function} params.setPage - Function to update page number
- * @param {number} [params.lerpFactor=0.1] - Linear interpolation factor
  */
 export const updateMagazineCarousel = ({
   magazineRef,
@@ -420,10 +371,6 @@ export const updateMagazineCarousel = ({
 
 /**
  * Performs linear interpolation between two vectors
- * @param {THREE.Vector3} current - Current position vector
- * @param {THREE.Vector3} target - Target position vector
- * @param {number} lerpFactor - Linear interpolation factor (0-1)
- * @returns {THREE.Vector3} The interpolated position vector
  */
 export const performLerp = (current, target, lerpFactor) => {
   current.lerp(target, lerpFactor)
@@ -432,8 +379,6 @@ export const performLerp = (current, target, lerpFactor) => {
 
 /**
  * Gets the button position configuration
- * @param {boolean} isPortrait - Whether the view is in portrait mode
- * @returns {Object|null} Button position or null in portrait mode
  */
 export const getButtonPosition = (isPortrait) => {
   return isPortrait ? null : getSpacingConfig(isPortrait).positions.button
@@ -441,11 +386,6 @@ export const getButtonPosition = (isPortrait) => {
 
 /**
  * Calculates the magazine position in landscape mode
- * @param {string} magazine - Magazine ID
- * @param {number} dragOffset - Current drag offset
- * @param {number} page - Current page number
- * @param {boolean} isPortrait - Whether in portrait mode
- * @returns {THREE.Vector3} The calculated position
  */
 export const calculateMagazinePosition = (magazine, dragOffset, page, isPortrait) => {
   const position = new THREE.Vector3()
@@ -469,10 +409,6 @@ export const calculateMagazinePosition = (magazine, dragOffset, page, isPortrait
 
 /**
  * Checks if a magazine is in the middle position
- * @param {Object} params - Check parameters
- * @param {THREE.Vector3} params.position - Magazine position
- * @param {boolean} params.isPortrait - Whether in portrait mode
- * @returns {boolean} Whether the magazine is in the middle
  */
 export const isMiddleMagazine = ({ position, isPortrait }) => {
   const config = getSpacingConfig(isPortrait).interaction.carousel
@@ -484,12 +420,6 @@ export const isMiddleMagazine = ({ position, isPortrait }) => {
 
 /**
  * Applies hover effect to magazine position
- * @param {Object} params - Hover parameters
- * @param {THREE.Vector3} params.position - Magazine position
- * @param {boolean} params.isHovered - Whether magazine is hovered
- * @param {string} params.magazine - Magazine ID
- * @param {boolean} params.isPortrait - Whether in portrait mode
- * @returns {THREE.Vector3} Updated position with hover effect
  */
 export const hoverMagazine = ({ position, isHovered, magazine, isPortrait }) => {
   const spacingConfig = getSpacingConfig(isPortrait)
@@ -519,10 +449,6 @@ export const hoverMagazine = ({ position, isHovered, magazine, isPortrait }) => 
 
 /**
  * Calculates and applies Float nullification for focused or hovered elements
- * @param {Object} params - Parameters for Float nullification
- * @param {THREE.Object3D} params.floatRef - Reference to Float component
- * @param {THREE.Object3D} params.nullifyRef - Reference to group that will nullify Float
- * @param {boolean} params.shouldNullify - Whether Float should be nullified
  */
 export const applyFloatNullification = ({ floatRef, nullifyRef, shouldNullify }) => {
   if (!floatRef || !nullifyRef) return
@@ -540,16 +466,6 @@ export const applyFloatNullification = ({ floatRef, nullifyRef, shouldNullify })
 
 /**
  * Calculates button position with Float nullification
- * @param {Object} params - Parameters for button positioning
- * @param {THREE.Vector3} params.position - Current position
- * @param {THREE.Camera} params.camera - Camera reference
- * @param {boolean} params.isHovered - Whether element is hovered
- * @param {boolean} params.isPortrait - Whether in portrait mode
- * @param {THREE.Object3D} params.floatRef - Reference to Float component
- * @param {THREE.Object3D} params.buttonRef - Reference to button object
- * @param {THREE.Quaternion} params.floatQuaternion - Quaternion for float rotation
- * @param {THREE.Quaternion} params.uprightQuaternion - Upright quaternion reference
- * @returns {void} Updates button position and rotation directly
  */
 export const calculateButtonPosition = ({
   position,
@@ -587,84 +503,4 @@ export const calculateButtonPosition = ({
   }
 
   return targetPos
-}
-
-/**
- * Calculates the positions for skill text elements in a stacked layout
- * @param {Array} skills - Array of skill objects
- * @param {number} vpWidth - Viewport width
- * @param {number} vpHeight - Viewport height
- * @returns {Object} Object containing positions, startPositions, and delays arrays
- */
-export const calculateStackPositions = (skills, vpWidth, vpHeight) => {
-  const positions = []
-  const startPositions = []
-  const delays = []
-
-  // Separate skills into columns
-  const creativeSkills = skills.filter((skill) => !skill.isEngineering)
-  const engineeringSkills = skills.filter((skill) => skill.isEngineering)
-
-  // Calculate spacing for each column independently
-  const creativeSpacing = (vpHeight * 0.3) / creativeSkills.length
-  const engineeringSpacing = (vpHeight * 0.3) / engineeringSkills.length
-  const columnOffset = vpWidth / 75 // Distance between columns
-  const staggerDelay = 100 // Delay between each skill in ms
-
-  // Calculate positions for creative skills (left column)
-  creativeSkills.forEach((_, index) => {
-    // Center the stack vertically and apply creative spacing
-    const y = (index - (creativeSkills.length - 1) / 2) * creativeSpacing
-    // Add to the start of the arrays to ensure creative skills are processed first
-    positions.unshift([-columnOffset, y, -5])
-    startPositions.unshift([-columnOffset, vpHeight + creativeSpacing * index, -5])
-    delays.unshift(index * staggerDelay)
-  })
-
-  // Calculate positions for engineering skills (right column)
-  engineeringSkills.forEach((_, index) => {
-    // Center the stack vertically and apply engineering spacing
-    const y = (index - (engineeringSkills.length - 1) / 2) * engineeringSpacing
-    // Add to the end of the arrays for engineering skills
-    positions.push([columnOffset, y, -5])
-    startPositions.push([columnOffset, -vpHeight - engineeringSpacing * index, -5])
-    delays.push((creativeSkills.length + index) * staggerDelay)
-  })
-
-  return { positions, startPositions, delays }
-}
-
-/**
- * Calculates explosion positions for skills when one is clicked
- * @param {Array} skills - Array of skill objects
- * @param {number} vpWidth - Viewport width
- * @param {number} vpHeight - Viewport height
- * @param {string} clickedContent - Content of the clicked skill
- * @returns {Object} Object containing explosion positions and delays
- */
-export const calculateExplosionPositions = (skills, vpWidth, vpHeight, clickedContent) => {
-  const positions = []
-  const delays = []
-  const radius = Math.max(vpWidth, vpHeight) * 1.5 // Large enough to ensure skills go off screen
-  const nonClickedSkills = skills.filter((skill) => skill.content !== clickedContent)
-  const angleStep = (2 * Math.PI) / nonClickedSkills.length // Divide circle by number of non-clicked skills
-  let currentAngle = 0
-  const staggerDelay = 50 // Delay between each exploding skill
-
-  skills.forEach((skill, index) => {
-    if (skill.content === clickedContent) {
-      // Reserve space for clicked skill, but let handleSkillClick set the actual position
-      positions.push([0, 0, 0])
-      delays.push(0)
-    } else {
-      // Calculate position on circle for other skills
-      const x = Math.cos(currentAngle) * radius
-      const y = Math.sin(currentAngle) * radius
-      positions.push([x, y, -5])
-      delays.push(index * staggerDelay)
-      currentAngle += angleStep
-    }
-  })
-
-  return { positions, delays }
 }
