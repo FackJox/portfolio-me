@@ -3,10 +3,7 @@ import React, { useEffect, useRef, useState, useMemo, useCallback, forwardRef, u
 import { useFrame, useThree } from '@react-three/fiber'
 import { Text3D, OrthographicCamera } from '@react-three/drei'
 import { skills, transformSkillsConfig, SmackContents, EngineerContents } from '@/helpers/contentsConfig'
-import {
-  calculateStackPositions,
-  calculateExplosionPositions,
-} from '@/helpers/contentsPositionHelpers'
+import { calculateStackPositions, calculateExplosionPositions } from '@/helpers/contentsPositionHelpers'
 import { performLerp, getSpacingConfig } from '@/helpers/magazinePositionHelpers'
 import { useViewportMeasurements } from '@/helpers/deviceHelpers'
 import { throttle } from '@/helpers/throttleHelpers'
@@ -17,13 +14,81 @@ import { styleMagazineAtom, titleSlidesAtom } from '@/helpers/atoms'
 import { PageCarousel } from '@/components/canvas/PageCarousel/PageCarousel'
 import { getTexturePath } from '@/helpers/textureLoaders'
 
+// Animation Constants
+const ANIMATION = {
+  SCALE: {
+    HOVER: 1.1,
+    HOVER_LARGE: 1.2,
+    DEFAULT: 1.0,
+  },
+  HEIGHT: {
+    MIN: 0.01,
+    MAX: 0.1,
+  },
+  LERP: {
+    SCALE: 0.2,
+    POSITION: {
+      NORMAL: 0.1,
+      SLOW: 0.05,
+      X_AXIS: 0.03,
+    },
+    HEIGHT: {
+      INCREASING: 0.1,
+      DECREASING: 0.02,
+    },
+  },
+  THRESHOLD: {
+    BOTTOM_PROXIMITY: 0.5,
+    POSITION_CHANGE: 0.001,
+  },
+  DELAY: {
+    HOVER: 100,
+    INITIAL: 500,
+  },
+}
+
+// Layout Constants
+const LAYOUT = {
+  TEXT: {
+    SIZE: {
+      ENGINEERING: 0.5,
+      CREATIVE: 0.6,
+    },
+    LETTER_SPACING: {
+      ENGINEERING: -0.06,
+      CREATIVE: 0,
+    },
+    CURVE_SEGMENTS: 12,
+    VERTICAL_OFFSET: 0.15,
+  },
+  VIEWPORT: {
+    MAIN_DIVIDER: 35,
+    COLUMN_DIVIDER: 50,
+  },
+  POSITION: {
+    HOVER_DETECTOR: -5.5,
+    MAIN_GROUP: 4,
+    CONTENT_GROUP: -3,
+    CAROUSEL: 6,
+  },
+}
+
+// Color Constants
+const COLORS = {
+  DEFAULT: '#F4EEDC',
+  HOVER: {
+    ENGINEERING: '#FFB79C',
+    CREATIVE: '#FABE7F',
+  },
+}
+
 function SkillText({
   content,
   isEngineering,
   onClick,
   position,
   onHoverChange,
-  scale = 1,
+  scale = ANIMATION.SCALE.DEFAULT,
   opacity = 1,
   isMoving = false,
   resetState = false,
@@ -35,12 +100,10 @@ function SkillText({
   const textRef = useRef()
   const [textSize, setTextSize] = useState([1, 0.5, 0.25])
   const currentScaleRef = useRef(new THREE.Vector3(scale, scale, scale))
-  const currentHeightRef = useRef(0.01)
+  const currentHeightRef = useRef(ANIMATION.HEIGHT.MIN)
   const groupRef = useRef()
   const meshRef = useRef()
   const text3DRef = useRef()
-  const lastLoggedTimeRef = useRef(0)
-  const lastPositionsRef = useRef(null)
 
   // Cache vector objects for reuse in animation loop
   const targetScaleVec = useRef(new THREE.Vector3())
@@ -51,13 +114,23 @@ function SkillText({
 
   const setStyleMagazine = useSetAtom(styleMagazineAtom)
 
-  // Reset states when resetState changes
+  /**
+   * Reset component states based on resetState prop changes.
+   *
+   * @effect
+   * - Resets stack and bottom position states based on resetState value
+   * - Clears clicked state when not moving and resetState is true
+   * - Sets bottom position when resetState.isBottomPosition is true
+   *
+   * Dependencies:
+   * - resetState: Triggers state resets
+   * - content: Ensures proper reset when content changes
+   * - isMoving: Affects click state during movement
+   */
   useEffect(() => {
     if (resetState === true) {
-      // Only update stack position state immediately
       setIsStackPosition(true)
       setIsBottomPosition(false)
-      // Keep clicked state until movement is complete
       if (!isMoving) {
         setClicked(false)
       }
@@ -67,31 +140,45 @@ function SkillText({
     }
   }, [resetState, content, isMoving])
 
-  // Update position states based on isMoving
+  /**
+   * Update position states when movement or click states change.
+   *
+   * @effect
+   * - Updates stack and bottom position states during movement
+   * - Resets click state when returning to stack position
+   *
+   * Dependencies:
+   * - isMoving: Triggers position updates during animations
+   * - clicked: Current click state
+   * - content: Ensures updates when content changes
+   * - isStackPosition: Current stack position state
+   */
   useEffect(() => {
-    if (content === 'Three.js' && isMoving) {
-      console.log('SkillText moving:', content, isMoving, clicked, isBottomPosition, isStackPosition)
-    }
     if (isMoving && clicked) {
       setIsStackPosition(false)
       setIsBottomPosition(false)
     } else if (!isMoving && isStackPosition && clicked) {
-      // Reset clicked state only when we've finished moving back to stack position
       setClicked(false)
     }
   }, [isMoving, clicked, content, isStackPosition])
 
   // Calculate target scale based on states
-  const targetScale = !isMoving && hovered && (!clicked || isBottomPosition) ? scale * 1.1 : scale
+  const targetScale = !isMoving && hovered && (!clicked || isBottomPosition) ? scale * ANIMATION.SCALE.HOVER : scale
 
   // Calculate target height based on states
-  const targetHeight = isStackPosition ? 0.01 : clicked || isBottomPosition ? 0.1 : 0.01
+  const targetHeight = isStackPosition
+    ? ANIMATION.HEIGHT.MIN
+    : clicked || isBottomPosition
+      ? ANIMATION.HEIGHT.MAX
+      : ANIMATION.HEIGHT.MIN
 
   // Get color based on states
   const getColor = () => {
-    if (isMoving && clicked) return '#F4EEDC' // Default color while moving only for clicked skill
-    if (hovered && (!clicked || isBottomPosition)) return isEngineering ? '#FFB79C' : '#FABE7F'
-    return '#F4EEDC'
+    if (isMoving && clicked) return COLORS.DEFAULT
+    if (hovered && (!clicked || isBottomPosition)) {
+      return isEngineering ? COLORS.HOVER.ENGINEERING : COLORS.HOVER.CREATIVE
+    }
+    return COLORS.DEFAULT
   }
 
   const handleClick = (e) => {
@@ -105,14 +192,27 @@ function SkillText({
       } else if (isBottomPosition) {
         setIsBottomPosition(false)
       }
-      // Clear hover state when clicking
       setHovered(false)
     }
 
     onClick && onClick(content, textSize[0])
   }
 
-  // Create throttled hover handlers
+  /**
+   * Throttled hover handler to prevent excessive state updates.
+   *
+   * @callback
+   * - Updates hover state and magazine style based on current component state
+   * - Throttles updates to prevent performance issues
+   *
+   * Dependencies:
+   * - isMoving: Prevents hover during movement
+   * - clicked: Affects hover behavior based on click state
+   * - isBottomPosition: Modifies hover behavior at bottom
+   * - isEngineering: Determines style on hover
+   * - onHoverChange: Callback prop for hover state changes
+   * - setStyleMagazine: Atom setter for magazine style
+   */
   const handleHoverChange = useCallback(
     throttle((isHovered) => {
       if (!isMoving && (!clicked || isBottomPosition)) {
@@ -120,8 +220,8 @@ function SkillText({
         onHoverChange && onHoverChange(isHovered)
         setStyleMagazine(isHovered ? (isEngineering ? 'engineer' : 'smack') : 'vague')
       }
-    }, 100),
-    [isMoving, clicked, isBottomPosition, isEngineering, onHoverChange],
+    }, ANIMATION.DELAY.HOVER),
+    [isMoving, clicked, isBottomPosition, isEngineering, onHoverChange, setStyleMagazine],
   )
 
   const handlePointerOver = (e) => {
@@ -134,108 +234,105 @@ function SkillText({
     handleHoverChange(false)
   }
 
+  // Helper function for synchronized lerping
+  const performSyncedLerp = (current, target, xSpeed, normalSpeed, isNearBottom) => {
+    if (!isNearBottom) {
+      current.x = THREE.MathUtils.lerp(current.x, target.x, xSpeed)
+    } else {
+      current.x = target.x
+    }
+    current.y = THREE.MathUtils.lerp(current.y, target.y, normalSpeed)
+    current.z = THREE.MathUtils.lerp(current.z, target.z, normalSpeed)
+  }
+
+  /**
+   * Animation frame update for smooth transitions.
+   *
+   * @frame
+   * - Handles scale lerping with smooth transitions
+   * - Updates height with different lerp speeds for increasing/decreasing
+   * - Manages synchronized position updates for mesh and text
+   * - Calculates and updates bounding box for text sizing
+   *
+   * Dependencies:
+   * - targetScale: Current target scale value
+   * - targetHeight: Current target height value
+   * - position: Current position vector
+   * - opacity: Current opacity value
+   * - textRef: Reference to text component
+   * - meshRef: Reference to mesh component
+   * - text3DRef: Reference to Text3D component
+   * - isEngineering: Affects text positioning
+   * - textSize: Current text dimensions
+   */
   useFrame(() => {
     if (groupRef.current && meshRef.current && text3DRef.current) {
-      // Reuse cached vector for target scale
+      // Scale lerping
       targetScaleVec.current.set(targetScale, targetScale, targetScale)
-      performLerp(currentScaleRef.current, targetScaleVec.current, 0.2)
+      performLerp(currentScaleRef.current, targetScaleVec.current, ANIMATION.LERP.SCALE)
       groupRef.current.scale.copy(currentScaleRef.current)
 
-      // Lerp height with different speeds based on direction
+      // Height lerping
       const prevHeight = currentHeightRef.current
       const isIncreasing = targetHeight > prevHeight
-      const lerpFactor = isIncreasing ? 0.1 : 0.02 // Slower when decreasing height
-      currentHeightRef.current = THREE.MathUtils.lerp(currentHeightRef.current, targetHeight, lerpFactor)
+      const heightLerpFactor = isIncreasing ? ANIMATION.LERP.HEIGHT.INCREASING : ANIMATION.LERP.HEIGHT.DECREASING
+      currentHeightRef.current = THREE.MathUtils.lerp(currentHeightRef.current, targetHeight, heightLerpFactor)
 
-      // Calculate target positions for mesh and text3D based on state
+      // Calculate target positions
       const targetMeshX =
         isMoving || clicked
           ? isStackPosition
             ? !isEngineering
               ? -textSize[0] / 2
-              : textSize[0] / 2 // Moving back to stack
-            : 0 // Moving to/at bottom
+              : textSize[0] / 2
+            : 0
           : !isEngineering
             ? -textSize[0] / 2
-            : textSize[0] / 2 // At stack
+            : textSize[0] / 2
 
       const targetText3DX =
         isMoving || clicked
           ? isStackPosition
             ? !isEngineering
               ? -textSize[0]
-              : 0 // Moving back to stack
-            : -textSize[0] / 2 // Moving to/at bottom
+              : 0
+            : -textSize[0] / 2
           : !isEngineering
             ? -textSize[0]
-            : 0 // At stack
+            : 0
 
-      // Lerp mesh and text3D positions with synchronized speeds
-      const xLerpSpeed = 0.03 // Speed for x-axis when near stack
-      const normalLerpSpeed = 0.1 // Speed for y and z
+      const isNearBottom = Math.abs(groupRef.current.position.y - -0.807) < ANIMATION.THRESHOLD.BOTTOM_PROXIMITY
 
-      // Determine if we're near the bottom position (using y coordinate as reference)
-      const isNearBottom = Math.abs(groupRef.current.position.y - -0.807) < 0.5 // Threshold of 0.5 units
-
-      // Lerp mesh position
-      meshPositionRef.current.set(targetMeshX, textSize[1] / 2 - textSize[1] * 0.15, 0)
-      const prevMeshX = meshRef.current.position.x
-
-      // Only lerp x when not near bottom
-      if (!isNearBottom) {
-        meshRef.current.position.x = THREE.MathUtils.lerp(
-          meshRef.current.position.x,
-          meshPositionRef.current.x,
-          xLerpSpeed,
-        )
-      } else {
-        // Instantly set x position when near bottom
-        meshRef.current.position.x = targetMeshX
-      }
-
-      meshRef.current.position.y = THREE.MathUtils.lerp(
-        meshRef.current.position.y,
-        meshPositionRef.current.y,
-        normalLerpSpeed,
-      )
-      meshRef.current.position.z = THREE.MathUtils.lerp(
-        meshRef.current.position.z,
-        meshPositionRef.current.z,
-        normalLerpSpeed,
+      // Update mesh position
+      meshPositionRef.current.set(targetMeshX, textSize[1] / 2 - textSize[1] * LAYOUT.TEXT.VERTICAL_OFFSET, 0)
+      performSyncedLerp(
+        meshRef.current.position,
+        meshPositionRef.current,
+        ANIMATION.LERP.POSITION.X_AXIS,
+        ANIMATION.LERP.POSITION.NORMAL,
+        isNearBottom,
       )
 
-      // Lerp text3D position with the same approach
+      // Update text3D position
       text3DPositionRef.current.set(targetText3DX, 0, 0)
-      const prevText3DX = text3DRef.current.position.x
-
-      // Only lerp x when not near bottom
-      if (!isNearBottom) {
-        text3DRef.current.position.x = THREE.MathUtils.lerp(
-          text3DRef.current.position.x,
-          text3DPositionRef.current.x,
-          xLerpSpeed,
-        )
-      } else {
-        // Instantly set x position when near bottom
-        text3DRef.current.position.x = targetText3DX
-      }
-
-      text3DRef.current.position.y = THREE.MathUtils.lerp(
-        text3DRef.current.position.y,
-        text3DPositionRef.current.y,
-        normalLerpSpeed,
-      )
-      text3DRef.current.position.z = THREE.MathUtils.lerp(
-        text3DRef.current.position.z,
-        text3DPositionRef.current.z,
-        normalLerpSpeed,
+      performSyncedLerp(
+        text3DRef.current.position,
+        text3DPositionRef.current,
+        ANIMATION.LERP.POSITION.X_AXIS,
+        ANIMATION.LERP.POSITION.NORMAL,
+        isNearBottom,
       )
     }
   })
 
+  /**
+   * Update text size when content or engineering state changes.
+   * Dependencies:
+   * - content: Recalculate size when text changes
+   * - isEngineering: Affects text styling and size
+   */
   useEffect(() => {
     if (textRef.current) {
-      // Reuse cached Box3 and Vector3
       tempBox3.current.setFromObject(textRef.current)
       tempBox3.current.getSize(tempVec3.current)
       setTextSize([tempVec3.current.x, tempVec3.current.y, tempVec3.current.z])
@@ -251,9 +348,13 @@ function SkillText({
           onClick={handleClick}
           onPointerOver={handlePointerOver}
           onPointerOut={handlePointerOut}
-          position={[!isEngineering ? -textSize[0] / 2 : textSize[0] / 2, textSize[1] / 2 - textSize[1] * 0.15, 0]}
+          position={[
+            !isEngineering ? -textSize[0] / 2 : textSize[0] / 2,
+            textSize[1] / 2 - textSize[1] * LAYOUT.TEXT.VERTICAL_OFFSET,
+            0,
+          ]}
         >
-          <boxGeometry args={[textSize[0], textSize[1], Math.max(0.01, textSize[2])]} />
+          <boxGeometry args={[textSize[0], textSize[1], Math.max(ANIMATION.HEIGHT.MIN, textSize[2])]} />
           <meshBasicMaterial transparent opacity={0} />
         </mesh>
 
@@ -263,11 +364,11 @@ function SkillText({
             text3DRef.current = ref
           }}
           font={isEngineering ? HKGroteskFont : LemonFont}
-          size={isEngineering ? 0.5 : 0.6}
+          size={isEngineering ? LAYOUT.TEXT.SIZE.ENGINEERING : LAYOUT.TEXT.SIZE.CREATIVE}
           height={currentHeightRef.current}
-          curveSegments={12}
+          curveSegments={LAYOUT.TEXT.CURVE_SEGMENTS}
           bevelEnabled={false}
-          letterSpacing={isEngineering ? -0.06 : 0}
+          letterSpacing={isEngineering ? LAYOUT.TEXT.LETTER_SPACING.ENGINEERING : LAYOUT.TEXT.LETTER_SPACING.CREATIVE}
           position={[!isEngineering ? -textSize[0] : 0, 0, 0]}
         >
           {content}
@@ -284,8 +385,8 @@ const SkillStack = forwardRef(({ skills, onSkillClick }, ref) => {
   const { vpWidth: pixelWidth, vpHeight: pixelHeight } = useViewportMeasurements(false)
 
   // Convert pixel measurements to Three.js units
-  const vpWidth = pixelWidth / 35
-  const vpHeight = pixelHeight / 35
+  const vpWidth = pixelWidth / LAYOUT.VIEWPORT.MAIN_DIVIDER
+  const vpHeight = pixelHeight / LAYOUT.VIEWPORT.MAIN_DIVIDER
 
   const [activeSkills, setActiveSkills] = useState([])
   const [hoveredStates, setHoveredStates] = useState({})
@@ -310,11 +411,16 @@ const SkillStack = forwardRef(({ skills, onSkillClick }, ref) => {
   const tempVec3 = useRef(new THREE.Vector3())
   const tempForward = useRef(new THREE.Vector3(0, 0, -1))
   const tempTargetPos = useRef(new THREE.Vector3())
-  const lerpSpeed = 0.05
 
   // Trigger a rerender when animation states change significantly
   const [animationStateVersion, setAnimationStateVersion] = useState(0)
 
+  /**
+   * Initialize skill positions and animation states.
+   * Dependencies:
+   * - skills: Trigger recalculation when skills change
+   * - vpWidth/vpHeight: Update positions on viewport changes
+   */
   useEffect(() => {
     if (skills.length > 0) {
       const { positions, startPositions, delays } = calculateStackPositions(skills, vpWidth, vpHeight)
@@ -328,12 +434,21 @@ const SkillStack = forwardRef(({ skills, onSkillClick }, ref) => {
       const timer = setTimeout(() => {
         startTimeRef.current = performance.now()
         setIsReady(true)
-      }, 500)
+      }, ANIMATION.DELAY.INITIAL)
 
       return () => clearTimeout(timer)
     }
-  }, [skills])
+  }, [skills, vpWidth, vpHeight])
 
+  /**
+   * Handle skill click interactions and position updates.
+   * Dependencies:
+   * - camera: For position calculations
+   * - explodedSkill: Track expanded state
+   * - onSkillClick: Parent callback
+   * - skills: Update when skills change
+   * - vpWidth/vpHeight: Recalculate on viewport changes
+   */
   const handleSkillClick = useCallback(
     (content, textWidth) => {
       isInitialAnimationRef.current = false
@@ -373,10 +488,6 @@ const SkillStack = forwardRef(({ skills, onSkillClick }, ref) => {
 
           // Set target position with x=0 for centering
           positions[clickedIndex] = [0, tempTargetPos.current.y, tempTargetPos.current.z]
-
-          if (content === 'Three.js') {
-            console.log('Bottom target:', content, positions[clickedIndex])
-          }
         }
 
         targetPositionsRef.current = positions
@@ -423,6 +534,13 @@ const SkillStack = forwardRef(({ skills, onSkillClick }, ref) => {
     }))
   }
 
+  /**
+   * Animation frame update for skill positions.
+   * Handles:
+   * - Delayed animations
+   * - Position lerping
+   * - State updates on significant changes
+   */
   useFrame(() => {
     if (!isReady) return
 
@@ -444,12 +562,12 @@ const SkillStack = forwardRef(({ skills, onSkillClick }, ref) => {
         tempVec3.current.set(target[0], target[1], target[2])
 
         // Apply lerp with different speeds for x and y/z
-        const xLerpSpeed = 0.05 // Much slower for x-axis
-        const normalLerpSpeed = 0.05 // Normal speed for y and z
+        const xLerpSpeed = ANIMATION.LERP.POSITION.X_AXIS
+        const normalLerpSpeed = ANIMATION.LERP.POSITION.NORMAL
 
         // Determine if we're near the bottom position (using y coordinate as reference)
         const buttonY = getSpacingConfig(false).positions.button.hover.y
-        const isNearBottom = Math.abs(currentPos.y - buttonY) < 0.5 // Threshold of 0.5 units
+        const isNearBottom = Math.abs(currentPos.y - buttonY) < ANIMATION.THRESHOLD.BOTTOM_PROXIMITY
 
         // Only lerp x when not near bottom
         if (!isNearBottom) {
@@ -464,23 +582,15 @@ const SkillStack = forwardRef(({ skills, onSkillClick }, ref) => {
         currentPos.z = THREE.MathUtils.lerp(currentPos.z, tempVec3.current.z, normalLerpSpeed)
 
         // Check if this skill has reached its target position
-        if (currentPos.distanceTo(tempVec3.current) < 0.001) {
+        if (currentPos.distanceTo(tempVec3.current) < ANIMATION.THRESHOLD.POSITION_CHANGE) {
           if (movingSkillsRef.current.has(skill.content)) {
             movingSkillsRef.current.delete(skill.content)
             significantChanges = true
 
             // Check for bottom position state
-            const buttonY = getSpacingConfig(false).positions.button.hover.y
             if (target[1] === buttonY && !resetStatesRef.current[skill.content]?.isBottomPosition) {
               resetStatesRef.current[skill.content] = {
                 isBottomPosition: true,
-              }
-              if (skill.content === 'Three.js') {
-                console.log(
-                  'Bottom reached:',
-                  skill.content,
-                  currentPos.toArray().map((v) => v.toFixed(3)),
-                )
               }
               significantChanges = true
             }
@@ -491,7 +601,7 @@ const SkillStack = forwardRef(({ skills, onSkillClick }, ref) => {
         positions[index] = [currentPos.x, currentPos.y, currentPos.z]
 
         // Check if position changed significantly
-        if (prevPos.distanceTo(currentPos) > 0.001) {
+        if (prevPos.distanceTo(currentPos) > ANIMATION.THRESHOLD.POSITION_CHANGE) {
           significantChanges = true
         }
       })
@@ -511,7 +621,11 @@ const SkillStack = forwardRef(({ skills, onSkillClick }, ref) => {
         const currentPos = currentPositionsRef.current[index] || [0, vpHeight, -5]
         const isHovered = hoveredStates[index]
         const isMoving = movingSkillsRef.current.has(skill.content)
-        const scale = isMoving ? 1 : isHovered ? 1.2 : 1
+        const scale = isMoving
+          ? ANIMATION.SCALE.DEFAULT
+          : isHovered
+            ? ANIMATION.SCALE.HOVER_LARGE
+            : ANIMATION.SCALE.DEFAULT
         const elapsed = performance.now() - startTimeRef.current
         const isActive = isInitialAnimationRef.current ? elapsed >= delaysRef.current[index] : true
         const isInViewport = Math.abs(currentPos[0]) <= vpWidth * 1.5 && Math.abs(currentPos[1]) <= vpHeight * 1.5
@@ -638,11 +752,18 @@ function SkillStackContent() {
     }
   }, [currentSkill, resetCarouselState])
 
+  // Cleanup effect for carousel state
+  useEffect(() => {
+    return () => {
+      resetCarouselState()
+    }
+  }, [resetCarouselState])
+
   return (
     <>
       <SkillStack skills={skillsContent} onSkillClick={handleSkillClick} ref={skillStackRef} />
       {carouselPages && (
-        <group position={[0, 0, 6]}>
+        <group position={[0, 0, LAYOUT.POSITION.CAROUSEL]}>
           <PageCarousel images={carouselPages} onFinish={handleCarouselFinish} isExiting={isExitingCarousel} />
         </group>
       )}
@@ -652,7 +773,7 @@ function SkillStackContent() {
 
 function HoverDetector({ vpWidth }) {
   const setStyleMagazine = useSetAtom(styleMagazineAtom)
-  const columnOffset = vpWidth / 50 // Match the offset from calculateStackPositions
+  const columnOffset = vpWidth / LAYOUT.VIEWPORT.COLUMN_DIVIDER // Match the offset from calculateStackPositions
 
   // Create throttled pointer move handler
   const handlePointerMove = useCallback(
@@ -667,12 +788,12 @@ function HoverDetector({ vpWidth }) {
       } else {
         setStyleMagazine('vague')
       }
-    }, 100),
+    }, ANIMATION.DELAY.HOVER),
     [columnOffset, setStyleMagazine],
   )
 
   return (
-    <mesh position={[0, 0, -5.5]} onPointerMove={handlePointerMove}>
+    <mesh position={[0, 0, LAYOUT.POSITION.HOVER_DETECTOR]} onPointerMove={handlePointerMove}>
       <planeGeometry args={[vpWidth * 2, vpWidth * 2]} />
       <meshBasicMaterial transparent opacity={0} />
     </mesh>
@@ -680,15 +801,17 @@ function HoverDetector({ vpWidth }) {
 }
 
 export default function Contents() {
-  const { vpWidth } = useViewportMeasurements(false)
+  const { vpWidth, vpHeight } = useViewportMeasurements()
+
   return (
-    <group position={[0, 0, 4]}>
-      <HoverDetector vpWidth={vpWidth / 35} />
-      <group position={[0, 0, -3]}>
+    <group position={[0, 0, LAYOUT.POSITION.MAIN_GROUP]}>
+      <HoverDetector vpWidth={vpWidth / LAYOUT.VIEWPORT.MAIN_DIVIDER} />
+      <group position={[0, 0, LAYOUT.POSITION.CONTENT_GROUP]}>
         <SkillStackContent />
       </group>
     </group>
   )
 }
 
+// Only export SkillStack if it's needed externally
 export { SkillStack }
