@@ -678,7 +678,7 @@ function SkillStackContent() {
           if (hasSkill) {
             relevantSections.push({
               ...section,
-              type,
+              type: section.magazine || type, // Use section.magazine if available, fallback to type
             })
           }
         }
@@ -723,15 +723,18 @@ function SkillStackContent() {
 
         // Collect all pages from all relevant sections
         const allPages = relevantSections.reduce((acc, section) => {
-          const pages = Array.isArray(section.pages) ? section.pages : [section.pages]
-          return [...acc, ...pages.map((page) => getTexturePath(section.type, page))]
+          // Get pages in order based on pageIndex
+          const orderedPages = Object.values(section.pages)
+            .sort((a, b) => a.pageIndex - b.pageIndex)
+            .map((page) => getTexturePath(section.magazine, page.image))
+          return [...acc, ...orderedPages]
         }, [])
 
         // Use the first section's type for the magazine style
         const firstSection = relevantSections[0]
-        setCarouselType(firstSection.type)
+        setCarouselType(firstSection.magazine)
         setCarouselPages(allPages)
-        setStyleMagazine(firstSection.type)
+        setStyleMagazine(firstSection.magazine)
       } else {
         resetCarouselState()
       }

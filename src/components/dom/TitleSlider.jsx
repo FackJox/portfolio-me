@@ -1,20 +1,34 @@
 import { motion } from 'motion/react'
-import { useEffect, useState } from 'react'
-import { scrollState } from '@/templates/Scroll'
+import { useEffect, useState, useRef } from 'react'
+import { scrollState } from '@/helpers/components/Scroll'
 import { useAtomValue } from 'jotai'
 import { carouselReadyAtom } from '@/helpers/atoms'
 
 const TitleSlider = ({ titles = ['Title 1', 'Title 2', 'Title 3'] }) => {
   const [currentRotation, setCurrentRotation] = useState(0)
-  const baseAngle = 170
+  const baseAngle = 171.25
   const perspective = 500
   const sensitivity = 5 // Increased sensitivity factor
   const isCarouselReady = useAtomValue(carouselReadyAtom)
+  const hasFinishedLogged = useRef(false)
 
   useEffect(() => {
     const updateRotation = () => {
-      // Use negative scrollState.top multiplied by sensitivity to get faster rotation in opposite direction
-      setCurrentRotation(-scrollState.top * sensitivity)
+      // Calculate new rotation based on scroll with adjusted sensitivity
+      const newRotation = -scrollState.top * sensitivity
+      // Calculate total rotation needed to reach the last mesh
+      // Multiply by titles.length instead of (titles.length - 1) to reach the final mesh
+      const totalRotation = baseAngle * titles.length
+      // Clamp between 0 and totalRotation to ensure smooth transitions
+      const clampedRotation = Math.max(0, Math.min(newRotation, totalRotation))
+
+      // Log when we reach the final rotation
+      if (clampedRotation >= totalRotation && !hasFinishedLogged.current) {
+        console.log('Title Slider finished')
+        hasFinishedLogged.current = true
+      }
+
+      setCurrentRotation(clampedRotation)
     }
 
     // Create a RAF loop to smoothly update rotation
@@ -28,7 +42,7 @@ const TitleSlider = ({ titles = ['Title 1', 'Title 2', 'Title 3'] }) => {
     return () => {
       if (rafId) cancelAnimationFrame(rafId)
     }
-  }, [sensitivity])
+  }, [sensitivity, titles.length])
 
   if (!isCarouselReady) return null
 
@@ -43,7 +57,15 @@ const TitleSlider = ({ titles = ['Title 1', 'Title 2', 'Title 3'] }) => {
     >
       {titles.map((title, index) => {
         // Calculate rotation based on current scroll-driven rotation
-        const rotationAngle = -(index * baseAngle) + (currentRotation % (baseAngle * titles.length))
+        const rotationAngle = -(index * baseAngle) + currentRotation
+
+        // Calculate opacity based on rotation angle
+        // Hide when rotated more than 90 degrees in either direction
+        const opacity = Math.abs(rotationAngle) > 90 ? 0 : 1
+
+        console.log(
+          `Title "${title}" at index ${index}: rotationAngle = ${rotationAngle.toFixed(2)}, currentRotation = ${currentRotation.toFixed(2)}`,
+        )
 
         return (
           <motion.div
@@ -52,6 +74,8 @@ const TitleSlider = ({ titles = ['Title 1', 'Title 2', 'Title 3'] }) => {
             style={{
               transformOrigin: `50% 50% -${perspective / 1.2}px`,
               backfaceVisibility: 'hidden',
+              opacity,
+              transition: 'opacity 0.3s ease',
             }}
             initial={{
               rotateX: rotationAngle,

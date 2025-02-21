@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { useAtom } from 'jotai'
 import { motion, AnimatePresence } from 'motion/react'
-import Scroll from '@/templates/Scroll'
+import Scroll from '@/helpers/components/Scroll'
 
 import {
   styleMagazineAtom,
@@ -111,85 +111,84 @@ const Layout = ({ children }) => {
 
   return (
     <PreloadComponents>
-            <Scroll>
-
-      <div
-        ref={ref}
-        style={{
-          position: 'relative',
-          width: ' 100%',
-          height: '100%',
-          overflow: 'auto',
-          touchAction: 'none',
-        }}
-      >
-        <motion.div
-          className='relative flex min-h-[100dvh] w-full flex-col items-center'
-          animate={{
-            backgroundColor: backgroundTransitions.colors[styleMagazine],
-          }}
-          transition={{ duration: backgroundTransitions.duration, ease: backgroundTransitions.ease }}
-        >
-          {/* TopBar for landscape */}
-          <motion.div layout className={layout.showTopBar ? 'block w-full' : 'hidden'}>
-            <AnimatePresence mode='wait'>
-              <motion.div key={`top-${styleMagazine}`} {...layoutAnimations.topBar}>
-                {styleMagazine === 'smack' && <SmackTopBar />}
-                {styleMagazine === 'engineer' && <EngineerTopBar />}
-                {styleMagazine === 'vague' && <VagueTopBar />}
-              </motion.div>
-            </AnimatePresence>
-          </motion.div>
-
-          {/* Header for portrait */}
-          <motion.div layout className={layout.showHeader ? 'block w-full' : 'hidden'}>
-            <AnimatePresence mode='wait'>
-              <motion.div className='w-full' key={`header-${styleMagazine}`} {...layoutAnimations.header}>
-                {styleMagazine === 'smack' && <SmackHeader />}
-                {styleMagazine === 'engineer' && <EngineerHeader />}
-                {styleMagazine === 'vague' && <VagueHeader />}
-              </motion.div>
-            </AnimatePresence>
-          </motion.div>
-
-          {/* Buttons Section */}
-          <motion.div layout className={layout.showButtons ? 'block w-full' : 'hidden'}>
-            <AnimatePresence mode='wait'>
-              <motion.div key={`buttons-${styleMagazine}`} {...layoutAnimations.buttons}>
-                {styleMagazine === 'smack' && <SmackButtons />}
-                {styleMagazine === 'engineer' && <EngineerButtons />}
-                {styleMagazine === 'vague' && <VagueButtons />}
-              </motion.div>
-            </AnimatePresence>
-          </motion.div>
-
-          {children}
-
-          <motion.div layout className={layout.showCTA ? 'block w-full' : 'hidden'}>
-            <AnimatePresence mode='wait'>
-              <motion.div key={`cta-${styleMagazine}`} {...layoutAnimations.cta}>
-                {styleMagazine === 'smack' && <SmackLabel />}
-                {styleMagazine === 'engineer' && <EngineerLabel />}
-                {styleMagazine === 'vague' && <VagueLabel />}
-              </motion.div>
-            </AnimatePresence>
-          </motion.div>
-        </motion.div>
-
-        <Scene
+      <Scroll>
+        <div
+          ref={ref}
           style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100vw',
-            height: '100vh',
-            pointerEvents: 'none',
+            position: 'relative',
+            width: ' 100%',
+            height: '100%',
+            overflow: 'auto',
+            touchAction: 'none',
           }}
-          eventSource={ref}
-          eventPrefix='client'
+        >
+          <motion.div
+            className='relative flex min-h-[100dvh] w-full flex-col items-center'
+            animate={{
+              backgroundColor: backgroundTransitions.colors[styleMagazine],
+            }}
+            transition={{ duration: backgroundTransitions.duration, ease: backgroundTransitions.ease }}
+          >
+            {/* TopBar for landscape */}
+            <motion.div layout className={layout.showTopBar ? 'block w-full' : 'hidden'}>
+              <AnimatePresence mode='wait'>
+                <motion.div key={`top-${styleMagazine}`} {...layoutAnimations.topBar}>
+                  {styleMagazine === 'smack' && <SmackTopBar />}
+                  {styleMagazine === 'engineer' && <EngineerTopBar />}
+                  {styleMagazine === 'vague' && <VagueTopBar />}
+                </motion.div>
+              </AnimatePresence>
+            </motion.div>
+
+            {/* Header for portrait */}
+            <motion.div layout className={layout.showHeader ? 'block w-full' : 'hidden'}>
+              <AnimatePresence mode='wait'>
+                <motion.div className='w-full' key={`header-${styleMagazine}`} {...layoutAnimations.header}>
+                  {styleMagazine === 'smack' && <SmackHeader />}
+                  {styleMagazine === 'engineer' && <EngineerHeader />}
+                  {styleMagazine === 'vague' && <VagueHeader />}
+                </motion.div>
+              </AnimatePresence>
+            </motion.div>
+
+            {/* Buttons Section */}
+            <motion.div layout className={layout.showButtons ? 'block w-full' : 'hidden'}>
+              <AnimatePresence mode='wait'>
+                <motion.div key={`buttons-${styleMagazine}`} {...layoutAnimations.buttons}>
+                  {styleMagazine === 'smack' && <SmackButtons />}
+                  {styleMagazine === 'engineer' && <EngineerButtons />}
+                  {styleMagazine === 'vague' && <VagueButtons />}
+                </motion.div>
+              </AnimatePresence>
+            </motion.div>
+
+            {children}
+
+            <motion.div layout className={layout.showCTA ? 'block w-full' : 'hidden'}>
+              <AnimatePresence mode='wait'>
+                <motion.div key={`cta-${styleMagazine}`} {...layoutAnimations.cta}>
+                  {styleMagazine === 'smack' && <SmackLabel />}
+                  {styleMagazine === 'engineer' && <EngineerLabel />}
+                  {styleMagazine === 'vague' && <VagueLabel />}
+                </motion.div>
+              </AnimatePresence>
+            </motion.div>
+          </motion.div>
+
+          <Scene
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              width: '100vw',
+              height: '100vh',
+              pointerEvents: 'none',
+            }}
+            eventSource={ref}
+            eventPrefix='client'
           />
-      </div>
-          </Scroll>
+        </div>
+      </Scroll>
     </PreloadComponents>
   )
 }

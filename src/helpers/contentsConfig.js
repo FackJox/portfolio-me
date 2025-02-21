@@ -43,9 +43,21 @@ export const skills = {
 }
 
 export const SmackContents = {
-  Editorial: { page: 2, title: 'Editorial', skills: [] },
+  Editorial: {
+    magazine: 'smack',
+    pages: {
+      1: { image: '04Editorial', pageIndex: 2 },
+      2: { image: '05Editorial', pageIndex: 3 },
+    },
+    title: 'Editorial',
+    skills: [],
+  },
   Graphics: {
-    pages: ['06Graphics', '07Graphics'],
+    magazine: 'smack',
+    pages: {
+      1: { image: '06Graphics', pageIndex: 4 },
+      2: { image: '07Graphics', pageIndex: 5 },
+    },
     title: 'Graphics',
     skills: [
       skills.creative.design,
@@ -57,7 +69,11 @@ export const SmackContents = {
     ],
   },
   Scout: {
-    pages: ['08Scout', '09Scout'],
+    magazine: 'smack',
+    pages: {
+      1: { image: '08Scout', pageIndex: 6 },
+      2: { image: '09Scout', pageIndex: 7 },
+    },
     title: 'Scout',
     skills: [
       skills.creative.design,
@@ -68,7 +84,11 @@ export const SmackContents = {
     ],
   },
   Bunker: {
-    pages: ['10Bunker', '11Bunker'],
+    magazine: 'smack',
+    pages: {
+      1: { image: '10Bunker', pageIndex: 8 },
+      2: { image: '11Bunker', pageIndex: 9 },
+    },
     title: 'Bunker',
     skills: [
       skills.creative.design,
@@ -79,12 +99,20 @@ export const SmackContents = {
     ],
   },
   AI: {
-    pages: ['12AI', '13AI'],
+    magazine: 'smack',
+    pages: {
+      1: { image: '12AI', pageIndex: 10 },
+      2: { image: '13AI', pageIndex: 11 },
+    },
     title: 'AI',
     skills: [skills.creative.ai, skills.creative.design, skills.creative.animation, skills.creative.motiongraphics],
   },
   Sandro: {
-    pages: ['14Sandro', '15Sandro'],
+    magazine: 'smack',
+    pages: {
+      1: { image: '14Sandro', pageIndex: 12 },
+      2: { image: '15Sandro', pageIndex: 13 },
+    },
     title: 'Sandro',
     skills: [
       skills.creative.css,
@@ -100,7 +128,11 @@ export const SmackContents = {
     ],
   },
   Tarot: {
-    pages: ['18Tarot', '19Tarot'],
+    magazine: 'smack',
+    pages: {
+      1: { image: '18Tarot', pageIndex: 14 },
+      2: { image: '19Tarot', pageIndex: 15 },
+    },
     title: 'Tarot',
     skills: [
       skills.creative.css,
@@ -117,16 +149,34 @@ export const SmackContents = {
     ],
   },
   Events: {
-    pages: ['20Events', '21Events'],
+    magazine: 'smack',
+    pages: {
+      1: { image: '20Events', pageIndex: 16 },
+      2: { image: '21Events', pageIndex: 17 },
+    },
     title: 'Events',
     skills: [skills.creative.experience, skills.creative.projectmanagement],
   },
 }
 
 export const EngineerContents = {
-  Editorial: { page: 2, title: 'Editorial', skills: [] },
+  Editorial: {
+    magazine: 'engineer',
+    pages: {
+      1: { image: '04Editorial', pageIndex: 2 },
+      2: { image: '05Editorial', pageIndex: 3 },
+    },
+    title: 'Editorial',
+    skills: [],
+  },
   DigitalTwins: {
-    pages: ['06DigitalTwins', '07DigitalTwins', '08DigitalTwins', '09DigitalTwins'],
+    magazine: 'engineer',
+    pages: {
+      1: { image: '06DigitalTwins', pageIndex: 4 },
+      2: { image: '07DigitalTwins', pageIndex: 5 },
+      3: { image: '08DigitalTwins', pageIndex: 6 },
+      4: { image: '09DigitalTwins', pageIndex: 7 },
+    },
     title: 'Digital Twins',
     skills: [
       skills.engineering.digitalisation,
@@ -139,7 +189,11 @@ export const EngineerContents = {
     ],
   },
   WindTurbines: {
-    pages: ['10WindTurbines', '11WindTurbines'],
+    magazine: 'engineer',
+    pages: {
+      1: { image: '10WindTurbines', pageIndex: 8 },
+      2: { image: '11WindTurbines', pageIndex: 9 },
+    },
     title: 'Wind Turbines',
     skills: [
       skills.engineering.wind,
@@ -151,12 +205,20 @@ export const EngineerContents = {
     ],
   },
   HPC: {
-    pages: ['12HPC', '13HPC'],
+    magazine: 'engineer',
+    pages: {
+      1: { image: '12HPC', pageIndex: 10 },
+      2: { image: '13HPC', pageIndex: 11 },
+    },
     title: 'HPC',
     skills: [skills.engineering.nuclear, skills.engineering.projectmanagement, skills.engineering.modelling3d],
   },
   Modelling: {
-    pages: ['14Modelling', '15Modelling'],
+    magazine: 'engineer',
+    pages: {
+      1: { image: '14Modelling', pageIndex: 12 },
+      2: { image: '15Modelling', pageIndex: 13 },
+    },
     title: 'Modelling',
     skills: [
       skills.engineering.digitalisation,
@@ -167,7 +229,13 @@ export const EngineerContents = {
     ],
   },
   Transformation: {
-    pages: ['16Transformation', '17Transformation', '18Transformation', '19Transformation'],
+    magazine: 'engineer',
+    pages: {
+      1: { image: '16Transformation', pageIndex: 14 },
+      2: { image: '17Transformation', pageIndex: 15 },
+      3: { image: '18Transformation', pageIndex: 16 },
+      4: { image: '19Transformation', pageIndex: 17 },
+    },
     title: 'Transformation',
     skills: [
       skills.engineering.digitalisation,
@@ -179,10 +247,42 @@ export const EngineerContents = {
 }
 
 export const VagueContents = {
-  Editorial: { page: 3, title: 'Editorial', skills: [] },
-  Timeline: { page: 4, title: 'Timeline', skills: [] },
-  About: { page: 5, title: 'About', skills: [] },
-  Contributers: { page: 6, title: 'Contributers', skills: [] },
+  Editorial: {
+    magazine: 'vague',
+    pages: {
+      1: { image: '04Editorial', pageIndex: 3 },
+      2: { image: '05Editorial', pageIndex: 4 },
+    },
+    title: 'Editorial',
+    skills: [],
+  },
+  Timeline: {
+    magazine: 'vague',
+    pages: {
+      1: { image: '06Timeline', pageIndex: 5 },
+      2: { image: '07Timeline', pageIndex: 6 },
+    },
+    title: 'Timeline',
+    skills: [],
+  },
+  About: {
+    magazine: 'vague',
+    pages: {
+      1: { image: '08About', pageIndex: 7 },
+      2: { image: '09About', pageIndex: 8 },
+    },
+    title: 'About',
+    skills: [],
+  },
+  Contributers: {
+    magazine: 'vague',
+    pages: {
+      1: { image: '10Contributers', pageIndex: 9 },
+      2: { image: '11Contributers', pageIndex: 10 },
+    },
+    title: 'Contributers',
+    skills: [],
+  },
 }
 
 /**
