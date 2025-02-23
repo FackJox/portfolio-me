@@ -1,5 +1,6 @@
 // portfolio-me/src/utils/contentsPositionHelpers.js
 import * as THREE from 'three'
+import { SmackContents, EngineerContents, VagueContents } from './contentsConfig'
 
 // Constants for layout configuration
 /**
@@ -149,3 +150,118 @@ export const calculateExplosionPositions = (skills, vpWidth, vpHeight, clickedCo
 
   return { positions, delays }
 }
+
+/**
+ * Gets the number of pages for a given title by searching through all content sources.
+ *
+ * @param {string} title - The title to search for (case-sensitive)
+ * @returns {number} The number of pages for the matching title, or 0 if not found
+ *
+ * @example
+ * const pageCount = getPageCountForTitle("My Project");
+ * console.log(pageCount); // Returns the number of pages or 0 if not found
+ */
+export const getPageCountForTitle = (title) => {
+  const contentSources = [SmackContents, EngineerContents, VagueContents]
+
+  for (const source of contentSources) {
+    for (const contentItem of Object.values(source)) {
+      if (contentItem.title === title) {
+        return Object.keys(contentItem.pages).length
+      }
+    }
+  }
+
+  return 0
+}
+
+/**
+ * Calculates cumulative page counts for an ordered array of titles.
+ * Uses getPageCountForTitle to get individual counts and accumulates them.
+ *
+ * @param {string[]} titles - Ordered array of title strings to calculate cumulative counts for
+ * @returns {number[]} Array of cumulative page counts
+ *
+ * @example
+ * const titles = ["Project A", "Project B", "Project C"];
+ * const counts = getCumulativePageCounts(titles);
+ * // If individual counts are [2, 4, 3], returns [2, 6, 9]
+ */
+export const getCumulativePageCounts = (titles) => {
+  let sum = 0
+  return titles.map((title) => {
+    sum += getPageCountForTitle(title)
+    return sum
+  })
+}
+
+/**
+ * Calculates scroll thresholds for each title's enter, stationary, and exit positions.
+ * Uses cumulative page counts to determine when each title should transition during scrolling.
+ *
+ * @param {string[]} titles - Ordered array of title strings
+ * @param {number} baseAngle - Base angle value for calculating thresholds
+ * @returns {Array<{
+ *   title: string,
+ *   enter: number,
+ *   stationary: number,
+ *   exit: number,
+ *   pageCount: number
+ * }>} Array of threshold objects for each title
+ *
+ * @example
+ * const titles = ["Project A", "Project B"];
+ * const thresholds = getTitleScrollThresholds(titles, 171.25);
+ * // Returns array of objects with enter/stationary/exit thresholds and page counts
+ */
+export const getTitleScrollThresholds = (titles, baseAngle) => {
+  const cumulativeCounts = getCumulativePageCounts(titles)
+
+  return titles.map((title, index) => {
+    const pageCount = getPageCountForTitle(title)
+
+    if (index === 0) {
+      return {
+        title,
+        enter: 0,
+        stationary: 0,
+        exit: baseAngle * cumulativeCounts[0] - baseAngle,
+        pageCount,
+      }
+    }
+
+    return {
+      title,
+      enter: baseAngle * cumulativeCounts[index - 1] - 0.5 * baseAngle,
+      stationary: baseAngle * cumulativeCounts[index - 1],
+      exit: baseAngle * cumulativeCounts[index] - baseAngle,
+      pageCount,
+    }
+  })
+}
+
+/**
+ * Example usage of the title threshold calculation functions.
+ * This example demonstrates how the three functions work together
+ * to calculate scroll thresholds for a set of titles.
+ */
+/*
+//Example usage:
+const exampleTitles = ['Editorial', 'Graphics', 'Scout']
+const exampleBaseAngle = 171.25 // Same as used in TitleSlider component
+
+// Get thresholds for all titles
+const thresholds = getTitleScrollThresholds(exampleTitles, exampleBaseAngle)
+
+// Log results
+console.log('Title Scroll Thresholds:')
+thresholds.forEach(({ title, enter, stationary, exit, pageCount }) => {
+  console.log(`
+  Title: ${title}
+  - Page Count: ${pageCount}
+  - Enter at: ${enter.toFixed(2)}
+  - Stationary at: ${stationary.toFixed(2)}
+  - Exit at: ${exit.toFixed(2)}
+  `)
+})
+*/

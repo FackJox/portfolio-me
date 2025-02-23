@@ -22,10 +22,10 @@ export const PageCarousel = ({ images = [], onFinish, isExiting = false }) => {
   const textures = useTexture(images)
 
   // Helper function for entrance animation
-  const handleEntranceAnimation = (delta) => {
-    initialAnimationRef.current = THREE.MathUtils.lerp(initialAnimationRef.current, 0, 0.05)
+    const handleEntranceAnimation = (delta) => {
+      initialAnimationRef.current = THREE.MathUtils.lerp(initialAnimationRef.current, 0, 0.05)
 
-    // Check if initial animation is complete
+      // Check if initial animation is complete
     if (!hasLoggedReady.current && Math.abs(initialAnimationRef.current) < 0.01) {
       hasLoggedReady.current = true
       setCarouselReady(true)
