@@ -50,6 +50,8 @@ export const SmackContents = {
       2: { image: '05Editorial', pageIndex: 3 },
     },
     title: 'Editorial',
+    description:
+      'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum euismod mauris vel lectus tincidunt, ac venenatis nunc consequat.',
     skills: [],
   },
   Graphics: {
@@ -59,6 +61,8 @@ export const SmackContents = {
       2: { image: '07Graphics', pageIndex: 5 },
     },
     title: 'Graphics',
+    description:
+      'Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.',
     skills: [
       skills.creative.design,
       skills.creative.ai,
@@ -75,6 +79,8 @@ export const SmackContents = {
       2: { image: '09Scout', pageIndex: 7 },
     },
     title: 'Scout',
+    description:
+      'Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia.',
     skills: [
       skills.creative.design,
       skills.creative.ai,
@@ -90,6 +96,8 @@ export const SmackContents = {
       2: { image: '11Bunker', pageIndex: 9 },
     },
     title: 'Bunker',
+    description:
+      'Nulla facilisi morbi tempus iaculis urna id volutpat lacus. Vivamus at augue eget arcu dictum varius duis at consectetur.',
     skills: [
       skills.creative.design,
       skills.creative.ai,
@@ -105,6 +113,8 @@ export const SmackContents = {
       2: { image: '13AI', pageIndex: 11 },
     },
     title: 'AI',
+    description:
+      'Praesent elementum facilisis leo vel fringilla est ullamcorper eget. Scelerisque eleifend donec pretium vulputate sapien nec sagittis aliquam.',
     skills: [skills.creative.ai, skills.creative.design, skills.creative.animation, skills.creative.motiongraphics],
   },
   Sandro: {
@@ -114,6 +124,8 @@ export const SmackContents = {
       2: { image: '15Sandro', pageIndex: 13 },
     },
     title: 'Sandro',
+    description:
+      'Feugiat in fermentum posuere urna nec tincidunt praesent semper. Tortor consequat id porta nibh venenatis cras sed felis eget.',
     skills: [
       skills.creative.css,
       skills.creative.webdesign,
@@ -134,6 +146,8 @@ export const SmackContents = {
       2: { image: '19Tarot', pageIndex: 15 },
     },
     title: 'Tarot',
+    description:
+      'Massa tincidunt dui ut ornare lectus sit amet est placerat. Nunc pulvinar sapien et ligula ullamcorper malesuada proin libero.',
     skills: [
       skills.creative.css,
       skills.creative.webdesign,
@@ -155,6 +169,8 @@ export const SmackContents = {
       2: { image: '21Events', pageIndex: 17 },
     },
     title: 'Events',
+    description:
+      'Vitae congue eu consequat ac felis donec et odio pellentesque. Habitant morbi tristique senectus et netus et malesuada fames.',
     skills: [skills.creative.experience, skills.creative.projectmanagement],
   },
 }
@@ -167,6 +183,8 @@ export const EngineerContents = {
       2: { image: '05Editorial', pageIndex: 3 },
     },
     title: 'Editorial',
+    description:
+      'Egestas dui id ornare arcu odio ut sem nulla pharetra. Amet consectetur adipiscing elit pellentesque habitant morbi tristique.',
     skills: [],
   },
   DigitalTwins: {
@@ -178,6 +196,8 @@ export const EngineerContents = {
       4: { image: '09DigitalTwins', pageIndex: 7 },
     },
     title: 'Digital Twins',
+    description:
+      'Cursus mattis molestie a iaculis at erat pellentesque adipiscing commodo. Dignissim suspendisse in est ante in nibh mauris cursus.',
     skills: [
       skills.engineering.digitalisation,
       skills.engineering.digitaltwins,
@@ -195,6 +215,8 @@ export const EngineerContents = {
       2: { image: '11WindTurbines', pageIndex: 9 },
     },
     title: 'Wind Turbines',
+    description:
+      'Ultrices vitae auctor eu augue ut lectus arcu bibendum at. Vulputate eu scelerisque felis imperdiet proin fermentum leo vel.',
     skills: [
       skills.engineering.wind,
       skills.engineering.fluid,
@@ -211,6 +233,8 @@ export const EngineerContents = {
       2: { image: '13HPC', pageIndex: 11 },
     },
     title: 'HPC',
+    description:
+      'Elementum facilisis leo vel fringilla est ullamcorper eget nulla. Volutpat maecenas volutpat blandit aliquam etiam erat velit scelerisque.',
     skills: [skills.engineering.nuclear, skills.engineering.projectmanagement, skills.engineering.modelling3d],
   },
   Modelling: {
@@ -220,6 +244,8 @@ export const EngineerContents = {
       2: { image: '15Modelling', pageIndex: 13 },
     },
     title: 'Modelling',
+    description:
+      'Amet risus nullam eget felis eget nunc lobortis mattis aliquam. Ornare arcu dui vivamus arcu felis bibendum ut tristique.',
     skills: [
       skills.engineering.digitalisation,
       skills.engineering.digitaltwins,
@@ -237,6 +263,8 @@ export const EngineerContents = {
       4: { image: '19Transformation', pageIndex: 17 },
     },
     title: 'Transformation',
+    description:
+      'Pellentesque habitant morbi tristique senectus et netus et malesuada. Nunc faucibus a pellentesque sit amet porttitor eget dolor.',
     skills: [
       skills.engineering.digitalisation,
       skills.engineering.digitaltwins,
@@ -250,10 +278,12 @@ export const VagueContents = {
   Editorial: {
     magazine: 'vague',
     pages: {
-      1: { image: '04Editorial', pageIndex: 3 },
-      2: { image: '05Editorial', pageIndex: 4 },
+      1: { image: '04Editorial', pageIndex: 2 },
+      2: { image: '05Editorial', pageIndex: 3 },
     },
     title: 'Editorial',
+    description:
+      'Tempus imperdiet nulla malesuada pellentesque elit eget gravida cum. Sit amet cursus sit amet dictum sit amet justo.',
     skills: [],
   },
   Timeline: {

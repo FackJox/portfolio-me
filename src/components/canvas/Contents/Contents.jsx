@@ -717,9 +717,12 @@ function SkillStackContent() {
 
       const relevantSections = findRelevantContent(content)
       if (relevantSections.length > 0) {
-        // Get all titles from relevant sections
-        const sectionTitles = relevantSections.map((section) => section.title)
-        setTitles(sectionTitles)
+        // Get all titles and descriptions from relevant sections
+        const sectionItems = relevantSections.map((section) => ({
+          title: section.title,
+          description: section.description || 'No description available.',
+        }))
+        setTitles(sectionItems)
 
         // Collect all pages from all relevant sections
         const allPages = relevantSections.reduce((acc, section) => {

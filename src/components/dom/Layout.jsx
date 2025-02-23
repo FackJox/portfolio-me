@@ -33,7 +33,6 @@ import { layoutAnimations, backgroundTransitions } from '@/helpers/animationConf
 import { SmackHeader, SmackButtons, SmackLabel, SmackTopBar } from '@/components/dom/SmackUI'
 import { EngineerHeader, EngineerButtons, EngineerLabel, EngineerTopBar } from '@/components/dom/EngineerUI'
 import { VagueHeader, VagueButtons, VagueLabel, VagueTopBar } from '@/components/dom/VagueUI'
-import TitleSlider from '@/components/dom/TitleSlider'
 
 const Scene = dynamic(() => import('@/components/canvas/Scene'), { ssr: false })
 const View = dynamic(() => import('@/components/canvas/View').then((mod) => mod.View), {

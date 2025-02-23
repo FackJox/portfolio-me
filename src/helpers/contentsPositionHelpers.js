@@ -240,28 +240,56 @@ export const getTitleScrollThresholds = (titles, baseAngle) => {
   })
 }
 
+
 /**
- * Example usage of the title threshold calculation functions.
- * This example demonstrates how the three functions work together
- * to calculate scroll thresholds for a set of titles.
+ * Computes the effective rotation angle and phase for a title based on current scroll position
+ * and its threshold values.
+ *
+ * @param {number} currentRotation - Current scroll-based rotation value
+ * @param {Object} threshold - Threshold object containing enter, stationary, and exit values
+ * @param {number} nextThreshold - The threshold value for the next title's enter phase or current title's exit + baseAngle
+ * @returns {Object} Object containing:
+ *   - effectiveRotation: number (the calculated rotation angle)
+ *   - phase: string ('waiting' | 'entering' | 'stationary' | 'exiting' | 'hidden')
+ *   - opacity: number (calculated opacity value between 0 and 1)
  */
-/*
-//Example usage:
-const exampleTitles = ['Editorial', 'Graphics', 'Scout']
-const exampleBaseAngle = 171.25 // Same as used in TitleSlider component
+export const computeEffectiveRotation = (currentRotation, threshold, nextThreshold) => {
+  let effectiveRotation
+  let phase
+  let opacity = 1
 
-// Get thresholds for all titles
-const thresholds = getTitleScrollThresholds(exampleTitles, exampleBaseAngle)
+  if (currentRotation < threshold.enter) {
+    // Waiting phase: title starts at -90 degrees (bottom)
+    effectiveRotation = -90
+    phase = 'waiting'
+    opacity = 0
+  } else if (currentRotation >= threshold.enter && currentRotation < threshold.stationary) {
+    // Enter phase: rotate from -90 to 0 degrees
+    const progress = (currentRotation - threshold.enter) / (threshold.stationary - threshold.enter)
+    effectiveRotation = -90 + progress * 90
+    phase = 'entering'
+    opacity = Math.max(0, progress)
+  } else if (currentRotation >= threshold.stationary && currentRotation < threshold.exit) {
+    // Stationary phase: hold at 0 degrees
+    effectiveRotation = 0
+    phase = 'stationary'
+    opacity = 1
+  } else if (currentRotation >= threshold.exit && currentRotation < nextThreshold) {
+    // Exit phase: rotate from 0 to 90 degrees
+    const progress = (currentRotation - threshold.exit) / (nextThreshold - threshold.exit)
+    effectiveRotation = progress * 90
+    phase = 'exiting'
+    opacity = Math.max(0, 1 - progress)
+  } else {
+    // Hidden phase: stay at 90 degrees (top)
+    effectiveRotation = 90
+    phase = 'hidden'
+    opacity = 0
+  }
 
-// Log results
-console.log('Title Scroll Thresholds:')
-thresholds.forEach(({ title, enter, stationary, exit, pageCount }) => {
-  console.log(`
-  Title: ${title}
-  - Page Count: ${pageCount}
-  - Enter at: ${enter.toFixed(2)}
-  - Stationary at: ${stationary.toFixed(2)}
-  - Exit at: ${exit.toFixed(2)}
-  `)
-})
-*/
+  return {
+    effectiveRotation,
+    phase,
+    opacity,
+  }
+}

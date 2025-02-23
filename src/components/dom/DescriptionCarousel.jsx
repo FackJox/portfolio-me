@@ -3,10 +3,10 @@ import { useEffect, useState, useRef, useMemo } from 'react'
 import { scrollState } from '@/helpers/components/Scroll'
 import { useAtomValue } from 'jotai'
 import { carouselReadyAtom } from '@/helpers/atoms'
-import { getTitleScrollThresholds } from '@/helpers/contentsPositionHelpers'
+import { getTitleScrollThresholds, computeEffectiveRotation } from '@/helpers/contentsPositionHelpers'
 import { throttle } from '@/helpers/throttleHelpers'
 
-const TitleSlider = ({ titles = ['Title 1', 'Title 2', 'Title 3'] }) => {
+const DescriptionCarousel = ({ items = [{ title: 'Title 1', description: 'Description 1' }] }) => {
   const [currentRotation, setCurrentRotation] = useState(0)
   const baseAngle = 171.25
   const perspective = 500
@@ -19,6 +19,9 @@ const TitleSlider = ({ titles = ['Title 1', 'Title 2', 'Title 3'] }) => {
     thresholds: null,
     effectiveRotations: null,
   })
+
+  // Extract titles for threshold calculations
+  const titles = useMemo(() => items.map((item) => item.title), [items])
 
   // Throttled logging functions
   const logScrollUpdate = useMemo(
@@ -44,14 +47,14 @@ const TitleSlider = ({ titles = ['Title 1', 'Title 2', 'Title 3'] }) => {
     [],
   )
 
-  const logTitleUpdate = useMemo(
+  const logItemUpdate = useMemo(
     () =>
-      throttle((index, title, data) => {
-        const key = `title_${index}`
+      throttle((index, item, data) => {
+        const key = `item_${index}`
         const dataStr = JSON.stringify(data)
 
         if (!lastLoggedValues.current[key] || lastLoggedValues.current[key] !== dataStr) {
-          console.log(`Title ${index} (${title}) update:`, data)
+          console.log(`Item ${index} (${item.title}) update:`, data)
           lastLoggedValues.current[key] = dataStr
         }
       }, 500),
@@ -78,41 +81,16 @@ const TitleSlider = ({ titles = ['Title 1', 'Title 2', 'Title 3'] }) => {
       const totalRotation = lastThreshold.exit + baseAngle
       const clampedRotation = Math.max(0, Math.min(newRotation, totalRotation))
 
-      // Calculate effective rotations for all titles
-      const effectiveRotations = titles.map((_, index) => {
+      // Calculate effective rotations for all items
+      const effectiveRotations = items.map((item, index) => {
         const threshold = thresholds[index]
         // For the next threshold, use the next title's enter, or if it's the last title, use its exit + baseAngle
-        const nextThreshold = index < titles.length - 1 ? thresholds[index + 1].enter : threshold.exit + baseAngle
+        const nextThreshold = index < items.length - 1 ? thresholds[index + 1].enter : threshold.exit + baseAngle
 
-        let effectiveRotation
-        let phase
-
-        if (clampedRotation < threshold.enter) {
-          // Waiting phase: title starts at -90 degrees (bottom)
-          effectiveRotation = -90
-          phase = 'waiting'
-        } else if (clampedRotation >= threshold.enter && clampedRotation < threshold.stationary) {
-          // Enter phase: rotate from -90 to 0 degrees
-          const progress = (clampedRotation - threshold.enter) / (threshold.stationary - threshold.enter)
-          effectiveRotation = -90 + progress * 90
-          phase = 'entering'
-        } else if (clampedRotation >= threshold.stationary && clampedRotation < threshold.exit) {
-          // Stationary phase: hold at 0 degrees
-          effectiveRotation = 0
-          phase = 'stationary'
-        } else if (clampedRotation >= threshold.exit && clampedRotation < nextThreshold) {
-          // Exit phase: rotate from 0 to 90 degrees
-          const progress = (clampedRotation - threshold.exit) / (nextThreshold - threshold.exit)
-          effectiveRotation = progress * 90
-          phase = 'exiting'
-        } else {
-          // Hidden phase: stay at 90 degrees (top)
-          effectiveRotation = 90
-          phase = 'hidden'
-        }
+        const { effectiveRotation, phase } = computeEffectiveRotation(clampedRotation, threshold, nextThreshold)
 
         return {
-          title: titles[index],
+          item,
           effectiveRotation,
           phase,
           threshold: {
@@ -131,7 +109,7 @@ const TitleSlider = ({ titles = ['Title 1', 'Title 2', 'Title 3'] }) => {
       logScrollUpdate(scrollState.top, clampedRotation, effectiveRotations)
 
       if (clampedRotation >= totalRotation && !hasFinishedLogged.current) {
-        console.log('Title Slider finished')
+        console.log('Description Carousel finished')
         hasFinishedLogged.current = true
       }
 
@@ -148,7 +126,7 @@ const TitleSlider = ({ titles = ['Title 1', 'Title 2', 'Title 3'] }) => {
     return () => {
       if (rafId) cancelAnimationFrame(rafId)
     }
-  }, [sensitivity, titles.length])
+  }, [sensitivity, items.length])
 
   if (!isCarouselReady) {
     if (!lastLoggedValues.current.carouselReady) {
@@ -167,45 +145,19 @@ const TitleSlider = ({ titles = ['Title 1', 'Title 2', 'Title 3'] }) => {
         zIndex: 50,
       }}
     >
-      {titles.map((title, index) => {
+      {items.map((item, index) => {
         const threshold = thresholds[index]
         // Match the same nextThreshold calculation as in the effect
-        const nextThreshold = index < titles.length - 1 ? thresholds[index + 1].enter : threshold.exit + baseAngle
+        const nextThreshold = index < items.length - 1 ? thresholds[index + 1].enter : threshold.exit + baseAngle
 
-        let effectiveRotation
-        let phase
-
-        if (currentRotation < threshold.enter) {
-          effectiveRotation = -90
-          phase = 'waiting'
-        } else if (currentRotation >= threshold.enter && currentRotation < threshold.stationary) {
-          const progress = (currentRotation - threshold.enter) / (threshold.stationary - threshold.enter)
-          effectiveRotation = -90 + progress * 90
-          phase = 'entering'
-        } else if (currentRotation >= threshold.stationary && currentRotation < threshold.exit) {
-          effectiveRotation = 0
-          phase = 'stationary'
-        } else if (currentRotation >= threshold.exit && currentRotation < nextThreshold) {
-          const progress = (currentRotation - threshold.exit) / (nextThreshold - threshold.exit)
-          effectiveRotation = progress * 90
-          phase = 'exiting'
-        } else {
-          effectiveRotation = 90
-          phase = 'hidden'
-        }
-
+        const { effectiveRotation, phase, opacity } = computeEffectiveRotation(
+          currentRotation,
+          threshold,
+          nextThreshold,
+        )
         const rotationAngle = effectiveRotation
 
-        let opacity = 1
-        if (phase === 'waiting' || phase === 'hidden') {
-          opacity = 0
-        } else if (phase === 'entering') {
-          opacity = Math.max(0, (currentRotation - threshold.enter) / (threshold.stationary - threshold.enter))
-        } else if (phase === 'exiting') {
-          opacity = Math.max(0, 1 - (currentRotation - threshold.exit) / (nextThreshold - threshold.exit))
-        }
-
-        logTitleUpdate(index, title, {
+        logItemUpdate(index, item, {
           threshold,
           effectiveRotation,
           rotationAngle,
@@ -219,8 +171,8 @@ const TitleSlider = ({ titles = ['Title 1', 'Title 2', 'Title 3'] }) => {
 
         return (
           <motion.div
-            key={title}
-            className='absolute top-1/2 left-1/2 uppercase text-white text-7xl'
+            key={item.title}
+            className='absolute top-1/2 left-1/2 flex flex-col gap-2'
             style={{
               transformOrigin: `50% 50% -${perspective / 1.2}px`,
               backfaceVisibility: 'hidden',
@@ -242,7 +194,7 @@ const TitleSlider = ({ titles = ['Title 1', 'Title 2', 'Title 3'] }) => {
             }}
           >
             <div
-              className='relative'
+              className='relative uppercase text-white text-7xl'
               style={{
                 animation: isCarouselReady ? 'edgeToCenter 2s cubic-bezier(0.4, 0, 0.2, 1) forwards' : 'none',
                 WebkitMaskImage: 'linear-gradient(to right, transparent, black, transparent)',
@@ -253,8 +205,23 @@ const TitleSlider = ({ titles = ['Title 1', 'Title 2', 'Title 3'] }) => {
                 maskPosition: '0 0',
               }}
             >
-              {title}
+              {item.title}
             </div>
+            <div
+              className='relative text-white text-xl max-w-2xl'
+              style={{
+                animation: isCarouselReady ? 'edgeToCenter 2.2s cubic-bezier(0.4, 0, 0.2, 1) forwards' : 'none',
+                WebkitMaskImage: 'linear-gradient(to right, transparent, black, transparent)',
+                maskImage: 'linear-gradient(to right, transparent, black, transparent)',
+                WebkitMaskSize: '200% 100%',
+                maskSize: '200% 100%',
+                WebkitMaskPosition: '0 0',
+                maskPosition: '0 0',
+              }}
+            >
+              {item.description}
+            </div>
+
             <style jsx global>{`
               @keyframes edgeToCenter {
                 0% {
@@ -274,4 +241,4 @@ const TitleSlider = ({ titles = ['Title 1', 'Title 2', 'Title 3'] }) => {
   )
 }
 
-export default TitleSlider
+export default DescriptionCarousel
