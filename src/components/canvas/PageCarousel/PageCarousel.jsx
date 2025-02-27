@@ -36,7 +36,7 @@ export const PageCarousel = ({ images = [], onFinish, isExiting = false }) => {
   const handleExitAnimation = (delta) => {
     const targetProgress = images.length * 1.75
     const prevExitProgress = exitProgressRef.current
-    exitProgressRef.current = THREE.MathUtils.lerp(exitProgressRef.current, targetProgress, 0.05)
+    exitProgressRef.current = THREE.MathUtils.lerp(exitProgressRef.current, targetProgress, 0.01)
 
     // Check if exit animation is complete
     if (!hasFinished.current && Math.abs(exitProgressRef.current - targetProgress) < 0.01) {

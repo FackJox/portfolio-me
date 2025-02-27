@@ -5,6 +5,7 @@ import { Suspense } from 'react'
 import { useAtom } from 'jotai'
 import { motion } from 'motion/react'
 import { allAssetsLoadedAtom } from '@/helpers/atoms'
+import QueryParamHandler from '@/components/QueryParamHandler'
 
 // Keep dynamic imports for canvas components
 const Library = dynamic(() => import('@/components/canvas/Magazines/Library').then((mod) => mod.Library), {
@@ -26,6 +27,12 @@ const AllAssetsLoader = ({ children }) => {
 export default function Page() {
   return (
     <motion.div layout className='relative w-full flex-1'>
+      {/* Regular React components */}
+      <AllAssetsLoader>
+        <QueryParamHandler />
+      </AllAssetsLoader>
+
+      {/* 3D/R3F components */}
       <View className='absolute w-full inset-0 flex items-center justify-center'>
         <Suspense fallback={null}>
           <AllAssetsLoader>

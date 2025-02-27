@@ -43,6 +43,17 @@ export const skills = {
 }
 
 export const SmackContents = {
+  Contents: {
+    magazine: 'smack',
+    pages: {
+      1: { image: '02Contents', pageIndex: 0 },
+      2: { image: '03Contents', pageIndex: 1 },
+    },
+    title: 'Contents',
+    description:
+      'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum euismod mauris vel lectus tincidunt, ac venenatis nunc consequat.',
+    skills: [],
+  },
   Editorial: {
     magazine: 'smack',
     pages: {
@@ -176,6 +187,17 @@ export const SmackContents = {
 }
 
 export const EngineerContents = {
+  Contents: {
+    magazine: 'engineer',
+    pages: {
+      1: { image: '02Contents', pageIndex: 0 },
+      2: { image: '03Contents', pageIndex: 1 },
+    },
+    title: 'Contents',
+    description:
+      'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum euismod mauris vel lectus tincidunt, ac venenatis nunc consequat.',
+    skills: [],
+  },
   Editorial: {
     magazine: 'engineer',
     pages: {
@@ -275,6 +297,17 @@ export const EngineerContents = {
 }
 
 export const VagueContents = {
+  Contents: {
+    magazine: 'vague',
+    pages: {
+      1: { image: '02Contents', pageIndex: 0 },
+      2: { image: '03Contents', pageIndex: 1 },
+    },
+    title: 'Contents',
+    description:
+      'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum euismod mauris vel lectus tincidunt, ac venenatis nunc consequat.',
+    skills: [],
+  },
   Editorial: {
     magazine: 'vague',
     pages: {
