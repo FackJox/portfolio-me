@@ -3,9 +3,10 @@ import * as THREE from 'three'
 import { useFrame } from '@react-three/fiber'
 import { scrollState } from '@/helpers/components/Scroll'
 import { useTexture } from '@react-three/drei'
-import { useSetAtom } from 'jotai'
+import { useSetAtom, useAtomValue } from 'jotai'
 import { carouselReadyAtom } from '@/helpers/atoms'
 import { configureMaterialShader } from '@/helpers/shaderHelpers'
+import { carouselExitingAtom } from '@/components/dom/DescriptionCarousel'
 
 export const PageCarousel = ({ images = [], onFinish, isExiting = false }) => {
   const groupRef = useRef()
@@ -17,15 +18,17 @@ export const PageCarousel = ({ images = [], onFinish, isExiting = false }) => {
   const setCarouselReady = useSetAtom(carouselReadyAtom)
   const exitProgressRef = useRef(0) // Track exit animation progress
   const lastLogTimeRef = useRef(0) // For throttling logs
+  const shouldExit = useAtomValue(carouselExitingAtom)
+  const combinedIsExiting = isExiting || shouldExit
 
   // Load textures at component level
   const textures = useTexture(images)
 
   // Helper function for entrance animation
-    const handleEntranceAnimation = (delta) => {
-      initialAnimationRef.current = THREE.MathUtils.lerp(initialAnimationRef.current, 0, 0.05)
+  const handleEntranceAnimation = (delta) => {
+    initialAnimationRef.current = THREE.MathUtils.lerp(initialAnimationRef.current, 0, 0.05)
 
-      // Check if initial animation is complete
+    // Check if initial animation is complete
     if (!hasLoggedReady.current && Math.abs(initialAnimationRef.current) < 0.01) {
       hasLoggedReady.current = true
       setCarouselReady(true)
@@ -143,23 +146,23 @@ export const PageCarousel = ({ images = [], onFinish, isExiting = false }) => {
 
     // Update scroll progress
     const scrollSpeed = 5.1
-    let currentScrollValue = isExiting ? handleExitAnimation(delta) : scrollState.progress * scrollSpeed
+    let currentScrollValue = combinedIsExiting ? handleExitAnimation(delta) : scrollState.progress * scrollSpeed
 
-    if (!isExiting) {
+    if (!combinedIsExiting) {
       handleEntranceAnimation(delta)
     }
 
     // Update each mesh and check if all are finished
     let allFinished = true
     meshesRef.current.forEach(({ mesh, pos }, index) => {
-      const isVisible = updateMeshAnimation(mesh, pos, index, currentScrollValue, delta, isExiting)
-      if (!isExiting && isVisible) {
+      const isVisible = updateMeshAnimation(mesh, pos, index, currentScrollValue, delta, combinedIsExiting)
+      if (!combinedIsExiting && isVisible) {
         allFinished = false
       }
     })
 
     // Check if finished scrolling normally (not during exit animation)
-    if (!isExiting && allFinished && !hasFinished.current) {
+    if (!combinedIsExiting && allFinished && !hasFinished.current) {
       hasFinished.current = true
       // Reset scroll state before calling onFinish
       scrollState.top = 0

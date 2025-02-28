@@ -1,10 +1,14 @@
 import { motion } from 'motion/react'
 import { useEffect, useState, useRef, useMemo } from 'react'
 import { scrollState } from '@/helpers/components/Scroll'
-import { useAtomValue } from 'jotai'
+import { useAtomValue, useSetAtom } from 'jotai'
 import { carouselReadyAtom } from '@/helpers/atoms'
 import { getTitleScrollThresholds, computeEffectiveRotation } from '@/helpers/contentsPositionHelpers'
 import { throttle } from '@/helpers/throttleHelpers'
+import { atom } from 'jotai'
+import { easeIn } from 'motion'
+
+export const carouselExitingAtom = atom(false)
 
 const DescriptionCarousel = ({ items = [{ title: 'Title 1', description: 'Description 1' }] }) => {
   const [currentRotation, setCurrentRotation] = useState(0)
@@ -12,7 +16,10 @@ const DescriptionCarousel = ({ items = [{ title: 'Title 1', description: 'Descri
   const perspective = 500
   const sensitivity = 5
   const isCarouselReady = useAtomValue(carouselReadyAtom)
+  const [isFadingOut, setIsFadingOut] = useState(false)
+  const setIsExiting = useSetAtom(carouselExitingAtom)
   const hasFinishedLogged = useRef(false)
+  const navigationTimeoutRef = useRef(null)
   const lastLoggedValues = useRef({
     scroll: null,
     rotation: null,
@@ -20,10 +27,8 @@ const DescriptionCarousel = ({ items = [{ title: 'Title 1', description: 'Descri
     effectiveRotations: null,
   })
 
-  // Extract titles for threshold calculations
   const titles = useMemo(() => items.map((item) => item.title), [items])
 
-  // Throttled logging functions
   const logScrollUpdate = useMemo(
     () =>
       throttle((scroll, rotation, effectiveRotations) => {
@@ -61,7 +66,6 @@ const DescriptionCarousel = ({ items = [{ title: 'Title 1', description: 'Descri
     [],
   )
 
-  // Calculate scroll thresholds for all titles
   const thresholds = useMemo(() => {
     const calculatedThresholds = getTitleScrollThresholds(titles, baseAngle)
     const thresholdsStr = JSON.stringify(calculatedThresholds)
@@ -73,18 +77,56 @@ const DescriptionCarousel = ({ items = [{ title: 'Title 1', description: 'Descri
     return calculatedThresholds
   }, [titles])
 
+  // Safe navigation function that works outside of Next.js context
+  const navigateToPage = (url) => {
+    // Check if we're in a browser environment
+    if (typeof window !== 'undefined') {
+      window.location.href = url;
+    }
+  };
+
+  const handleCarouselClick = () => {
+    // Prevent multiple clicks from creating multiple timeouts
+    if (isFadingOut) return;
+    
+    // Start fading out
+    setIsFadingOut(true)
+    // Tell PageCarousel to start exit animation
+    setIsExiting(true)
+    console.log('DescriptionCarousel: Exit animation triggered')
+    
+    // Clear any existing timeout
+    if (navigationTimeoutRef.current) {
+      clearTimeout(navigationTimeoutRef.current);
+    }
+    
+    // Set timeout to match the fade-out animation duration (500ms)
+    navigationTimeoutRef.current = setTimeout(() => {
+      // Navigate to the new URL after animation completes
+      console.log('DescriptionCarousel: Navigation triggered to /page?magazine=smack&article=Graphics');
+      // Use the safe navigation function instead of router
+      navigateToPage('/?magazine=smack&article=Graphics');
+    }, 500); // Match the duration of the fade-out animation
+  }
+
+  // Clean up timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (navigationTimeoutRef.current) {
+        clearTimeout(navigationTimeoutRef.current);
+      }
+    };
+  }, []);
+
   useEffect(() => {
     const updateRotation = () => {
       const newRotation = -scrollState.top * sensitivity
-      // Calculate total rotation based on the last title's exit threshold plus one baseAngle
       const lastThreshold = thresholds[thresholds.length - 1]
       const totalRotation = lastThreshold.exit + baseAngle
       const clampedRotation = Math.max(0, Math.min(newRotation, totalRotation))
 
-      // Calculate effective rotations for all items
       const effectiveRotations = items.map((item, index) => {
         const threshold = thresholds[index]
-        // For the next threshold, use the next title's enter, or if it's the last title, use its exit + baseAngle
         const nextThreshold = index < items.length - 1 ? thresholds[index + 1].enter : threshold.exit + baseAngle
 
         const { effectiveRotation, phase } = computeEffectiveRotation(clampedRotation, threshold, nextThreshold)
@@ -128,6 +170,19 @@ const DescriptionCarousel = ({ items = [{ title: 'Title 1', description: 'Descri
     }
   }, [sensitivity, items.length])
 
+  useEffect(() => {
+    if (!isCarouselReady) {
+      setIsFadingOut(false)
+      setIsExiting(false)
+      
+      // Clear navigation timeout if carousel is not ready
+      if (navigationTimeoutRef.current) {
+        clearTimeout(navigationTimeoutRef.current);
+        navigationTimeoutRef.current = null;
+      }
+    }
+  }, [isCarouselReady, setIsExiting])
+
   if (!isCarouselReady) {
     if (!lastLoggedValues.current.carouselReady) {
       console.log('Carousel not ready yet')
@@ -144,10 +199,10 @@ const DescriptionCarousel = ({ items = [{ title: 'Title 1', description: 'Descri
         transformStyle: 'preserve-3d',
         zIndex: 50,
       }}
+      onClick={handleCarouselClick}
     >
       {items.map((item, index) => {
         const threshold = thresholds[index]
-        // Match the same nextThreshold calculation as in the effect
         const nextThreshold = index < items.length - 1 ? thresholds[index + 1].enter : threshold.exit + baseAngle
 
         const { effectiveRotation, phase, opacity } = computeEffectiveRotation(
@@ -176,22 +231,25 @@ const DescriptionCarousel = ({ items = [{ title: 'Title 1', description: 'Descri
             style={{
               transformOrigin: `50% 50% -${perspective / 1.2}px`,
               backfaceVisibility: 'hidden',
-              opacity,
-              transition: 'opacity 0.3s ease',
+              cursor: 'pointer',
             }}
             initial={{
               rotateX: rotationAngle,
               x: '-50%',
               y: '-50%',
+              opacity: opacity,
             }}
             animate={{
               rotateX: rotationAngle,
               x: '-50%',
               y: '-50%',
+              opacity: isFadingOut ? 0 : opacity,
             }}
             transition={{
               rotateX: { duration: 0.1, ease: 'linear' },
+              opacity: isFadingOut ? { duration: 0.5, easeIn: 'easeInOut' } : { duration: 0.3, easeIn: 'ease' },
             }}
+            onClick={handleCarouselClick}
           >
             <div
               className='relative uppercase text-white text-7xl'

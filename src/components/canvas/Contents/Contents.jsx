@@ -9,10 +9,11 @@ import { useViewportMeasurements } from '@/helpers/deviceHelpers'
 import { throttle } from '@/helpers/throttleHelpers'
 import HKGroteskFont from './HKGrotesk-SemiBold.json'
 import LemonFont from './Lemon_Regular.json'
-import { useSetAtom } from 'jotai'
+import { useSetAtom, useAtom } from 'jotai'
 import { styleMagazineAtom, titleSlidesAtom } from '@/helpers/atoms'
 import { PageCarousel } from '@/components/canvas/PageCarousel/PageCarousel'
 import { getTexturePath } from '@/helpers/textureLoaders'
+import { carouselExitingAtom } from '@/components/dom/DescriptionCarousel'
 
 // Animation Constants
 const ANIMATION = {
@@ -658,6 +659,7 @@ function SkillStackContent() {
   const [isExitingCarousel, setIsExitingCarousel] = useState(false)
   const setStyleMagazine = useSetAtom(styleMagazineAtom)
   const setTitles = useSetAtom(titleSlidesAtom)
+  const [isCarouselExiting, setIsCarouselExiting] = useAtom(carouselExitingAtom)
   const skillStackRef = useRef(null)
 
   // Function to reset all carousel-related state
@@ -666,7 +668,8 @@ function SkillStackContent() {
     setCarouselType(null)
     setTitles([])
     setIsExitingCarousel(false)
-  }, [setTitles])
+    setIsCarouselExiting(false)
+  }, [setTitles, setIsCarouselExiting])
 
   const findRelevantContent = useCallback((clickedSkill) => {
     // Search through SmackContents and EngineerContents
@@ -700,6 +703,7 @@ function SkillStackContent() {
         // If we have a current skill, trigger the exit animation
         if (currentSkill && skillStackRef.current) {
           setIsExitingCarousel(true)
+          setIsCarouselExiting(true)
         } else {
           resetCarouselState()
         }
@@ -709,6 +713,7 @@ function SkillStackContent() {
       // If clicking the same skill that's already expanded, start exit animation
       if (content === currentSkill) {
         setIsExitingCarousel(true)
+        setIsCarouselExiting(true)
         return
       }
 
@@ -742,7 +747,7 @@ function SkillStackContent() {
         resetCarouselState()
       }
     },
-    [findRelevantContent, setStyleMagazine, setTitles, currentSkill, resetCarouselState],
+    [findRelevantContent, setStyleMagazine, setTitles, currentSkill, resetCarouselState, setIsCarouselExiting],
   )
 
   // Handle carousel finish
