@@ -726,6 +726,7 @@ function SkillStackContent() {
         const sectionItems = relevantSections.map((section) => ({
           title: section.title,
           description: section.description || 'No description available.',
+          magazine: section.magazine || section.type, // Include magazine information
         }))
         setTitles(sectionItems)
 

@@ -12,6 +12,7 @@ export const carouselExitingAtom = atom(false)
 
 const DescriptionCarousel = ({ items = [{ title: 'Title 1', description: 'Description 1' }] }) => {
   const [currentRotation, setCurrentRotation] = useState(0)
+  const [selectedItemIndex, setSelectedItemIndex] = useState(0)
   const baseAngle = 171.25
   const perspective = 500
   const sensitivity = 5
@@ -85,9 +86,36 @@ const DescriptionCarousel = ({ items = [{ title: 'Title 1', description: 'Descri
     }
   };
 
+  // Determine which item is currently most visible/centered
+  const determineSelectedItem = () => {
+    // Find the item whose rotation is closest to 0 (most centered)
+    let minRotation = Infinity;
+    let selectedIndex = 0;
+    
+    items.forEach((item, index) => {
+      const threshold = thresholds[index];
+      const nextThreshold = index < items.length - 1 ? thresholds[index + 1].enter : threshold.exit + baseAngle;
+      const { effectiveRotation } = computeEffectiveRotation(currentRotation, threshold, nextThreshold);
+      
+      // The item with rotation closest to 0 is the most visible
+      const rotationDistance = Math.abs(effectiveRotation);
+      if (rotationDistance < minRotation) {
+        minRotation = rotationDistance;
+        selectedIndex = index;
+      }
+    });
+    
+    return selectedIndex;
+  };
+
   const handleCarouselClick = () => {
     // Prevent multiple clicks from creating multiple timeouts
     if (isFadingOut) return;
+    
+    // Determine which item is currently selected
+    const selectedIndex = determineSelectedItem();
+    setSelectedItemIndex(selectedIndex);
+    const selectedItem = items[selectedIndex];
     
     // Start fading out
     setIsFadingOut(true)
@@ -102,10 +130,18 @@ const DescriptionCarousel = ({ items = [{ title: 'Title 1', description: 'Descri
     
     // Set timeout to match the fade-out animation duration (500ms)
     navigationTimeoutRef.current = setTimeout(() => {
+      // Extract magazine and article from the selected item
+      // The magazine and article information should be available in the item
+      // If not directly available, we can determine it based on the title
+      const magazine = selectedItem.magazine || 'smack'; // Default to smack if not specified
+      const article = selectedItem.title || 'Graphics'; // Use the title as the article name
+      
       // Navigate to the new URL after animation completes
-      console.log('DescriptionCarousel: Navigation triggered to /page?magazine=smack&article=Graphics');
+      const url = `/?magazine=${magazine}&article=${article}`;
+      console.log(`DescriptionCarousel: Navigation triggered to ${url}`);
+      
       // Use the safe navigation function instead of router
-      navigateToPage('/?magazine=smack&article=Graphics');
+      navigateToPage(url);
     }, 500); // Match the duration of the fade-out animation
   }
 
