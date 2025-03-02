@@ -42,7 +42,25 @@ export const PageCarousel = ({ images = [], onFinish, isExiting = false }) => {
     exitProgressRef.current = THREE.MathUtils.lerp(exitProgressRef.current, targetProgress, 0.01)
 
     // Check if exit animation is complete
-    if (!hasFinished.current && Math.abs(exitProgressRef.current - targetProgress) < 0.01) {
+    if (!hasFinished.current && Math.abs(exitProgressRef.current - targetProgress) < 0.1) {
+      hasFinished.current = true
+      // Reset scroll state before calling onFinish
+      scrollState.top = 0
+      scrollState.progress = 0
+      onFinish?.()
+    }
+
+    return exitProgressRef.current
+  }
+
+  // Helper function for reverse exit animation (for DescriptionCarousel clicks)
+  const handleReverseExitAnimation = (delta) => {
+    const targetProgress = -images.length * 1.75
+    const prevExitProgress = exitProgressRef.current
+    exitProgressRef.current = THREE.MathUtils.lerp(exitProgressRef.current, targetProgress, 0.01)
+
+    // Check if exit animation is complete
+    if (!hasFinished.current && Math.abs(exitProgressRef.current - targetProgress) < 0.1) {
       hasFinished.current = true
       // Reset scroll state before calling onFinish
       scrollState.top = 0
@@ -65,7 +83,6 @@ export const PageCarousel = ({ images = [], onFinish, isExiting = false }) => {
     return finalProgress < 2
   }
 
-  // Reset scroll state when unmounting
   useEffect(() => {
     return () => {
       scrollState.top = 0
@@ -83,12 +100,25 @@ export const PageCarousel = ({ images = [], onFinish, isExiting = false }) => {
     initialAnimationRef.current = -10
     exitProgressRef.current = 0
 
+    // Log component mount/update
+    console.log('PageCarousel: Reset state with', images.length, 'images')
+
     return () => {
       setCarouselReady(false)
       scrollState.top = 0
       scrollState.progress = 0
     }
   }, [images])
+
+  // Reset hasFinished when exit state changes
+  useEffect(() => {
+    if (combinedIsExiting) {
+      console.log('PageCarousel: Exit animation started', shouldExit ? 'reverse' : 'forward')
+    } else {
+      // Reset hasFinished when not exiting
+      hasFinished.current = false
+    }
+  }, [combinedIsExiting, shouldExit])
 
   useEffect(() => {
     if (!images.length) return
@@ -146,7 +176,23 @@ export const PageCarousel = ({ images = [], onFinish, isExiting = false }) => {
 
     // Update scroll progress
     const scrollSpeed = 5.1
-    let currentScrollValue = combinedIsExiting ? handleExitAnimation(delta) : scrollState.progress * scrollSpeed
+    let currentScrollValue
+    
+    if (combinedIsExiting) {
+      // Determine which exit animation to use based on the source
+      if (shouldExit) {
+        // Use reverse exit animation for DescriptionCarousel clicks
+        currentScrollValue = handleReverseExitAnimation(delta)
+      } else if (isExiting) {
+        // Use original exit animation for SkillText clicks
+        currentScrollValue = handleExitAnimation(delta)
+      } else {
+        // Fallback (should not happen)
+        currentScrollValue = handleExitAnimation(delta)
+      }
+    } else {
+      currentScrollValue = scrollState.progress * scrollSpeed
+    }
 
     if (!combinedIsExiting) {
       handleEntranceAnimation(delta)

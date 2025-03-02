@@ -54,7 +54,7 @@ const EnhancedQueryParamHandler = () => {
 
 export default function Page() {
   return (
-    <motion.div layout className='relative w-full flex-1'>
+    <motion.div layout className='relative w-full h-full flex-1'>
       {/* 
         Render EnhancedQueryParamHandler outside of AllAssetsLoader
         This ensures it has its own lifecycle and can independently

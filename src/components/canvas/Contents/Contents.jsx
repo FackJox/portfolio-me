@@ -702,9 +702,13 @@ function SkillStackContent() {
       if (!content) {
         // If we have a current skill, trigger the exit animation
         if (currentSkill && skillStackRef.current) {
+          // Immediately clear the titles to hide DescriptionCarousel
+          setTitles([])
+          // Still trigger the exit animation for PageCarousel
           setIsExitingCarousel(true)
-          setIsCarouselExiting(true)
+          setIsCarouselExiting(false) // Don't set this for SkillText clicks
         } else {
+          // Only reset if there's no current skill
           resetCarouselState()
         }
         return
@@ -712,57 +716,70 @@ function SkillStackContent() {
 
       // If clicking the same skill that's already expanded, start exit animation
       if (content === currentSkill) {
+        // Immediately clear the titles to hide DescriptionCarousel
+        setTitles([])
+        // Still trigger the exit animation for PageCarousel
         setIsExitingCarousel(true)
-        setIsCarouselExiting(true)
+        setIsCarouselExiting(false) // Don't set this for SkillText clicks
         return
       }
 
-      // Store the clicked skill
-      setCurrentSkill(content)
+      // Only proceed with setting up a new carousel if we're not in an exit animation
+      if (!isExitingCarousel && !isCarouselExiting) {
+        // Store the clicked skill
+        setCurrentSkill(content)
 
-      const relevantSections = findRelevantContent(content)
-      if (relevantSections.length > 0) {
-        // Get all titles and descriptions from relevant sections
-        const sectionItems = relevantSections.map((section) => ({
-          title: section.title,
-          description: section.description || 'No description available.',
-          magazine: section.magazine || section.type, // Include magazine information
-        }))
-        setTitles(sectionItems)
+        const relevantSections = findRelevantContent(content)
+        if (relevantSections.length > 0) {
+          // Get all titles and descriptions from relevant sections
+          const sectionItems = relevantSections.map((section) => ({
+            title: section.title,
+            description: section.description || 'No description available.',
+            magazine: section.magazine || section.type, // Include magazine information
+          }))
+          setTitles(sectionItems)
 
-        // Collect all pages from all relevant sections
-        const allPages = relevantSections.reduce((acc, section) => {
-          // Get pages in order based on pageIndex
-          const orderedPages = Object.values(section.pages)
-            .sort((a, b) => a.pageIndex - b.pageIndex)
-            .map((page) => getTexturePath(section.magazine, page.image))
-          return [...acc, ...orderedPages]
-        }, [])
+          // Collect all pages from all relevant sections
+          const allPages = relevantSections.reduce((acc, section) => {
+            // Get pages in order based on pageIndex
+            const orderedPages = Object.values(section.pages)
+              .sort((a, b) => a.pageIndex - b.pageIndex)
+              .map((page) => getTexturePath(section.magazine, page.image))
+            return [...acc, ...orderedPages]
+          }, [])
 
-        // Use the first section's type for the magazine style
-        const firstSection = relevantSections[0]
-        setCarouselType(firstSection.magazine)
-        setCarouselPages(allPages)
-        setStyleMagazine(firstSection.magazine)
-      } else {
-        resetCarouselState()
+          // Use the first section's type for the magazine style
+          const firstSection = relevantSections[0]
+          setCarouselType(firstSection.magazine)
+          setCarouselPages(allPages)
+          setStyleMagazine(firstSection.magazine)
+        } else {
+          resetCarouselState()
+        }
       }
     },
-    [findRelevantContent, setStyleMagazine, setTitles, currentSkill, resetCarouselState, setIsCarouselExiting],
+    [findRelevantContent, setStyleMagazine, setTitles, currentSkill, resetCarouselState, setIsCarouselExiting, isExitingCarousel, isCarouselExiting],
   )
 
   // Handle carousel finish
   const handleCarouselFinish = useCallback(() => {
-    if (currentSkill && skillStackRef.current) {
-      const skillToReset = currentSkill
-      setCurrentSkill(null)
-      resetCarouselState()
-      // Trigger stack animation through the ref
-      skillStackRef.current.triggerStackAnimation()
-    } else {
-      resetCarouselState()
+    // This function is called when the PageCarousel animation finishes
+    // (either entrance or exit animation)
+    
+    // If we were in an exit animation, reset everything
+    if (isExitingCarousel || isCarouselExiting) {
+      if (currentSkill && skillStackRef.current) {
+        const skillToReset = currentSkill
+        setCurrentSkill(null)
+        resetCarouselState()
+        // Trigger stack animation through the ref
+        skillStackRef.current.triggerStackAnimation()
+      } else {
+        resetCarouselState()
+      }
     }
-  }, [currentSkill, resetCarouselState])
+    // Otherwise, do nothing - we've just finished the entrance animation
+  }, [currentSkill, resetCarouselState, isExitingCarousel, isCarouselExiting])
 
   // Cleanup effect for carousel state
   useEffect(() => {
@@ -812,8 +829,18 @@ function HoverDetector({ vpWidth }) {
   )
 }
 
+function useResponsiveScale() {
+  const { viewport, size } = useThree()
+  const scale = Math.min(
+    viewport.width / size.width,
+    viewport.height / size.height
+  )
+  return scale
+}
+
 export default function Contents() {
   const { vpWidth, vpHeight } = useViewportMeasurements()
+  const responsiveScale = useResponsiveScale()
 
   return (
     <group position={[0, 0, LAYOUT.POSITION.MAIN_GROUP]}>

@@ -8,6 +8,8 @@ import { hdrLoadedAtom } from '@/helpers/atoms'
 import { hdrLoader } from '@/helpers/textureLoaders'
 import { useThree } from '@react-three/fiber'
 import { Perf } from 'r3f-perf'
+import ResizeHandler from '../ResizeHandler'
+import FovController from '../FovController'
 
 export const Common = ({ color }) => {
   const [hdrLoaded] = useAtom(hdrLoadedAtom)
@@ -48,10 +50,13 @@ const View = forwardRef(({ children, orbit, ...props }, ref) => {
   return (
     <>
       <div ref={localRef} {...props} />
+
       <Three>
-        <ViewImpl track={localRef}>
+        <ViewImpl track={localRef} >
+          <ResizeHandler />
+          <FovController />
           {children}
-          {orbit && <OrbitControls />}
+          {/* {orbit && <OrbitControls />} */}
         </ViewImpl>
       </Three>
     </>
