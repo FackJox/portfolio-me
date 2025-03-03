@@ -177,9 +177,24 @@ export const calculateFocusPosition = ({ camera, focusedMagazine, magazine, layo
   const zDist = isPortrait ? 2.8 : 2.7
   let targetPos = new THREE.Vector3()
 
+  console.log('calculateFocusPosition called:', { 
+    magazine, 
+    focusedMagazine, 
+    isPortrait, 
+    zDist,
+    cameraPosition: camera ? { x: camera.position.x.toFixed(2), y: camera.position.y.toFixed(2), z: camera.position.z.toFixed(2) } : null
+  });
+
   if (focusedMagazine === magazine) {
     // Position the magazine in front of the camera
+    // Create a copy of the camera position to avoid modifying the original
     targetPos.copy(camera.position)
+    
+    // For focused magazines, we need to ensure consistent positioning
+    // regardless of the current camera position during animation
+    // Use a fixed z-position of 10 (PORTRAIT_BASE_DISTANCE) for consistency
+    const FIXED_CAMERA_Z = 10;
+    targetPos.z = FIXED_CAMERA_Z;
 
     const forward = new THREE.Vector3(
       isPortrait ? -0.003 : -0.15, // Different x-offset for portrait/landscape
@@ -190,11 +205,21 @@ export const calculateFocusPosition = ({ camera, focusedMagazine, magazine, layo
       .normalize()
 
     targetPos.addScaledVector(forward, zDist)
+    
+    console.log('Magazine focus position calculated:', { 
+      magazine,
+      targetPos: { x: targetPos.x.toFixed(2), y: targetPos.y.toFixed(2), z: targetPos.z.toFixed(2) },
+      forward: { x: forward.x.toFixed(2), y: forward.y.toFixed(2), z: forward.z.toFixed(2) },
+      zDist,
+      cameraZ: camera.position.z.toFixed(2),
+      fixedCameraZ: FIXED_CAMERA_Z
+    });
 
     // Apply layout position offset if provided
     if (layoutPosition && layoutPosition.length === 3) {
       const [offsetX, offsetY, offsetZ] = layoutPosition
       targetPos.add(new THREE.Vector3(-offsetX, -offsetY, -offsetZ))
+      console.log('Applied layout offset:', { offsetX, offsetY, offsetZ });
     }
   }
 

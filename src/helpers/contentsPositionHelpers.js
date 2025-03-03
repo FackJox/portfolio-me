@@ -7,7 +7,7 @@ import { SmackContents, EngineerContents, VagueContents } from './contentsConfig
  * Factor used to determine the height of the stacked skills relative to viewport height.
  * Value of 0.3 means the stack will occupy 30% of the viewport height.
  */
-const STACK_HEIGHT_FACTOR = 0.3
+const STACK_HEIGHT_FACTOR = 0.4
 
 /**
  * Divisor used to calculate horizontal offset between creative and engineering columns.

@@ -8,7 +8,6 @@ import { hdrLoadedAtom } from '@/helpers/atoms'
 import { hdrLoader } from '@/helpers/textureLoaders'
 import { useThree } from '@react-three/fiber'
 import { Perf } from 'r3f-perf'
-import ResizeHandler from '../ResizeHandler'
 import CameraDistanceController from '../CameraDistanceController'
 
 export const Common = ({ color }) => {
@@ -53,7 +52,6 @@ const View = forwardRef(({ children, orbit, ...props }, ref) => {
 
       <Three>
         <ViewImpl track={localRef} >
-          {/* <ResizeHandler /> */}
           <CameraDistanceController />
           {children}
           {/* {orbit && <OrbitControls />} */}
