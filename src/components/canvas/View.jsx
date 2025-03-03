@@ -9,7 +9,7 @@ import { hdrLoader } from '@/helpers/textureLoaders'
 import { useThree } from '@react-three/fiber'
 import { Perf } from 'r3f-perf'
 import ResizeHandler from '../ResizeHandler'
-import FovController from '../FovController'
+import CameraDistanceController from '../CameraDistanceController'
 
 export const Common = ({ color }) => {
   const [hdrLoaded] = useAtom(hdrLoadedAtom)
@@ -27,7 +27,7 @@ export const Common = ({ color }) => {
   return (
     <Suspense fallback={null}>
       {color && <color attach='background' args={[color]} />}
-      <PerspectiveCamera makeDefault fov={40} position={[0, 0, 10]} />
+      <PerspectiveCamera makeDefault fov={40} />
       {process.env.NODE_ENV === 'development' && <Perf position='bottom-right' />}
       {hdrLoaded && <Environment map={hdrLoader.loadedHDR} environmentIntensity={0.5} resolution={256} />}
       <ambientLight intensity={0.1} />
@@ -53,8 +53,8 @@ const View = forwardRef(({ children, orbit, ...props }, ref) => {
 
       <Three>
         <ViewImpl track={localRef} >
-          <ResizeHandler />
-          <FovController />
+          {/* <ResizeHandler /> */}
+          <CameraDistanceController />
           {children}
           {/* {orbit && <OrbitControls />} */}
         </ViewImpl>

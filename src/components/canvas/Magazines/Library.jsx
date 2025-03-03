@@ -273,7 +273,7 @@ export const Library = (props) => {
       {/* Invisible plane for drag detection */}
       <mesh position={[0, 0, 10]} {...bind()}>
         <planeGeometry args={[50, 50]} />
-        <meshBasicMaterial transparent opacity={1} />
+        <meshBasicMaterial transparent opacity={0} />
       </mesh>
 
       {/* Magazines */}
