@@ -34,7 +34,7 @@ export const EngineerButtons = () => {
             className='w-full py-2 font-[HKGrotesk-Bold] text-[#F4EEDC] text-xl sm:text-2xl md:text-2xl tracking-[-0.12em] text-center align-middle'
             onClick={() => setContentsVisible((prev) => !prev)}
           >
-            CONTENTS
+            EXPERIENCE
           </button>
         </motion.div>
         <div className='flex items-center flex-shrink-0'>
@@ -81,9 +81,9 @@ export const EngineerTopBar = () => {
         <div className='flex items-center gap-8'>
           <button
             className='font-[HKGrotesk-SemiBold] text-[#FFB79C] text-l tracking-[-0.12em]'
-            onClick={() => router.push('/contents')}
+            onClick={() => router.push('/experience')}
           >
-            CONTENTS
+            EXPERIENCE
           </button>
         </div>
       </motion.div>

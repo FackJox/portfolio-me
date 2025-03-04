@@ -34,7 +34,7 @@ export const VagueButtons = () => {
             className='w-full py-2 font-[HKGrotesk-SemiBold] text-[#F7F6F7] text-xl sm:text-2xl md:text-2xl tracking-[-0.12em] text-center align-middle'
             onClick={() => setContentsVisible((prev) => !prev)}
           >
-            CONTENTS
+            EXPERIENCE
           </button>
         </motion.div>
         <div className='flex items-center flex-shrink-0'>
@@ -81,9 +81,9 @@ export const VagueTopBar = () => {
         <div className='flex items-center gap-8'>
           <button
             className='font-[HKGrotesk-Regular] text-[#F7F6F7] text-xl tracking-[-0.12em]'
-            onClick={() => router.push('/contents')}
+            onClick={() => router.push('/experience')}
           >
-            CONTENTS
+            EXPERIENCE
           </button>
         </div>
       </motion.div>

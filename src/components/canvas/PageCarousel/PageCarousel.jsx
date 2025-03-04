@@ -177,7 +177,7 @@ export const PageCarousel = ({ images = [], onFinish, isExiting = false }) => {
     // Update scroll progress
     const scrollSpeed = 5.1
     let currentScrollValue
-    
+
     if (combinedIsExiting) {
       // Determine which exit animation to use based on the source
       if (shouldExit) {

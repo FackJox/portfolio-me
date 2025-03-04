@@ -8,7 +8,7 @@ import { useAtomValue, useSetAtom } from 'jotai'
 import { titleSlidesAtom } from '@/helpers/atoms'
 import { useViewportMeasurements } from '@/helpers/deviceHelpers'
 import HoverDetector from '@/components/canvas/Contents/HoverDetector'
-import SkillStackContent from '@/components/canvas/Contents/SkillStackContent'
+import Contents from '@/components/canvas/Contents/Contents'
 import { LAYOUT } from '@/components/canvas/Contents/Constants'
 
 const View = dynamic(() => import('@/components/canvas/View').then((mod) => mod.View), {
@@ -31,7 +31,7 @@ export default function Page() {
           <group position={[0, 0, LAYOUT.POSITION.MAIN_GROUP]}>
             <HoverDetector vpWidth={vpWidth / LAYOUT.VIEWPORT.MAIN_DIVIDER} />
             <group position={[0, 0, LAYOUT.POSITION.CONTENT_GROUP]}>
-              <SkillStackContent />
+              <Contents />
             </group>
           </group>
           <Common />

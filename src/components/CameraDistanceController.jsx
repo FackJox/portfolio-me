@@ -52,7 +52,7 @@ export default function CameraDistanceController() {
       // This ensures consistent behavior with magazinePositionHelpers.js
       targetDistanceRef.current = PORTRAIT_BASE_DISTANCE;
       camera.position.z = PORTRAIT_BASE_DISTANCE;
-      console.log('Initial load with focused magazine, setting camera position to:', PORTRAIT_BASE_DISTANCE);
+      // console.log('Initial load with focused magazine, setting camera position to:', PORTRAIT_BASE_DISTANCE);
     } else {
       // When no magazine is focused, use the appropriate distance based on orientation
       targetDistanceRef.current = isPortrait ? PORTRAIT_BASE_DISTANCE : getTargetDistance();
@@ -74,13 +74,13 @@ export default function CameraDistanceController() {
       // If this is the first time loading with a focused magazine (from URL),
       // immediately set the camera position without animation
       if (prevFocusedRef.current === null) {
-        console.log('Initial focus from URL, immediately setting camera position to:', PORTRAIT_BASE_DISTANCE);
+        // console.log('Initial focus from URL, immediately setting camera position to:', PORTRAIT_BASE_DISTANCE);
         camera.position.z = PORTRAIT_BASE_DISTANCE;
       }
     } else {
       // When no magazine is focused, use the appropriate distance based on orientation
       const unfocusedDistance = isPortrait ? PORTRAIT_BASE_DISTANCE : getTargetDistance();
-      console.log('Magazine unfocused, setting target distance to:', unfocusedDistance);
+      // console.log('Magazine unfocused, setting target distance to:', unfocusedDistance);
       targetDistanceRef.current = unfocusedDistance;
     }
 
@@ -108,14 +108,14 @@ export default function CameraDistanceController() {
       lerpFactor
     );
 
-    if (Math.abs(previousZ - camera.position.z) > 0.01) {
-      console.log('Camera Z updated:', {
-        from: previousZ.toFixed(2),
-        to: camera.position.z.toFixed(2),
-        target: targetDistanceRef.current.toFixed(2),
-        focusedMagazine
-      });
-    }
+    // if (Math.abs(previousZ - camera.position.z) > 0.01) {
+    //   console.log('Camera Z updated:', {
+    //     from: previousZ.toFixed(2),
+    //     to: camera.position.z.toFixed(2),
+    //     target: targetDistanceRef.current.toFixed(2),
+    //     focusedMagazine
+    //   });
+    // }
   });
 
   return null;

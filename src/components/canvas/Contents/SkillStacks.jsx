@@ -14,7 +14,7 @@ import SkillText from './SkillText'
  * @param {Array} props.skills - Array of skill objects
  * @param {Function} props.onSkillClick - Click handler for skills
  */
-const SkillStack = forwardRef(({ skills, onSkillClick }, ref) => {
+const SkillStacks = forwardRef(({ skills, onSkillClick }, ref) => {
   const { camera } = useThree()
   const { vpWidth: pixelWidth, vpHeight: pixelHeight } = useViewportMeasurements(false)
 
@@ -271,4 +271,4 @@ const SkillStack = forwardRef(({ skills, onSkillClick }, ref) => {
   )
 })
 
-export default SkillStack 
+export default SkillStacks

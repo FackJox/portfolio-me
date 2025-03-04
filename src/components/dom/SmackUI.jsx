@@ -34,7 +34,7 @@ export const SmackButtons = () => {
             className='w-full py-1.5 font-[lemon-regular] text-[#FABE7F] text-xl sm:text-2xl md:text-3xl tracking-[0.04em] text-center align-middle'
             onClick={() => setContentsVisible((prev) => !prev)}
           >
-            CONTENTS
+            EXPERIENCE
           </button>
         </motion.div>
         <div className='flex items-center flex-shrink-0'>
@@ -80,8 +80,8 @@ export const SmackTopBar = () => {
           Jack Foxcroft
         </h1>
         <div className='flex items-center gap-8'>
-          <button className='font-[lemon-regular] text-[#F5E4F8] text-3xl' onClick={() => router.push('/contents')}>
-            CONTENTS
+          <button className='font-[lemon-regular] text-[#F5E4F8] text-3xl' onClick={() => router.push('/experience')}>
+            EXPERIENCE
           </button>
         </div>
       </motion.div>

@@ -52,6 +52,10 @@ const EnhancedQueryParamHandler = () => {
   return <QueryParamHandler />;
 };
 
+// Note: We don't need to create an enhanced wrapper for ExperienceQueryParamHandler
+// because it's already included in the Contents component and will be mounted
+// when that component is rendered
+
 export default function Page() {
   return (
     <motion.div layout className='relative w-full h-full flex-1'>
