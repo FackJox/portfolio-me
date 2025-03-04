@@ -23,6 +23,7 @@ import LemonFont from './Lemon_Regular.json'
  * @param {number} props.opacity - Opacity value
  * @param {boolean} props.isMoving - Whether the text is currently animating
  * @param {boolean|Object} props.resetState - State reset trigger
+ * @param {boolean} props.forceClicked - Force the clicked state to true
  */
 export default function SkillText({
   content,
@@ -34,6 +35,7 @@ export default function SkillText({
   opacity = 1,
   isMoving = false,
   resetState = false,
+  forceClicked = false,
 }) {
   const [hovered, setHovered] = useState(false)
   const [clicked, setClicked] = useState(false)
@@ -55,6 +57,43 @@ export default function SkillText({
   const text3DPositionRef = useRef(new THREE.Vector3())
 
   const setStyleMagazine = useSetAtom(styleMagazineAtom)
+
+  /**
+   * Handle click interactions and maintain local state
+   * @param {Event} e - Click event
+   */
+  const handleClick = (e) => {
+    e.stopPropagation()
+
+    // Only update local state if we're not in a moving state
+    if (!isMoving) {
+      const newClickedState = !clicked
+      setClicked(newClickedState)
+
+      // Update position states based on new clicked state
+      if (newClickedState) {
+        if (isStackPosition) {
+          setIsStackPosition(false)
+        } else if (isBottomPosition) {
+          setIsBottomPosition(false)
+        }
+        setHovered(false)
+      }
+    }
+
+    // Always notify parent of click, letting it handle the business logic
+    onClick?.(content, textSize[0])
+  }
+
+  /**
+   * Handle forced click state changes
+   */
+  useEffect(() => {
+    if (forceClicked && !clicked && !isMoving) {
+      console.log('[SkillText] forceClicked true, setting clicked state to true');
+      setClicked(true);
+    }
+  }, [forceClicked, clicked, isMoving]);
 
   /**
    * Reset component states based on resetState prop changes.
@@ -103,23 +142,6 @@ export default function SkillText({
     return COLORS.DEFAULT
   }
 
-  const handleClick = (e) => {
-    e.stopPropagation()
-    const newClickedState = !clicked
-    setClicked(newClickedState)
-
-    if (newClickedState) {
-      if (isStackPosition) {
-        setIsStackPosition(false)
-      } else if (isBottomPosition) {
-        setIsBottomPosition(false)
-      }
-      setHovered(false)
-    }
-
-    onClick && onClick(content, textSize[0])
-  }
-
   /**
    * Throttled hover handler to prevent excessive state updates.
    */
@@ -160,6 +182,8 @@ export default function SkillText({
    */
   useFrame(() => {
     if (groupRef.current && meshRef.current && text3DRef.current) {
+
+      console.log('[SkillText] Clicked', clicked,)
       // Scale lerping
       targetScaleVec.current.set(targetScale, targetScale, targetScale)
       performLerp(currentScaleRef.current, targetScaleVec.current, ANIMATION.LERP.SCALE)

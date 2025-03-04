@@ -34,283 +34,193 @@ export default function Contents() {
 
     /**
      * Find content sections relevant to the clicked skill
+     * @param {string} clickedSkill - The skill to find content for
+     * @returns {Array} Array of relevant sections
      */
     const findRelevantContent = useCallback((clickedSkill) => {
-        console.log('Finding relevant content for skill:', clickedSkill);
+        if (!clickedSkill) return []
 
-        // Search through SmackContents and EngineerContents
         const searchContents = (contents, type) => {
-            console.log(`Searching in ${type} contents for skill:`, clickedSkill);
-            const relevantSections = [];
-            for (const [key, section] of Object.entries(contents)) {
-                console.log(`Checking section ${key}:`, section);
-                if (section.skills && section.skills.length > 0) {
-                    console.log(`Section ${key} has skills:`, section.skills);
+            return Object.entries(contents)
+                .filter(([_, section]) => section.skills?.length > 0)
+                .reduce((relevantSections, [_, section]) => {
+                    const hasMatch = section.skills.some(skill => {
+                        if (!skill?.title) return false
 
-                    // Check for exact title match
-                    const hasExactMatch = section.skills.some((skill) => {
-                        const match = skill && skill.title === clickedSkill;
-                        if (match) {
-                            console.log(`Found exact match in section ${key} for skill:`, clickedSkill);
-                        }
-                        return match;
-                    });
+                        // Check for exact or partial match
+                        const skillLower = skill.title.toLowerCase()
+                        const clickedLower = clickedSkill.toLowerCase()
+                        return skillLower === clickedLower ||
+                            skillLower.includes(clickedLower) ||
+                            clickedLower.includes(skillLower)
+                    })
 
-                    // If no exact match, check for partial title match
-                    const hasPartialMatch = !hasExactMatch && section.skills.some((skill) => {
-                        if (!skill || !skill.title) return false;
-
-                        // Check if the skill title contains the clicked skill or vice versa
-                        const skillLower = skill.title.toLowerCase();
-                        const clickedLower = clickedSkill.toLowerCase();
-                        const match = skillLower.includes(clickedLower) || clickedLower.includes(skillLower);
-
-                        if (match) {
-                            console.log(`Found partial match in section ${key}: "${skill.title}" matches "${clickedSkill}"`);
-                        }
-                        return match;
-                    });
-
-                    if (hasExactMatch || hasPartialMatch) {
-                        console.log(`Adding section ${key} to relevant sections`);
+                    if (hasMatch) {
                         relevantSections.push({
                             ...section,
-                            type: section.magazine || type, // Use section.magazine if available, fallback to type
-                        });
+                            type: section.magazine || type,
+                        })
                     }
-                } else {
-                    console.log(`Section ${key} has no skills array or empty skills array`);
-                }
-            }
-            return relevantSections;
-        };
+                    return relevantSections
+                }, [])
+        }
 
-        // Search in both content types
-        const smackSections = searchContents(SmackContents, 'smack');
-        const engineerSections = searchContents(EngineerContents, 'engineer');
+        // Search in both content types and combine results
+        return [
+            ...searchContents(SmackContents, 'smack'),
+            ...searchContents(EngineerContents, 'engineer')
+        ]
+    }, [])
 
-        console.log('Found relevant sections:', {
-            smack: smackSections,
-            engineer: engineerSections
-        });
+    /**
+     * Sets up carousel content based on relevant sections
+     */
+    const setupCarouselContent = useCallback((sections, magazine) => {
+        const sectionItems = sections.map((section) => ({
+            title: section.title,
+            description: section.description || 'No description available.',
+            magazine: section.magazine || section.type,
+        }))
+        setTitles(sectionItems)
 
-        // Combine and return all relevant sections
-        return [...smackSections, ...engineerSections];
-    }, []);
+        const allPages = sections.reduce((acc, section) => {
+            const orderedPages = Object.values(section.pages || {})
+                .sort((a, b) => a.pageIndex - b.pageIndex)
+                .map((page) => getTexturePath(section.magazine, page.image))
+            return [...acc, ...orderedPages]
+        }, [])
+
+        setCarouselType(magazine)
+        setCarouselPages(allPages)
+        setStyleMagazine(magazine)
+    }, [setStyleMagazine, setTitles])
 
     /**
      * Handle skill click events
      */
     const handleSkillClick = useCallback(
         (content) => {
-            console.log('handleSkillClick called with content:', content, 'current skill:', currentSkill);
+            setIsExitingCarousel(false)
+            setIsCarouselExiting(false)
 
-            // Force a reset of animation states to ensure clean state
-            setIsExitingCarousel(false);
-            setIsCarouselExiting(false);
-
-            if (!content) {
-                // If we have a current skill, trigger the exit animation
-                if (currentSkill && skillStackRef.current) {
-                    console.log('Clearing current skill (null content)');
-                    // Immediately clear the titles to hide DescriptionCarousel
+            // Handle skill deselection
+            if (!content || content === currentSkill) {
+                if (currentSkill) {
                     setTitles([])
-                    // Still trigger the exit animation for PageCarousel
                     setIsExitingCarousel(true)
-                    setIsCarouselExiting(false) // Don't set this for SkillText clicks
+                    // Trigger collapse animation immediately
+                    if (skillStackRef.current?.handleSkillAnimations) {
+                        skillStackRef.current.handleSkillAnimations(currentSkill, true)
+                    }
                 } else {
-                    // Only reset if there's no current skill
                     resetCarouselState()
                 }
                 setCurrentSkill(null)
                 return
             }
 
-            // If clicking the same skill that's already expanded, start exit animation
-            if (content === currentSkill) {
-                console.log('Clearing current skill (same content clicked)');
-                // Immediately clear the titles to hide DescriptionCarousel
-                setTitles([])
-                // Still trigger the exit animation for PageCarousel
-                setIsExitingCarousel(true)
-                setIsCarouselExiting(false) // Don't set this for SkillText clicks
-                setCurrentSkill(null)
-                return
-            }
+            // Handle new skill selection
+            resetCarouselState()
+            setCurrentSkill(content)
 
-            // Only proceed with setting up a new carousel if we're not in an exit animation
-            // or force it if we're in a clean state
-            console.log('Setting current skill to:', content);
-
-            // Reset any existing carousel state
-            resetCarouselState();
-
-            // Store the clicked skill
-            setCurrentSkill(content);
-
-            const relevantSections = findRelevantContent(content);
+            const relevantSections = findRelevantContent(content)
             if (relevantSections.length > 0) {
-                // Get all titles and descriptions from relevant sections
-                const sectionItems = relevantSections.map((section) => ({
-                    title: section.title,
-                    description: section.description || 'No description available.',
-                    magazine: section.magazine || section.type, // Include magazine information
-                }));
-                setTitles(sectionItems);
+                const firstSection = relevantSections[0]
+                setupCarouselContent(relevantSections, firstSection.magazine)
 
-                // Collect all pages from all relevant sections
-                const allPages = relevantSections.reduce((acc, section) => {
-                    // Get pages in order based on pageIndex
-                    const orderedPages = Object.values(section.pages)
-                        .sort((a, b) => a.pageIndex - b.pageIndex)
-                        .map((page) => getTexturePath(section.magazine, page.image));
-                    return [...acc, ...orderedPages];
-                }, []);
-
-                // Use the first section's type for the magazine style
-                const firstSection = relevantSections[0];
-                setCarouselType(firstSection.magazine);
-                setCarouselPages(allPages);
-                setStyleMagazine(firstSection.magazine);
+                // Trigger explosion animation
+                if (skillStackRef.current?.handleSkillAnimations) {
+                    skillStackRef.current.handleSkillAnimations(content, false)
+                }
             } else {
-                resetCarouselState();
+                resetCarouselState()
             }
         },
-        [findRelevantContent, setStyleMagazine, setTitles, currentSkill, resetCarouselState, setIsCarouselExiting],
-    );
+        [findRelevantContent, setupCarouselContent, currentSkill, resetCarouselState]
+    )
 
     /**
      * Handle carousel animation finish
      */
     const handleCarouselFinish = useCallback(() => {
-        // This function is called when the PageCarousel animation finishes
-        // (either entrance or exit animation)
+        if ((isExitingCarousel || isCarouselExiting) && skillStackRef.current?.handleSkillAnimations) {
+            const skillToReset = currentSkill
+            setCurrentSkill(null)
+            resetCarouselState()
 
-        // If we were in an exit animation, reset everything
-        if (isExitingCarousel || isCarouselExiting) {
-            if (currentSkill && skillStackRef.current) {
-                const skillToReset = currentSkill
-                setCurrentSkill(null)
-                resetCarouselState()
-                // Trigger stack animation through the ref
-                skillStackRef.current.triggerStackAnimation()
-            } else {
-                resetCarouselState()
+            if (skillToReset) {
+                skillStackRef.current.handleSkillAnimations(skillToReset, true)
             }
         }
-        // Otherwise, do nothing - we've just finished the entrance animation
     }, [currentSkill, resetCarouselState, isExitingCarousel, isCarouselExiting])
 
-    // Handler for experience parameter changes from URL
+    /**
+     * Handle experience parameter changes from URL
+     */
     const handleExperienceChange = useCallback((experienceParam) => {
-        console.log('handleExperienceChange called with param:', experienceParam, 'current skill:', currentSkill);
-
-        // If experienceParam is null, clear the current skill
+        console.log('[Contents] handleExperienceChange', experienceParam)
+        // Handle parameter removal
         if (!experienceParam) {
-            console.log('Received null experience parameter, clearing current skill');
-            if (currentSkill) {
-                // Use a direct approach to clear the skill
-                setTitles([]);
-                setIsExitingCarousel(true);
-                setIsCarouselExiting(false);
-                setCurrentSkill(null);
-                resetCarouselState();
+            if (currentSkill && skillStackRef.current?.handleSkillAnimations) {
+                setTitles([])
+                setIsExitingCarousel(true)
+                setIsCarouselExiting(false)
+                setCurrentSkill(null)
+                resetCarouselState()
+                skillStackRef.current.handleSkillAnimations(currentSkill, true)
             }
-            return;
+            return
         }
 
-        console.log('Processing experience parameter:', experienceParam);
+        // Normalize and find matching skill
+        const normalizeSkill = (skill) => skill.toLowerCase().replace(/\s+/g, '')
+        const normalizedParam = normalizeSkill(experienceParam)
 
-        // Normalize the experience parameter for comparison (lowercase, no spaces)
-        const normalizeSkill = (skill) => {
-            return skill.toLowerCase().replace(/\s+/g, '');
-        };
+        const findSkillMatch = (predicate) => skillsContent.find(predicate)
 
-        const normalizedParam = normalizeSkill(experienceParam);
+        // Try exact match
+        let matchingSkill = findSkillMatch(
+            skill => normalizeSkill(skill.content) === normalizedParam
+        )
 
-        // First try to find an exact match
-        let matchingSkill = skillsContent.find(skill =>
-            normalizeSkill(skill.content) === normalizedParam
-        );
-
-        // If no exact match, try to find a partial match
+        // Try partial match
         if (!matchingSkill) {
-            console.log('No exact match found, trying partial match');
-            matchingSkill = skillsContent.find(skill => {
-                const normalizedSkillContent = normalizeSkill(skill.content);
-                return normalizedSkillContent.includes(normalizedParam) ||
-                    normalizedParam.includes(normalizedSkillContent);
-            });
+            matchingSkill = findSkillMatch(skill => {
+                const normalizedContent = normalizeSkill(skill.content)
+                return normalizedContent.includes(normalizedParam) ||
+                    normalizedParam.includes(normalizedContent)
+            })
         }
 
-        // If still no match, try to match by checking if the skill content contains any word from the param
+        // Try word match
         if (!matchingSkill) {
-            console.log('No partial match found, trying word match');
-            const paramWords = normalizedParam.match(/[a-z]+/g) || [];
-            matchingSkill = skillsContent.find(skill => {
-                const normalizedSkillContent = normalizeSkill(skill.content);
-                return paramWords.some(word => normalizedSkillContent.includes(word));
-            });
+            const paramWords = normalizedParam.match(/[a-z]+/g) || []
+            matchingSkill = findSkillMatch(skill => {
+                const normalizedContent = normalizeSkill(skill.content)
+                return paramWords.some(word => normalizedContent.includes(word))
+            })
         }
 
-        if (matchingSkill) {
-            console.log('Found matching skill for URL parameter:', matchingSkill.content);
+        // Handle matching skill
+        if (matchingSkill && matchingSkill.content !== currentSkill) {
+            setIsExitingCarousel(false)
+            setIsCarouselExiting(false)
+            resetCarouselState()
+            setCurrentSkill(matchingSkill.content)
 
-            // Only trigger if it's different from the current skill
-            if (matchingSkill.content !== currentSkill) {
-                console.log('Setting skill from URL parameter');
+            const relevantSections = findRelevantContent(matchingSkill.content)
+            if (relevantSections.length > 0) {
+                const firstSection = relevantSections[0]
+                setupCarouselContent(relevantSections, firstSection.magazine)
 
-                // Reset animation states
-                setIsExitingCarousel(false);
-                setIsCarouselExiting(false);
-
-                // Reset any existing carousel state
-                resetCarouselState();
-
-                // Set the new skill directly
-                setCurrentSkill(matchingSkill.content);
-
-                // Find and set up the relevant content
-                const relevantSections = findRelevantContent(matchingSkill.content);
-                console.log('Found relevant sections:', relevantSections);
-
-                if (relevantSections.length > 0) {
-                    // Get all titles and descriptions from relevant sections
-                    const sectionItems = relevantSections.map((section) => ({
-                        title: section.title,
-                        description: section.description || 'No description available.',
-                        magazine: section.magazine || section.type, // Include magazine information
-                    }));
-                    setTitles(sectionItems);
-
-                    // Collect all pages from all relevant sections
-                    const allPages = relevantSections.reduce((acc, section) => {
-                        // Get pages in order based on pageIndex
-                        const orderedPages = Object.values(section.pages || {})
-                            .sort((a, b) => a.pageIndex - b.pageIndex)
-                            .map((page) => getTexturePath(section.magazine, page.image));
-                        return [...acc, ...orderedPages];
-                    }, []);
-
-                    console.log('Setting up carousel with pages:', allPages);
-
-                    // Use the first section's type for the magazine style
-                    const firstSection = relevantSections[0];
-                    setCarouselType(firstSection.magazine);
-                    setCarouselPages(allPages);
-                    setStyleMagazine(firstSection.magazine);
-                } else {
-                    console.warn('No relevant sections found for skill:', matchingSkill.content);
+                if (skillStackRef.current?.handleSkillAnimations) {
+                    skillStackRef.current.handleSkillAnimations(matchingSkill.content, false)
                 }
-            } else {
-                console.log('Skill already set to', matchingSkill.content);
             }
-        } else {
-            console.warn(`Experience "${experienceParam}" not found in available skills`);
         }
-    }, [skillsContent, currentSkill, resetCarouselState, findRelevantContent, setStyleMagazine]);
+    }, [skillsContent, currentSkill, resetCarouselState, findRelevantContent, setupCarouselContent])
 
-    // Cleanup effect for carousel state
+    // Cleanup effect
     useEffect(() => {
         return () => {
             resetCarouselState()
@@ -323,10 +233,19 @@ export default function Contents() {
                 onExperienceChange={handleExperienceChange}
                 currentSkill={currentSkill}
             />
-            <SkillStacks skills={skillsContent} onSkillClick={handleSkillClick} ref={skillStackRef} />
+            <SkillStacks
+                skills={skillsContent}
+                onSkillClick={handleSkillClick}
+                ref={skillStackRef}
+                selectedSkill={currentSkill}
+            />
             {carouselPages && (
                 <group position={[0, 0, LAYOUT.POSITION.CAROUSEL]}>
-                    <PageCarousel images={carouselPages} onFinish={handleCarouselFinish} isExiting={isExitingCarousel} />
+                    <PageCarousel
+                        images={carouselPages}
+                        onFinish={handleCarouselFinish}
+                        isExiting={isExitingCarousel}
+                    />
                 </group>
             )}
         </>

@@ -13,8 +13,9 @@ import SkillText from './SkillText'
  * @param {Object} props - Component props
  * @param {Array} props.skills - Array of skill objects
  * @param {Function} props.onSkillClick - Click handler for skills
+ * @param {string} props.selectedSkill - Currently selected skill content
  */
-const SkillStacks = forwardRef(({ skills, onSkillClick }, ref) => {
+const SkillStacks = forwardRef(({ skills, onSkillClick, selectedSkill }, ref) => {
   const { camera } = useThree()
   const { vpWidth: pixelWidth, vpHeight: pixelHeight } = useViewportMeasurements(false)
 
@@ -24,10 +25,9 @@ const SkillStacks = forwardRef(({ skills, onSkillClick }, ref) => {
 
   const [activeSkills, setActiveSkills] = useState([])
   const [hoveredStates, setHoveredStates] = useState({})
-  const [explodedSkill, setExplodedSkill] = useState(null)
   const [isReady, setIsReady] = useState(false)
 
-  // Replace state with refs for animation values
+  // Animation state refs
   const targetPositionsRef = useRef([])
   const currentPositionsRef = useRef([])
   const delaysRef = useRef([])
@@ -37,9 +37,6 @@ const SkillStacks = forwardRef(({ skills, onSkillClick }, ref) => {
   const movingSkillsRef = useRef(new Set())
   const resetStatesRef = useRef({})
   const isInitialAnimationRef = useRef(true)
-  const previousXPositionRef = useRef(null)
-  const lastLoggedTimeRef = useRef(0)
-  const lastStateRef = useRef(null)
 
   // Cache vector objects for reuse
   const tempVec3 = useRef(new THREE.Vector3())
@@ -50,7 +47,7 @@ const SkillStacks = forwardRef(({ skills, onSkillClick }, ref) => {
   const [animationStateVersion, setAnimationStateVersion] = useState(0)
 
   /**
-   * Initialize skill positions and animation states.
+   * Initialize skill positions and animation states
    */
   useEffect(() => {
     if (skills.length > 0) {
@@ -71,96 +68,89 @@ const SkillStacks = forwardRef(({ skills, onSkillClick }, ref) => {
     }
   }, [skills, vpWidth, vpHeight])
 
-  /**
-   * Handle skill click interactions and position updates.
-   */
-  const handleSkillClick = useCallback(
-    (content, textWidth) => {
-      isInitialAnimationRef.current = false
-      const now = performance.now()
-      if (content === 'Three.js') {
-        console.log('Click:', content, explodedSkill === content)
-        lastLoggedTimeRef.current = now
-      }
+  console.log('[SkillStacks] isReady', isReady)
+  console.log('[SkillStacks] currentPositionsRef.Current', currentPositionsRef.current)
+  console.log('[SkillStacks] delayRef', delaysRef.current)
 
-      if (explodedSkill === content) {
+
+  /**
+   * Handles animation and positioning logic for skills
+   * @param {string} content - The skill content to animate
+   * @param {boolean} isCollapsing - Whether we're collapsing the stack
+   */
+  const handleSkillAnimations = useCallback(
+    (content, isCollapsing) => {
+      console.log('Animation triggered:', { content, isCollapsing });
+      isInitialAnimationRef.current = false
+
+      if (isCollapsing) {
         const { positions, delays } = calculateStackPositions(skills, vpWidth, vpHeight)
-        if (content === 'Three.js') {
-          const newPosition = positions.find((_, i) => skills[i].content === content)
-          console.log('Stack position:', content, newPosition)
-        }
+        console.log('Collapse positions:', positions);
         targetPositionsRef.current = positions
         delaysRef.current = delays
-        setExplodedSkill(null)
-        movingSkillsRef.current = new Set([...skills.map((skill) => skill.content)])
-        onSkillClick(null) // Clear carousel when collapsing
-
-        // Update reset states
-        resetStatesRef.current = {}
-        skills.forEach((skill) => {
-          resetStatesRef.current[skill.content] = true
-        })
+        movingSkillsRef.current = new Set(skills.map((skill) => skill.content))
+        resetStatesRef.current = Object.fromEntries(
+          skills.map((skill) => [skill.content, true])
+        )
       } else {
         const { positions, delays } = calculateExplosionPositions(skills, vpWidth, vpHeight, content)
-
+        console.log('Explosion positions:', positions);
+        console.log('targetPositionsRef.current', targetPositionsRef.current)
         const clickedIndex = skills.findIndex((skill) => skill.content === content)
+        console.log('Clicked Skill Index:', clickedIndex)
+
         if (clickedIndex !== -1) {
           tempForward.current.set(0, 0, -1).applyQuaternion(camera.quaternion).normalize()
           tempTargetPos.current.copy(camera.position)
+          console.log('Computed target position for clicked skill:', tempTargetPos.current)
           const buttonConfig = getSpacingConfig(false).positions.button
+          console.log('Button config:', buttonConfig)
           tempTargetPos.current.addScaledVector(tempForward.current, buttonConfig.hover.z + 1)
           tempTargetPos.current.y = buttonConfig.hover.y
-
-          // Set target position with x=0 for centering
           positions[clickedIndex] = [0, tempTargetPos.current.y, tempTargetPos.current.z]
         }
 
         targetPositionsRef.current = positions
         delaysRef.current = delays
-        setExplodedSkill(content)
-        movingSkillsRef.current = new Set([...skills.map((skill) => skill.content)])
+        movingSkillsRef.current = new Set(skills.map((skill) => skill.content))
         resetStatesRef.current = {}
-        onSkillClick(content) // Pass clicked skill to parent
       }
+
       startTimeRef.current = performance.now()
       setAnimationStateVersion((v) => v + 1)
     },
-    [camera, explodedSkill, onSkillClick, skills, vpHeight, vpWidth],
+    [camera, skills, vpWidth, vpHeight]
   )
 
-  // Function to trigger stack animation
-  const triggerStackAnimation = useCallback(() => {
-    const { positions, delays } = calculateStackPositions(skills, vpWidth, vpHeight)
-    targetPositionsRef.current = positions
-    delaysRef.current = delays
-    movingSkillsRef.current = new Set([...skills.map((skill) => skill.content)])
-    resetStatesRef.current = {}
-    skills.forEach((skill) => {
-      resetStatesRef.current[skill.content] = true
-    })
-    startTimeRef.current = performance.now()
-    setAnimationStateVersion((v) => v + 1)
-  }, [skills, vpWidth, vpHeight])
+  /**
+   * Handle skill click events
+   */
+  const handleSkillClick = useCallback(
+    (content, textWidth) => {
+      onSkillClick?.(content)
+    },
+    [onSkillClick]
+  )
+
+  const handleHoverChange = useCallback((index, isHovered) => {
+    setHoveredStates((prev) => ({
+      ...prev,
+      [index]: isHovered,
+    }))
+  }, [])
 
   // Expose methods through ref
   useImperativeHandle(
     ref,
     () => ({
       handleSkillClick,
-      triggerStackAnimation,
+      handleSkillAnimations
     }),
-    [handleSkillClick, triggerStackAnimation],
+    [handleSkillClick, handleSkillAnimations]
   )
 
-  const handleHoverChange = (index, isHovered) => {
-    setHoveredStates((prev) => ({
-      ...prev,
-      [index]: isHovered,
-    }))
-  }
-
   /**
-   * Animation frame update for skill positions.
+   * Animation frame update for skill positions
    */
   useFrame(() => {
     if (!isReady) return
@@ -186,7 +176,7 @@ const SkillStacks = forwardRef(({ skills, onSkillClick }, ref) => {
         const xLerpSpeed = ANIMATION.LERP.POSITION.X_AXIS
         const normalLerpSpeed = ANIMATION.LERP.POSITION.NORMAL
 
-        // Determine if we're near the bottom position (using y coordinate as reference)
+        // Determine if we're near the bottom position
         const buttonY = getSpacingConfig(false).positions.button.hover.y
         const isNearBottom = Math.abs(currentPos.y - buttonY) < ANIMATION.THRESHOLD.BOTTOM_PROXIMITY
 
@@ -194,7 +184,6 @@ const SkillStacks = forwardRef(({ skills, onSkillClick }, ref) => {
         if (!isNearBottom) {
           currentPos.x = THREE.MathUtils.lerp(currentPos.x, tempVec3.current.x, xLerpSpeed)
         } else {
-          // Instantly set x position when near bottom
           currentPos.x = tempVec3.current.x
         }
 
@@ -242,15 +231,14 @@ const SkillStacks = forwardRef(({ skills, onSkillClick }, ref) => {
         const currentPos = currentPositionsRef.current[index] || [0, vpHeight, -5]
         const isHovered = hoveredStates[index]
         const isMoving = movingSkillsRef.current.has(skill.content)
-        const scale = isMoving
-          ? ANIMATION.SCALE.DEFAULT
-          : isHovered
-            ? ANIMATION.SCALE.HOVER_LARGE
-            : ANIMATION.SCALE.DEFAULT
+        const scale = isMoving ? ANIMATION.SCALE.DEFAULT : isHovered ? ANIMATION.SCALE.HOVER_LARGE : ANIMATION.SCALE.DEFAULT
         const elapsed = performance.now() - startTimeRef.current
         const isActive = isInitialAnimationRef.current ? elapsed >= delaysRef.current[index] : true
         const isInViewport = Math.abs(currentPos[0]) <= vpWidth * 1.5 && Math.abs(currentPos[1]) <= vpHeight * 1.5
         const opacity = isActive ? (isInViewport ? 1 : 0) : 0
+        const isForceClicked = skill.content === selectedSkill
+
+        console.log(`[SkillStacks] Rendering SkillText ${skill.content}, forceClicked:`, isForceClicked)
 
         return (
           <SkillText
@@ -264,6 +252,7 @@ const SkillStacks = forwardRef(({ skills, onSkillClick }, ref) => {
             opacity={opacity}
             isMoving={isMoving}
             resetState={resetStatesRef.current[skill.content]}
+            forceClicked={isForceClicked}
           />
         )
       })}

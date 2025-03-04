@@ -38,15 +38,15 @@ const ExperienceQueryParamHandler = ({ onExperienceChange, currentSkill }) => {
 
     // Log component props on each render
     const renderCount = ++debugCounterRef.current;
-    console.log(`[ExperienceQueryParamHandler] Render #${renderCount}:`, {
-        currentSkill,
-        lastProcessedSkill,
-        isInitialLoad,
-        searchParams: searchParams.toString(),
-        pathname,
-        isUpdatingUrl: isUpdatingUrlRef.current,
-        lastUrlParam: lastUrlParamRef.current
-    });
+    // console.log(`[ExperienceQueryParamHandler] Render #${renderCount}:`, {
+    //     currentSkill,
+    //     lastProcessedSkill,
+    //     isInitialLoad,
+    //     searchParams: searchParams.toString(),
+    //     pathname,
+    //     isUpdatingUrl: isUpdatingUrlRef.current,
+    //     lastUrlParam: lastUrlParamRef.current
+    // });
 
     // Cleanup function for timeouts
     useEffect(() => {
@@ -61,11 +61,11 @@ const ExperienceQueryParamHandler = ({ onExperienceChange, currentSkill }) => {
     useEffect(() => {
         // Skip if we're in the middle of updating the URL ourselves
         if (isUpdatingUrlRef.current) {
-            console.log('[ExperienceQueryParamHandler] Skipping URL -> State sync (we are updating URL)');
+            // console.log('[ExperienceQueryParamHandler] Skipping URL -> State sync (we are updating URL)');
             return;
         }
 
-        console.log(`[ExperienceQueryParamHandler] URL -> State effect running, isInitialLoad:`, isInitialLoad);
+        // console.log(`[ExperienceQueryParamHandler] URL -> State effect running, isInitialLoad:`, isInitialLoad);
 
         // Try to get the parameter with an empty name
         let experienceParam = searchParams.get('')
@@ -75,7 +75,7 @@ const ExperienceQueryParamHandler = ({ onExperienceChange, currentSkill }) => {
             const urlParams = new URLSearchParams(window.location.search)
             experienceParam = urlParams.get('')
             if (experienceParam) {
-                console.log(`[ExperienceQueryParamHandler] Got param from window.location:`, experienceParam);
+                // console.log(`[ExperienceQueryParamHandler] Got param from window.location:`, experienceParam);
             }
         }
 
@@ -85,11 +85,11 @@ const ExperienceQueryParamHandler = ({ onExperienceChange, currentSkill }) => {
             lastUrlParamRef.current = experienceParam;
 
             if (experienceParam) {
-                console.log('[ExperienceQueryParamHandler] URL -> State: Found experience parameter:', experienceParam);
+                // console.log('[ExperienceQueryParamHandler] URL -> State: Found experience parameter:', experienceParam);
                 onExperienceChange(experienceParam);
             } else if (currentSkill) {
                 // URL parameter was removed, clear the skill
-                console.log('[ExperienceQueryParamHandler] URL parameter removed, clearing skill');
+                // console.log('[ExperienceQueryParamHandler] URL parameter removed, clearing skill');
                 onExperienceChange(null);
             }
         }
@@ -103,17 +103,17 @@ const ExperienceQueryParamHandler = ({ onExperienceChange, currentSkill }) => {
     useEffect(() => {
         // Skip the initial render
         if (isInitialLoad) {
-            console.log('[ExperienceQueryParamHandler] Skipping initial render');
+            // console.log('[ExperienceQueryParamHandler] Skipping initial render');
             return;
         }
 
         // Skip if the skill hasn't changed
         if (currentSkill === lastProcessedSkill) {
-            console.log('[ExperienceQueryParamHandler] Skill unchanged, skipping URL update');
+            // console.log('[ExperienceQueryParamHandler] Skill unchanged, skipping URL update');
             return;
         }
 
-        console.log('[ExperienceQueryParamHandler] State -> URL: Current skill changed to', currentSkill);
+        // console.log('[ExperienceQueryParamHandler] State -> URL: Current skill changed to', currentSkill);
         setLastProcessedSkill(currentSkill);
 
         // Clear any existing timeout
@@ -135,12 +135,12 @@ const ExperienceQueryParamHandler = ({ onExperienceChange, currentSkill }) => {
                 params.append('', formattedSkill);
 
                 const newUrl = `${pathname}?${params.toString()}`;
-                console.log('[ExperienceQueryParamHandler] Updating URL to:', newUrl);
+                // console.log('[ExperienceQueryParamHandler] Updating URL to:', newUrl);
                 lastUrlParamRef.current = formattedSkill;
                 router.replace(newUrl, { scroll: false });
             } else {
                 // Remove the parameter if no skill is selected
-                console.log('[ExperienceQueryParamHandler] Clearing URL parameter');
+                // console.log('[ExperienceQueryParamHandler] Clearing URL parameter');
                 lastUrlParamRef.current = null;
                 router.replace(pathname, { scroll: false });
             }
@@ -148,11 +148,11 @@ const ExperienceQueryParamHandler = ({ onExperienceChange, currentSkill }) => {
             // Reset the flag after a short delay to allow the URL change to complete
             timeoutRef.current = setTimeout(() => {
                 isUpdatingUrlRef.current = false;
-                console.log('[ExperienceQueryParamHandler] URL update complete, reset isUpdatingUrlRef');
+                // console.log('[ExperienceQueryParamHandler] URL update complete, reset isUpdatingUrlRef');
                 timeoutRef.current = null;
             }, 200);
         } catch (error) {
-            console.error('[ExperienceQueryParamHandler] Error updating URL:', error);
+            // console.error('[ExperienceQueryParamHandler] Error updating URL:', error);
             isUpdatingUrlRef.current = false;
         }
     }, [currentSkill, router, isInitialLoad, lastProcessedSkill, pathname]);

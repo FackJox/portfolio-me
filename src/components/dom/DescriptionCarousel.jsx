@@ -39,12 +39,12 @@ const DescriptionCarousel = ({ items = [{ title: 'Title 1', description: 'Descri
           lastLoggedValues.current.rotation !== rotation ||
           lastLoggedValues.current.effectiveRotations !== rotationStr
         ) {
-          console.log({
-            'Scroll Position': scroll,
-            'Raw Rotation': -scroll * sensitivity,
-            'Clamped Rotation': rotation,
-            'Effective Rotations': effectiveRotations,
-          })
+          // console.log({
+          //   'Scroll Position': scroll,
+          //   'Raw Rotation': -scroll * sensitivity,
+          //   'Clamped Rotation': rotation,
+          //   'Effective Rotations': effectiveRotations,
+          // })
           lastLoggedValues.current.scroll = scroll
           lastLoggedValues.current.rotation = rotation
           lastLoggedValues.current.effectiveRotations = rotationStr
@@ -60,7 +60,7 @@ const DescriptionCarousel = ({ items = [{ title: 'Title 1', description: 'Descri
         const dataStr = JSON.stringify(data)
 
         if (!lastLoggedValues.current[key] || lastLoggedValues.current[key] !== dataStr) {
-          console.log(`Item ${index} (${item.title}) update:`, data)
+          // console.log(`Item ${index} (${item.title}) update:`, data)
           lastLoggedValues.current[key] = dataStr
         }
       }, 500),
@@ -72,7 +72,7 @@ const DescriptionCarousel = ({ items = [{ title: 'Title 1', description: 'Descri
     const thresholdsStr = JSON.stringify(calculatedThresholds)
 
     if (lastLoggedValues.current.thresholds !== thresholdsStr) {
-      console.log('Thresholds updated:', calculatedThresholds)
+      // console.log('Thresholds updated:', calculatedThresholds)
       lastLoggedValues.current.thresholds = thresholdsStr
     }
     return calculatedThresholds
@@ -121,7 +121,7 @@ const DescriptionCarousel = ({ items = [{ title: 'Title 1', description: 'Descri
     setIsFadingOut(true)
     // Tell PageCarousel to start exit animation
     setIsExiting(true)
-    console.log('DescriptionCarousel: Exit animation triggered')
+    // console.log('DescriptionCarousel: Exit animation triggered')
     
     // Clear any existing timeout
     if (navigationTimeoutRef.current) {
@@ -138,7 +138,7 @@ const DescriptionCarousel = ({ items = [{ title: 'Title 1', description: 'Descri
       
       // Navigate to the new URL after animation completes
       const url = `/?magazine=${magazine}&article=${article}`;
-      console.log(`DescriptionCarousel: Navigation triggered to ${url}`);
+      // console.log(`DescriptionCarousel: Navigation triggered to ${url}`);
       
       // Use the safe navigation function instead of router
       navigateToPage(url);
@@ -187,7 +187,7 @@ const DescriptionCarousel = ({ items = [{ title: 'Title 1', description: 'Descri
       logScrollUpdate(scrollState.top, clampedRotation, effectiveRotations)
 
       if (clampedRotation >= totalRotation && !hasFinishedLogged.current) {
-        console.log('Description Carousel finished')
+        // console.log('Description Carousel finished')
         hasFinishedLogged.current = true
       }
 
@@ -221,7 +221,7 @@ const DescriptionCarousel = ({ items = [{ title: 'Title 1', description: 'Descri
 
   if (!isCarouselReady) {
     if (!lastLoggedValues.current.carouselReady) {
-      console.log('Carousel not ready yet')
+      // console.log('Carousel not ready yet')
       lastLoggedValues.current.carouselReady = true
     }
     return null
