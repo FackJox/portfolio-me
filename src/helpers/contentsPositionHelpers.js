@@ -47,6 +47,7 @@ const EXPLOSION_STAGGER_DELAY = 50
  * @param {Array} skills - Array of skill objects, each containing at least {isEngineering: boolean}
  * @param {number} vpWidth - Viewport width in pixels
  * @param {number} vpHeight - Viewport height in pixels
+ * @param {boolean} isPortrait - Indicates if the viewport is in portrait mode
  * @returns {Object} Layout configuration containing:
  *   - positions: Array of [x, y, z] coordinates for final positions
  *   - startPositions: Array of [x, y, z] coordinates for initial animation positions
@@ -58,7 +59,7 @@ const EXPLOSION_STAGGER_DELAY = 50
  * - Column spacing is proportional to viewport width
  * - Stack height is proportional to viewport height (controlled by STACK_HEIGHT_FACTOR)
  */
-export const calculateStackPositions = (skills, vpWidth, vpHeight) => {
+export const calculateStackPositions = (skills, vpWidth, vpHeight, isPortrait = false) => {
   const positions = []
   const startPositions = []
   const delays = []
@@ -67,32 +68,65 @@ export const calculateStackPositions = (skills, vpWidth, vpHeight) => {
   const creativeSkills = skills.filter((skill) => !skill.isEngineering)
   const engineeringSkills = skills.filter((skill) => skill.isEngineering)
 
-  // Guard against empty skill arrays to prevent division by zero
-  // If no skills in a category, spacing will be 0 (no vertical distribution needed)
-  const creativeSpacing = creativeSkills.length > 0 ? (vpHeight * STACK_HEIGHT_FACTOR) / creativeSkills.length : 0
-  const engineeringSpacing =
-    engineeringSkills.length > 0 ? (vpHeight * STACK_HEIGHT_FACTOR) / engineeringSkills.length : 0
+  // Calculate column offset
   const columnOffset = vpWidth / COLUMN_OFFSET_DIVISOR // Distance between columns
+  
+  if (isPortrait) {
+    // PORTRAIT MODE: Interlace skills vertically
+    // Get the total number of skills and calculate vertical spacing
+    const totalSkills = creativeSkills.length + engineeringSkills.length
+    const verticalSpacing = (vpHeight * STACK_HEIGHT_FACTOR) / (totalSkills / 2)
+    
+    // Negative offset for horizontal overlap in the center
+    const portraitColumnOffset = columnOffset * -0.75
+    
+    // Position creative skills (left side)
+    creativeSkills.forEach((_, index) => {
+      // Calculate y position - evenly space creative skills
+      const y = ((index * 2) - (totalSkills - 1) / 2) * verticalSpacing
+      
+      positions.push([-portraitColumnOffset, y, DEFAULT_Z])
+      startPositions.push([-portraitColumnOffset, vpHeight + verticalSpacing * index, DEFAULT_Z])
+      delays.push(index * 2 * STAGGER_DELAY_STACK)
+    })
+    
+    // Position engineering skills (right side)
+    engineeringSkills.forEach((_, index) => {
+      // Calculate y position - offset by one position to interlace with creative skills
+      const y = ((index * 2 + 1) - (totalSkills - 1) / 2) * verticalSpacing
+      
+      positions.push([portraitColumnOffset, y, DEFAULT_Z])
+      startPositions.push([portraitColumnOffset, -vpHeight - verticalSpacing * index, DEFAULT_Z])
+      delays.push((index * 2 + 1) * STAGGER_DELAY_STACK)
+    })
+  } else {
+    // LANDSCAPE MODE: Original column-based layout
+    // Guard against empty skill arrays to prevent division by zero
+    // If no skills in a category, spacing will be 0 (no vertical distribution needed)
+    const creativeSpacing = creativeSkills.length > 0 ? (vpHeight * STACK_HEIGHT_FACTOR) / creativeSkills.length : 0
+    const engineeringSpacing =
+      engineeringSkills.length > 0 ? (vpHeight * STACK_HEIGHT_FACTOR) / engineeringSkills.length : 0
 
-  // Calculate positions for creative skills (left column) if any exist
-  creativeSkills.forEach((_, index) => {
-    // Center the stack vertically and apply creative spacing
-    const y = (index - (creativeSkills.length - 1) / 2) * creativeSpacing
-    // Add to the start of the arrays to ensure creative skills are processed first
-    positions.unshift([-columnOffset, y, DEFAULT_Z])
-    startPositions.unshift([-columnOffset, vpHeight + creativeSpacing * index, DEFAULT_Z])
-    delays.unshift(index * STAGGER_DELAY_STACK)
-  })
+    // Calculate positions for creative skills (left column) if any exist
+    creativeSkills.forEach((_, index) => {
+      // Center the stack vertically and apply creative spacing
+      const y = (index - (creativeSkills.length - 1) / 2) * creativeSpacing
+      // Add to the start of the arrays to ensure creative skills are processed first
+      positions.unshift([-columnOffset, y, DEFAULT_Z])
+      startPositions.unshift([-columnOffset, vpHeight + creativeSpacing * index, DEFAULT_Z])
+      delays.unshift(index * STAGGER_DELAY_STACK)
+    })
 
-  // Calculate positions for engineering skills (right column)
-  engineeringSkills.forEach((_, index) => {
-    // Center the stack vertically and apply engineering spacing
-    const y = (index - (engineeringSkills.length - 1) / 2) * engineeringSpacing
-    // Add to the end of the arrays for engineering skills
-    positions.push([columnOffset, y, DEFAULT_Z])
-    startPositions.push([columnOffset, -vpHeight - engineeringSpacing * index, DEFAULT_Z])
-    delays.push((creativeSkills.length + index) * STAGGER_DELAY_STACK)
-  })
+    // Calculate positions for engineering skills (right column)
+    engineeringSkills.forEach((_, index) => {
+      // Center the stack vertically and apply engineering spacing
+      const y = (index - (engineeringSkills.length - 1) / 2) * engineeringSpacing
+      // Add to the end of the arrays for engineering skills
+      positions.push([columnOffset, y, DEFAULT_Z])
+      startPositions.push([columnOffset, -vpHeight - engineeringSpacing * index, DEFAULT_Z])
+      delays.push((creativeSkills.length + index) * STAGGER_DELAY_STACK)
+    })
+  }
 
   return { positions, startPositions, delays }
 }

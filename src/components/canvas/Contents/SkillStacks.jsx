@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import React, { useEffect, useRef, useState, useCallback, forwardRef, useImperativeHandle } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
-import { useViewportMeasurements } from '@/helpers/deviceHelpers'
+import { useViewportMeasurements, useDeviceOrientation } from '@/helpers/deviceHelpers'
 import { calculateStackPositions, calculateExplosionPositions } from '@/helpers/contentsPositionHelpers'
 import { getSpacingConfig } from '@/helpers/magazinePositionHelpers'
 import { ANIMATION, LAYOUT } from './Constants'
@@ -18,6 +18,7 @@ import SkillText from './SkillText'
 const SkillStacks = forwardRef(({ skills, onSkillClick, selectedSkill }, ref) => {
   const { camera } = useThree()
   const { vpWidth: pixelWidth, vpHeight: pixelHeight } = useViewportMeasurements(false)
+  const isPortrait = useDeviceOrientation();
 
   // Convert pixel measurements to Three.js units
   const vpWidth = pixelWidth / LAYOUT.VIEWPORT.MAIN_DIVIDER
@@ -51,7 +52,7 @@ const SkillStacks = forwardRef(({ skills, onSkillClick, selectedSkill }, ref) =>
    */
   useEffect(() => {
     if (skills.length > 0) {
-      const { positions, startPositions, delays } = calculateStackPositions(skills, vpWidth, vpHeight)
+      const { positions, startPositions, delays } = calculateStackPositions(skills, vpWidth, vpHeight, isPortrait)
       targetPositionsRef.current = positions
       currentPositionsRef.current = startPositions
       delaysRef.current = delays
@@ -66,7 +67,7 @@ const SkillStacks = forwardRef(({ skills, onSkillClick, selectedSkill }, ref) =>
 
       return () => clearTimeout(timer)
     }
-  }, [skills, vpWidth, vpHeight])
+  }, [skills, vpWidth, vpHeight, isPortrait])
 
   console.log('[SkillStacks] isReady', isReady)
   console.log('[SkillStacks] currentPositionsRef.Current', currentPositionsRef.current)
@@ -84,7 +85,7 @@ const SkillStacks = forwardRef(({ skills, onSkillClick, selectedSkill }, ref) =>
       isInitialAnimationRef.current = false
 
       if (isCollapsing) {
-        const { positions, delays } = calculateStackPositions(skills, vpWidth, vpHeight)
+        const { positions, delays } = calculateStackPositions(skills, vpWidth, vpHeight, isPortrait)
         console.log('Collapse positions:', positions);
         targetPositionsRef.current = positions
         delaysRef.current = delays
@@ -119,7 +120,7 @@ const SkillStacks = forwardRef(({ skills, onSkillClick, selectedSkill }, ref) =>
       startTimeRef.current = performance.now()
       setAnimationStateVersion((v) => v + 1)
     },
-    [camera, skills, vpWidth, vpHeight]
+    [camera, skills, vpWidth, vpHeight, isPortrait]
   )
 
   /**
