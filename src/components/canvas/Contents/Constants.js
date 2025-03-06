@@ -52,7 +52,8 @@ export const LAYOUT = {
   POSITION: {
     HOVER_DETECTOR: -5.5, // Z-position of the hover detection plane
     MAIN_GROUP: 4,        // Z-position of the main content group
-    CONTENT_GROUP: -3,    // Z-position of the secondary content group
+    CONTENT_GROUP: -5,    // Z-position of the secondary content group for landscape mode
+    PORTRAIT_CONTENT_GROUP: -10,  // Z-position of the secondary content group for portrait mode
     CAROUSEL: 6.75,          // Z-position of the carousel elements
   },
 }

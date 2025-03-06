@@ -1,6 +1,7 @@
 // portfolio-me/src/utils/contentsPositionHelpers.js
 import * as THREE from 'three'
 import { SmackContents, EngineerContents, VagueContents } from './contentsConfig'
+import { LAYOUT } from '../components/canvas/Contents/Constants'
 
 // Constants for layout configuration
 /**
@@ -18,6 +19,7 @@ const COLUMN_OFFSET_DIVISOR = 75
 /**
  * Default z-index for positioning skills in 3D space.
  * Negative value places elements "into" the screen.
+ * This is used as fallback when LAYOUT constants are not available.
  */
 const DEFAULT_Z = -5
 
@@ -38,6 +40,16 @@ const EXPLOSION_RADIUS_MULTIPLIER = 1.5
  * Controls the sequential timing of skills exploding outward.
  */
 const EXPLOSION_STAGGER_DELAY = 50
+
+/**
+ * Fixed vertical spacing between skills in landscape mode (in Three.js units)
+ */
+const FIXED_SKILL_SPACING_LANDSCAPE = 1 // Adjust this value as needed
+
+/**
+ * Fixed vertical spacing between skills in portrait mode (in Three.js units)
+ */
+const FIXED_SKILL_SPACING_PORTRAIT = 1.4 // Adjust this value as needed
 
 /**
  * Calculates the positions for skill text elements in a stacked layout.
@@ -69,25 +81,29 @@ export const calculateStackPositions = (skills, vpWidth, vpHeight, isPortrait = 
   const engineeringSkills = skills.filter((skill) => skill.isEngineering)
 
   // Calculate column offset
-  const columnOffset = vpWidth / COLUMN_OFFSET_DIVISOR // Distance between columns
+  const columnOffset = 0.75 // Distance between columns
+  
+  // Use appropriate z position based on orientation
+  const zPosition = isPortrait ? LAYOUT.POSITION.PORTRAIT_CONTENT_GROUP : LAYOUT.POSITION.CONTENT_GROUP
   
   if (isPortrait) {
     // PORTRAIT MODE: Interlace skills vertically
-    // Get the total number of skills and calculate vertical spacing
+    // Get the total number of skills and calculate fixed vertical spacing
     const totalSkills = creativeSkills.length + engineeringSkills.length
-    const verticalSpacing = (vpHeight * STACK_HEIGHT_FACTOR) / (totalSkills / 2)
+    // Use fixed spacing instead of viewport-relative spacing
+    const verticalSpacing = FIXED_SKILL_SPACING_PORTRAIT
     
     // Negative offset for horizontal overlap in the center
-    const portraitColumnOffset = columnOffset * -0.75
+    const portraitColumnOffset = columnOffset * -5
     
     // Position creative skills (left side)
     creativeSkills.forEach((_, index) => {
       // Calculate y position - evenly space creative skills
       const y = ((index * 2) - (totalSkills - 1) / 2) * verticalSpacing
       
-      positions.push([-portraitColumnOffset, y, DEFAULT_Z])
-      startPositions.push([-portraitColumnOffset, vpHeight + verticalSpacing * index, DEFAULT_Z])
-      delays.push(index * 2 * STAGGER_DELAY_STACK)
+      positions.unshift([-portraitColumnOffset, y, zPosition])
+      startPositions.unshift([-portraitColumnOffset, vpHeight + verticalSpacing * index, zPosition])
+      delays.unshift(index * 2 * STAGGER_DELAY_STACK)
     })
     
     // Position engineering skills (right side)
@@ -95,25 +111,23 @@ export const calculateStackPositions = (skills, vpWidth, vpHeight, isPortrait = 
       // Calculate y position - offset by one position to interlace with creative skills
       const y = ((index * 2 + 1) - (totalSkills - 1) / 2) * verticalSpacing
       
-      positions.push([portraitColumnOffset, y, DEFAULT_Z])
-      startPositions.push([portraitColumnOffset, -vpHeight - verticalSpacing * index, DEFAULT_Z])
+      positions.push([portraitColumnOffset, y, zPosition])
+      startPositions.push([portraitColumnOffset, -vpHeight - verticalSpacing * index, zPosition])
       delays.push((index * 2 + 1) * STAGGER_DELAY_STACK)
     })
   } else {
     // LANDSCAPE MODE: Original column-based layout
-    // Guard against empty skill arrays to prevent division by zero
-    // If no skills in a category, spacing will be 0 (no vertical distribution needed)
-    const creativeSpacing = creativeSkills.length > 0 ? (vpHeight * STACK_HEIGHT_FACTOR) / creativeSkills.length : 0
-    const engineeringSpacing =
-      engineeringSkills.length > 0 ? (vpHeight * STACK_HEIGHT_FACTOR) / engineeringSkills.length : 0
+    // Use fixed spacing instead of viewport-relative spacing
+    const creativeSpacing = FIXED_SKILL_SPACING_LANDSCAPE
+    const engineeringSpacing = FIXED_SKILL_SPACING_LANDSCAPE
 
     // Calculate positions for creative skills (left column) if any exist
     creativeSkills.forEach((_, index) => {
       // Center the stack vertically and apply creative spacing
       const y = (index - (creativeSkills.length - 1) / 2) * creativeSpacing
       // Add to the start of the arrays to ensure creative skills are processed first
-      positions.unshift([-columnOffset, y, DEFAULT_Z])
-      startPositions.unshift([-columnOffset, vpHeight + creativeSpacing * index, DEFAULT_Z])
+      positions.unshift([-columnOffset, y, zPosition])
+      startPositions.unshift([-columnOffset, vpHeight + creativeSpacing * index, zPosition])
       delays.unshift(index * STAGGER_DELAY_STACK)
     })
 
@@ -122,8 +136,8 @@ export const calculateStackPositions = (skills, vpWidth, vpHeight, isPortrait = 
       // Center the stack vertically and apply engineering spacing
       const y = (index - (engineeringSkills.length - 1) / 2) * engineeringSpacing
       // Add to the end of the arrays for engineering skills
-      positions.push([columnOffset, y, DEFAULT_Z])
-      startPositions.push([columnOffset, -vpHeight - engineeringSpacing * index, DEFAULT_Z])
+      positions.push([columnOffset, y, zPosition])
+      startPositions.push([columnOffset, -vpHeight - engineeringSpacing * index, zPosition])
       delays.push((creativeSkills.length + index) * STAGGER_DELAY_STACK)
     })
   }
@@ -139,6 +153,7 @@ export const calculateStackPositions = (skills, vpWidth, vpHeight, isPortrait = 
  * @param {number} vpWidth - Viewport width in pixels
  * @param {number} vpHeight - Viewport height in pixels
  * @param {string} clickedContent - Content text of the clicked skill
+ * @param {boolean} isPortrait - Indicates if the viewport is in portrait mode
  * @returns {Object} Explosion configuration containing:
  *   - positions: Array of [x, y, z] coordinates for exploded positions
  *   - delays: Array of animation delay times in milliseconds
@@ -150,11 +165,14 @@ export const calculateStackPositions = (skills, vpWidth, vpHeight, isPortrait = 
  * - Other skills distribute evenly in a circle around center
  * - Animation delays create sequential explosion effect
  */
-export const calculateExplosionPositions = (skills, vpWidth, vpHeight, clickedContent) => {
+export const calculateExplosionPositions = (skills, vpWidth, vpHeight, clickedContent, isPortrait = false) => {
   const positions = []
   const delays = []
   const radius = Math.max(vpWidth, vpHeight) * EXPLOSION_RADIUS_MULTIPLIER
   const nonClickedSkills = skills.filter((skill) => skill.content !== clickedContent)
+
+  // Use appropriate z position based on orientation
+  const zPosition = isPortrait ? LAYOUT.POSITION.PORTRAIT_CONTENT_GROUP : LAYOUT.POSITION.CONTENT_GROUP
 
   // Guard: If there are no non-clicked skills, angleStep would be undefined (2π/0)
   // In this case, we don't need to calculate angles as there are no skills to position
@@ -171,12 +189,12 @@ export const calculateExplosionPositions = (skills, vpWidth, vpHeight, clickedCo
       if (nonClickedSkills.length > 0) {
         const x = Math.cos(currentAngle) * radius
         const y = Math.sin(currentAngle) * radius
-        positions.push([x, y, DEFAULT_Z])
+        positions.push([x, y, zPosition])
         delays.push(index * EXPLOSION_STAGGER_DELAY)
         currentAngle += angleStep
       } else {
         // Fallback position if this is the only skill (shouldn't occur in normal cases)
-        positions.push([0, 0, DEFAULT_Z])
+        positions.push([0, 0, zPosition])
         delays.push(index * EXPLOSION_STAGGER_DELAY)
       }
     }

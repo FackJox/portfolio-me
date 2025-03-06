@@ -28,6 +28,10 @@ const SkillStacks = forwardRef(({ skills, onSkillClick, selectedSkill }, ref) =>
   const [hoveredStates, setHoveredStates] = useState({})
   const [isReady, setIsReady] = useState(false)
 
+  // Track initialization state
+  const hasInitializedRef = useRef(false)
+  const prevOrientationRef = useRef(isPortrait)
+
   // Animation state refs
   const targetPositionsRef = useRef([])
   const currentPositionsRef = useRef([])
@@ -52,20 +56,45 @@ const SkillStacks = forwardRef(({ skills, onSkillClick, selectedSkill }, ref) =>
    */
   useEffect(() => {
     if (skills.length > 0) {
+      // Calculate positions based on current orientation
       const { positions, startPositions, delays } = calculateStackPositions(skills, vpWidth, vpHeight, isPortrait)
-      targetPositionsRef.current = positions
-      currentPositionsRef.current = startPositions
-      delaysRef.current = delays
-      setActiveSkills(skills.map((skill, index) => ({ skill, index })))
-      skillRefs.current = skills.map(() => ({ position: new THREE.Vector3() }))
-      positionRefs.current = startPositions.map((pos) => new THREE.Vector3(pos[0], pos[1], pos[2]))
 
-      const timer = setTimeout(() => {
-        startTimeRef.current = performance.now()
-        setIsReady(true)
-      }, ANIMATION.DELAY.INITIAL)
+      if (!hasInitializedRef.current) {
+        // FIRST LOAD: Set up initial animation with start positions
+        console.log('[SkillStacks] First initialization')
+        targetPositionsRef.current = positions
+        currentPositionsRef.current = startPositions
+        delaysRef.current = delays
+        setActiveSkills(skills.map((skill, index) => ({ skill, index })))
+        skillRefs.current = skills.map(() => ({ position: new THREE.Vector3() }))
+        positionRefs.current = startPositions.map((pos) => new THREE.Vector3(pos[0], pos[1], pos[2]))
+        isInitialAnimationRef.current = true
 
-      return () => clearTimeout(timer)
+        const timer = setTimeout(() => {
+          startTimeRef.current = performance.now()
+          setIsReady(true)
+          hasInitializedRef.current = true
+        }, ANIMATION.DELAY.INITIAL)
+
+        return () => clearTimeout(timer)
+      }
+      else if (prevOrientationRef.current !== isPortrait) {
+        // ORIENTATION CHANGE: Update target positions but keep current positions
+        console.log('[SkillStacks] Orientation changed, updating positions')
+        targetPositionsRef.current = positions
+
+        // Mark all skills as moving to trigger smooth transitions
+        movingSkillsRef.current = new Set(skills.map((skill) => skill.content))
+
+        // Don't reset current positions or animation state
+        isInitialAnimationRef.current = false
+
+        // Update animation state to trigger rerender
+        setAnimationStateVersion((v) => v + 1)
+
+        // Store new orientation
+        prevOrientationRef.current = isPortrait
+      }
     }
   }, [skills, vpWidth, vpHeight, isPortrait])
 
@@ -94,7 +123,7 @@ const SkillStacks = forwardRef(({ skills, onSkillClick, selectedSkill }, ref) =>
           skills.map((skill) => [skill.content, true])
         )
       } else {
-        const { positions, delays } = calculateExplosionPositions(skills, vpWidth, vpHeight, content)
+        const { positions, delays } = calculateExplosionPositions(skills, vpWidth, vpHeight, content, isPortrait)
         console.log('Explosion positions:', positions);
         console.log('targetPositionsRef.current', targetPositionsRef.current)
         const clickedIndex = skills.findIndex((skill) => skill.content === content)
@@ -163,11 +192,15 @@ const SkillStacks = forwardRef(({ skills, onSkillClick, selectedSkill }, ref) =>
       let significantChanges = false
 
       positions.forEach((pos, index) => {
-        if (elapsed < delaysRef.current[index]) return
+        // For initial animation, respect delays
+        // For orientation changes, start moving immediately
+        if (isInitialAnimationRef.current && elapsed < delaysRef.current[index]) return
 
         const target = targets[index]
         const skill = activeSkills[index]?.skill
         const currentPos = positionRefs.current[index]
+        if (!currentPos) return
+
         const prevPos = currentPos.clone()
 
         // Set target position
@@ -233,8 +266,12 @@ const SkillStacks = forwardRef(({ skills, onSkillClick, selectedSkill }, ref) =>
         const isHovered = hoveredStates[index]
         const isMoving = movingSkillsRef.current.has(skill.content)
         const scale = isMoving ? ANIMATION.SCALE.DEFAULT : isHovered ? ANIMATION.SCALE.HOVER_LARGE : ANIMATION.SCALE.DEFAULT
+
+        // For initial animation, respect delays
+        // For orientation changes, show immediately
         const elapsed = performance.now() - startTimeRef.current
         const isActive = isInitialAnimationRef.current ? elapsed >= delaysRef.current[index] : true
+
         const isInViewport = Math.abs(currentPos[0]) <= vpWidth * 1.5 && Math.abs(currentPos[1]) <= vpHeight * 1.5
         const opacity = isActive ? (isInViewport ? 1 : 0) : 0
         const isForceClicked = skill.content === selectedSkill
