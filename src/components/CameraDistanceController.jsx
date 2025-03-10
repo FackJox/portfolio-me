@@ -1,8 +1,8 @@
 import { useFrame, useThree } from '@react-three/fiber';
 import { useAtom } from 'jotai';
 import * as THREE from 'three';
-import { useDeviceOrientation } from '@/helpers/deviceHelpers';
-import { focusedMagazineAtom } from '@/helpers/atoms';
+import { useDeviceOrientation } from '@/helpers/global/device';
+import { focusedMagazineAtom } from '@/state/atoms/magazines';
 
 export default function CameraDistanceController() {
   const { camera } = useThree();

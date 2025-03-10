@@ -3,10 +3,12 @@ import React, { useEffect, useRef, useState, useCallback } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Text3D } from '@react-three/drei'
 import { useSetAtom } from 'jotai'
-import { styleMagazineAtom } from '@/helpers/atoms'
-import { throttle } from '@/helpers/throttleHelpers'
-import { performLerp } from '@/helpers/magazinePositionHelpers'
-import { ANIMATION, LAYOUT, COLORS } from './Constants'
+import { styleMagazineAtom } from '@/state/atoms/global'
+import { throttle } from '@/helpers/global/throttle'
+import { performLerp } from '@/helpers/magazines/position'
+import { ANIMATION } from '@/constants/contents/animation'
+import { LAYOUT } from '@/constants/contents/layout'
+import { COLORS } from '@/constants/global'
 import HKGroteskFont from './HKGrotesk-SemiBold.json'
 import LemonFont from './Lemon_Regular.json'
 
@@ -90,7 +92,6 @@ export default function SkillText({
    */
   useEffect(() => {
     if (forceClicked && !clicked && !isMoving) {
-      console.log('[SkillText] forceClicked true, setting clicked state to true');
       setClicked(true);
     }
   }, [forceClicked, clicked, isMoving]);
@@ -152,7 +153,7 @@ export default function SkillText({
         onHoverChange && onHoverChange(isHovered)
         setStyleMagazine(isHovered ? (isEngineering ? 'engineer' : 'smack') : 'vague')
       }
-    }, ANIMATION.DELAY.HOVER),
+    }, ANIMATION.TIMING.HOVER_DELAY),
     [isMoving, clicked, isBottomPosition, isEngineering, onHoverChange, setStyleMagazine],
   )
 
@@ -183,7 +184,6 @@ export default function SkillText({
   useFrame(() => {
     if (groupRef.current && meshRef.current && text3DRef.current) {
 
-      console.log('[SkillText] Clicked', clicked,)
       // Scale lerping
       targetScaleVec.current.set(targetScale, targetScale, targetScale)
       performLerp(currentScaleRef.current, targetScaleVec.current, ANIMATION.LERP.SCALE)

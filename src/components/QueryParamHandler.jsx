@@ -3,8 +3,17 @@
 import React, { useEffect, useCallback } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useAtom } from 'jotai'
-import { focusedMagazineAtom, smackAtom, engineerAtom, vagueAtom } from '@/helpers/atoms'
-import { SmackContents, EngineerContents, VagueContents } from '@/helpers/contentsConfig'
+import { 
+  focusedMagazineAtom, 
+  smackAtom, 
+  engineerAtom, 
+  vagueAtom 
+} from '@/state/atoms/magazines'
+import { 
+  SmackContents, 
+  EngineerContents, 
+  VagueContents 
+} from '@/constants/contents/config'
 
 const QueryParamHandler = () => {
   const searchParams = useSearchParams()
@@ -81,16 +90,7 @@ const QueryParamHandler = () => {
     const magazine = searchParams.get('magazine')
     const article = searchParams.get('article')
 
-    console.log('URL -> State Sync:', {
-      magazine,
-      article,
-      currentFocusedMagazine: focusedMagazine,
-      currentPages: {
-        smack: smackPage,
-        engineer: engineerPage,
-        vague: vaguePage,
-      },
-    })
+   
 
     if (magazine && article) {
       const pageIndex = findArticlePageIndex(magazine, article)
@@ -116,15 +116,7 @@ const QueryParamHandler = () => {
 
   // Effect for State -> URL synchronization
   useEffect(() => {
-    console.log('State -> URL Sync:', {
-      focusedMagazine,
-      pages: {
-        smack: smackPage,
-        engineer: engineerPage,
-        vague: vaguePage,
-      },
-    })
-
+   
     // Skip if no magazine is focused
     if (!focusedMagazine) {
       router.replace('/')
@@ -156,7 +148,6 @@ const QueryParamHandler = () => {
       params.set('article', articleTitle)
 
       const newUrl = `?${params.toString()}`
-      console.log('Updating URL to:', newUrl)
       router.replace(newUrl)
     }
   }, [focusedMagazine, smackPage, engineerPage, vaguePage, findArticleByPageIndex, router])

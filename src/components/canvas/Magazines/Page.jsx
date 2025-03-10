@@ -14,7 +14,7 @@ import {
   Vector3,
 } from 'three'
 import { degToRad } from 'three/src/math/MathUtils.js'
-import { textureCache, getTexturePath, getRoughnessPath } from '@/helpers/textureLoaders'
+import { textureCache, getTexturePath, getRoughnessPath } from '@/helpers/global/texture'
 
 // Constants
 const PAGE_WIDTH = 1.28

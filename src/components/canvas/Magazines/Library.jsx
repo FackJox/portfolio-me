@@ -11,18 +11,22 @@ import {
   styleMagazineAtom,
   magazineViewingStatesAtom,
   lastCarouselMoveAtom,
-  contentsVisibleAtom,
-} from '@/helpers/atoms'
+} from '@/state/atoms/magazines'
+import { contentsVisibleAtom } from '@/state/atoms/contents'
 import {
   calculateFocusPosition,
   updateMagazineCarousel,
   calculateMiddleMagazine,
   getSpacingConfig,
-} from '@/helpers/magazinePositionHelpers'
-import { useDeviceOrientation } from '@/helpers/deviceHelpers'
-import { handleLibraryDrag, isTapInteraction, isSwipeInteraction } from '@/helpers/gestureHelpers'
-import { ANIMATION_CONFIG } from '@/helpers/animationConfigs'
-import { GESTURE_CONFIG } from '@/helpers/gestureHelpers'
+} from '@/helpers/magazines/position'
+import { useDeviceOrientation } from '@/helpers/global/device'
+import { 
+  handleLibraryDrag, 
+  isTapInteraction, 
+  isSwipeInteraction 
+} from '@/helpers/magazines/interaction'
+import { LERP, FLOAT } from '@/constants/magazines/animation'
+import { THRESHOLD } from '@/constants/magazines/animation'
 import { Magazine } from './Magazine'
 import { VagueButton, EngineerButton, SmackButton } from './Buttons'
 

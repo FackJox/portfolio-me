@@ -1,55 +1,28 @@
-// portfolio-me/src/utils/contentsPositionHelpers.js
+/**
+ * Position calculation helper functions for Contents components
+ */
+
 import * as THREE from 'three'
-import { SmackContents, EngineerContents, VagueContents } from './contentsConfig'
-import { LAYOUT } from '../components/canvas/Contents/Constants'
-
-// Constants for layout configuration
-/**
- * Factor used to determine the height of the stacked skills relative to viewport height.
- * Value of 0.3 means the stack will occupy 30% of the viewport height.
- */
-const STACK_HEIGHT_FACTOR = 0.4
+import { SPACING, POSITION } from '@/constants/contents/layout'
+import { TIMING } from '@/constants/contents/animation'
+import { SmackContents, EngineerContents, VagueContents } from '@/constants/contents/config'
 
 /**
- * Divisor used to calculate horizontal offset between creative and engineering columns.
- * A larger value creates a smaller gap between columns.
+ * Gets the appropriate content spacing configuration based on view mode
+ * @param {boolean} isPortrait - Whether in portrait orientation
+ * @returns {Object} Spacing configuration for current orientation
  */
-const COLUMN_OFFSET_DIVISOR = 75
-
-/**
- * Default z-index for positioning skills in 3D space.
- * Negative value places elements "into" the screen.
- * This is used as fallback when LAYOUT constants are not available.
- */
-const DEFAULT_Z = -5
-
-/**
- * Delay (in ms) between each skill animation in the stack layout.
- * Controls the cascading animation effect of skills appearing.
- */
-const STAGGER_DELAY_STACK = 100
-
-/**
- * Multiplier for explosion radius relative to viewport dimensions.
- * Value > 1 means skills will explode beyond viewport boundaries.
- */
-const EXPLOSION_RADIUS_MULTIPLIER = 1.5
-
-/**
- * Delay (in ms) between each skill animation during explosion effect.
- * Controls the sequential timing of skills exploding outward.
- */
-const EXPLOSION_STAGGER_DELAY = 50
-
-/**
- * Fixed vertical spacing between skills in landscape mode (in Three.js units)
- */
-const FIXED_SKILL_SPACING_LANDSCAPE = 1 // Adjust this value as needed
-
-/**
- * Fixed vertical spacing between skills in portrait mode (in Three.js units)
- */
-const FIXED_SKILL_SPACING_PORTRAIT = 1.4 // Adjust this value as needed
+export const getSpacingConfig = (isPortrait) => {
+  return {
+    positions: {
+      button: {
+        hover: {
+          y: -1.2, // Button hover Y position
+        }
+      }
+    }
+  }
+}
 
 /**
  * Calculates the positions for skill text elements in a stacked layout.
@@ -64,12 +37,6 @@ const FIXED_SKILL_SPACING_PORTRAIT = 1.4 // Adjust this value as needed
  *   - positions: Array of [x, y, z] coordinates for final positions
  *   - startPositions: Array of [x, y, z] coordinates for initial animation positions
  *   - delays: Array of animation delay times in milliseconds
- *
- * @remarks
- * - Guards against empty skill arrays to prevent division by zero
- * - Creative skills enter from top, engineering skills from bottom
- * - Column spacing is proportional to viewport width
- * - Stack height is proportional to viewport height (controlled by STACK_HEIGHT_FACTOR)
  */
 export const calculateStackPositions = (skills, vpWidth, vpHeight, isPortrait = false) => {
   const positions = []
@@ -84,14 +51,14 @@ export const calculateStackPositions = (skills, vpWidth, vpHeight, isPortrait = 
   const columnOffset = 0.75 // Distance between columns
   
   // Use appropriate z position based on orientation
-  const zPosition = isPortrait ? LAYOUT.POSITION.PORTRAIT_CONTENT_GROUP : LAYOUT.POSITION.CONTENT_GROUP
+  const zPosition = isPortrait ? POSITION.PORTRAIT_CONTENT_GROUP : POSITION.CONTENT_GROUP
   
   if (isPortrait) {
     // PORTRAIT MODE: Interlace skills vertically
     // Get the total number of skills and calculate fixed vertical spacing
     const totalSkills = creativeSkills.length + engineeringSkills.length
-    // Use fixed spacing instead of viewport-relative spacing
-    const verticalSpacing = FIXED_SKILL_SPACING_PORTRAIT
+    // Use fixed spacing from constants
+    const verticalSpacing = SPACING.FIXED_SKILL_SPACING_PORTRAIT
     
     // Negative offset for horizontal overlap in the center
     const portraitColumnOffset = columnOffset * -5
@@ -103,7 +70,7 @@ export const calculateStackPositions = (skills, vpWidth, vpHeight, isPortrait = 
       
       positions.unshift([-portraitColumnOffset, y, zPosition])
       startPositions.unshift([-portraitColumnOffset, vpHeight + verticalSpacing * index, zPosition])
-      delays.unshift(index * 2 * STAGGER_DELAY_STACK)
+      delays.unshift(index * 2 * TIMING.STAGGER_DELAY_STACK)
     })
     
     // Position engineering skills (right side)
@@ -113,13 +80,13 @@ export const calculateStackPositions = (skills, vpWidth, vpHeight, isPortrait = 
       
       positions.push([portraitColumnOffset, y, zPosition])
       startPositions.push([portraitColumnOffset, -vpHeight - verticalSpacing * index, zPosition])
-      delays.push((index * 2 + 1) * STAGGER_DELAY_STACK)
+      delays.push((index * 2 + 1) * TIMING.STAGGER_DELAY_STACK)
     })
   } else {
     // LANDSCAPE MODE: Original column-based layout
-    // Use fixed spacing instead of viewport-relative spacing
-    const creativeSpacing = FIXED_SKILL_SPACING_LANDSCAPE
-    const engineeringSpacing = FIXED_SKILL_SPACING_LANDSCAPE
+    // Use fixed spacing from constants
+    const creativeSpacing = SPACING.FIXED_SKILL_SPACING_LANDSCAPE
+    const engineeringSpacing = SPACING.FIXED_SKILL_SPACING_LANDSCAPE
 
     // Calculate positions for creative skills (left column) if any exist
     creativeSkills.forEach((_, index) => {
@@ -128,7 +95,7 @@ export const calculateStackPositions = (skills, vpWidth, vpHeight, isPortrait = 
       // Add to the start of the arrays to ensure creative skills are processed first
       positions.unshift([-columnOffset, y, zPosition])
       startPositions.unshift([-columnOffset, vpHeight + creativeSpacing * index, zPosition])
-      delays.unshift(index * STAGGER_DELAY_STACK)
+      delays.unshift(index * TIMING.STAGGER_DELAY_STACK)
     })
 
     // Calculate positions for engineering skills (right column)
@@ -138,7 +105,7 @@ export const calculateStackPositions = (skills, vpWidth, vpHeight, isPortrait = 
       // Add to the end of the arrays for engineering skills
       positions.push([columnOffset, y, zPosition])
       startPositions.push([columnOffset, -vpHeight - engineeringSpacing * index, zPosition])
-      delays.push((creativeSkills.length + index) * STAGGER_DELAY_STACK)
+      delays.push((creativeSkills.length + index) * TIMING.STAGGER_DELAY_STACK)
     })
   }
 
@@ -157,22 +124,15 @@ export const calculateStackPositions = (skills, vpWidth, vpHeight, isPortrait = 
  * @returns {Object} Explosion configuration containing:
  *   - positions: Array of [x, y, z] coordinates for exploded positions
  *   - delays: Array of animation delay times in milliseconds
- *
- * @remarks
- * - Guards against scenarios where there's only one skill (no explosion needed)
- * - Explosion radius is proportional to the larger viewport dimension
- * - Clicked skill moves to center (0, 0, 0)
- * - Other skills distribute evenly in a circle around center
- * - Animation delays create sequential explosion effect
  */
 export const calculateExplosionPositions = (skills, vpWidth, vpHeight, clickedContent, isPortrait = false) => {
   const positions = []
   const delays = []
-  const radius = Math.max(vpWidth, vpHeight) * EXPLOSION_RADIUS_MULTIPLIER
+  const radius = Math.max(vpWidth, vpHeight) * SPACING.EXPLOSION_RADIUS_MULTIPLIER
   const nonClickedSkills = skills.filter((skill) => skill.content !== clickedContent)
 
   // Use appropriate z position based on orientation
-  const zPosition = isPortrait ? LAYOUT.POSITION.PORTRAIT_CONTENT_GROUP : LAYOUT.POSITION.CONTENT_GROUP
+  const zPosition = isPortrait ? POSITION.PORTRAIT_CONTENT_GROUP : POSITION.CONTENT_GROUP
 
   // Guard: If there are no non-clicked skills, angleStep would be undefined (2π/0)
   // In this case, we don't need to calculate angles as there are no skills to position
@@ -190,12 +150,12 @@ export const calculateExplosionPositions = (skills, vpWidth, vpHeight, clickedCo
         const x = Math.cos(currentAngle) * radius
         const y = Math.sin(currentAngle) * radius
         positions.push([x, y, zPosition])
-        delays.push(index * EXPLOSION_STAGGER_DELAY)
+        delays.push(index * TIMING.EXPLOSION_STAGGER_DELAY)
         currentAngle += angleStep
       } else {
         // Fallback position if this is the only skill (shouldn't occur in normal cases)
         positions.push([0, 0, zPosition])
-        delays.push(index * EXPLOSION_STAGGER_DELAY)
+        delays.push(index * TIMING.EXPLOSION_STAGGER_DELAY)
       }
     }
   })
@@ -208,10 +168,6 @@ export const calculateExplosionPositions = (skills, vpWidth, vpHeight, clickedCo
  *
  * @param {string} title - The title to search for (case-sensitive)
  * @returns {number} The number of pages for the matching title, or 0 if not found
- *
- * @example
- * const pageCount = getPageCountForTitle("My Project");
- * console.log(pageCount); // Returns the number of pages or 0 if not found
  */
 export const getPageCountForTitle = (title) => {
   const contentSources = [SmackContents, EngineerContents, VagueContents]
@@ -233,11 +189,6 @@ export const getPageCountForTitle = (title) => {
  *
  * @param {string[]} titles - Ordered array of title strings to calculate cumulative counts for
  * @returns {number[]} Array of cumulative page counts
- *
- * @example
- * const titles = ["Project A", "Project B", "Project C"];
- * const counts = getCumulativePageCounts(titles);
- * // If individual counts are [2, 4, 3], returns [2, 6, 9]
  */
 export const getCumulativePageCounts = (titles) => {
   let sum = 0
@@ -260,11 +211,6 @@ export const getCumulativePageCounts = (titles) => {
  *   exit: number,
  *   pageCount: number
  * }>} Array of threshold objects for each title
- *
- * @example
- * const titles = ["Project A", "Project B"];
- * const thresholds = getTitleScrollThresholds(titles, 171.25);
- * // Returns array of objects with enter/stationary/exit thresholds and page counts
  */
 export const getTitleScrollThresholds = (titles, baseAngle) => {
   const cumulativeCounts = getCumulativePageCounts(titles)
@@ -291,7 +237,6 @@ export const getTitleScrollThresholds = (titles, baseAngle) => {
     }
   })
 }
-
 
 /**
  * Computes the effective rotation angle and phase for a title based on current scroll position

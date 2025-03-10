@@ -1,4 +1,8 @@
 /**
+ * Throttle and debounce utility functions
+ */
+
+/**
  * Creates a throttled function that only invokes func at most once per wait milliseconds
  * @param {Function} func The function to throttle
  * @param {number} wait The number of milliseconds to throttle invocations to

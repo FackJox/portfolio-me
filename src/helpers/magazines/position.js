@@ -1,103 +1,87 @@
-// portfolio-me/src/utils/magazinePositionHelpers.js
-import * as THREE from 'three'
-import { ANIMATION_CONFIG } from './animationConfigs'
-import { GESTURE_CONFIG } from './gestureHelpers'
+/**
+ * Position calculation helper functions for Magazine components
+ */
 
-// Spacing and positioning configuration
-const SPACING_CONFIG = {
-  portrait: {
-    magazine: 2.5,
-    total: 7.5, // magazine * 3
-    positions: {
-      x: -0.65,
-      y: 0,
-      z: 3.5,
-      zOffset: 2.5, // z-offset for middle magazine
-      pageOpenOffset: 0.65, // x-offset when page is open
-    },
-    camera: {
-      zDistance: 2.8,
-      xOffset: -0.003,
-    },
-    geometry: {
-      width: 3,
-      viewOffset: 3.8, // divisor for page view offset
-    },
-  },
-  landscape: {
-    magazine: 2,
-    total: 6, // magazine * 3
-    zOffset: 2.5, // z-offset for hover effect
-    positions: {
-      engineer: {
-        x: -2.5,
-        y: 0.3, // Slightly raised
-        z: 4.5,
-        dragOffset: 1,
-        hoverOffset: { x: 1 }, // move right when hovered
-      },
-      vague: {
-        x: -0.5,
-        y: 0.3, // Center
-        z: 4.5,
-        pageOffset: 1,
-      },
-      smack: {
-        x: 1.5,
-        y: 0.3, // Slightly lowered
-        z: 4.5,
-        dragOffset: 1,
-        hoverOffset: { x: -1 }, // move left when hovered
-      },
-      button: {
-        x: 0.65,
-        y: -1.05,
-        z: 0,
-        hover: {
-          y: -1.2, // Y position when hovered
-          z: 4, // Forward distance from camera
-          lerpSpeed: 0.1, // Speed of position transition
-        },
-      },
-    },
-    camera: {
-      zDistance: 2.7,
-      xOffset: -0.15,
-    },
-    geometry: {
-      width: 3,
-      viewOffset: 3.8,
-    },
-  },
-}
+import * as THREE from 'three'
+import { SPACING, POSITION, CAMERA, HOVER, GEOMETRY, ORDER } from '@/constants/magazines/layout'
+import { LERP, THRESHOLD, SENSITIVITY } from '@/constants/magazines/animation'
 
 /**
  * Gets the appropriate spacing configuration based on view mode
+ * @param {boolean} isPortrait - Whether in portrait orientation
+ * @returns {Object} Spacing configuration for current orientation
  */
 export const getSpacingConfig = (isPortrait) => {
-  return isPortrait ? SPACING_CONFIG.portrait : SPACING_CONFIG.landscape
+  return {
+    magazine: isPortrait ? SPACING.PORTRAIT.MAGAZINE : SPACING.LANDSCAPE.MAGAZINE,
+    total: isPortrait ? SPACING.PORTRAIT.TOTAL : SPACING.LANDSCAPE.TOTAL,
+    positions: isPortrait ? POSITION.PORTRAIT : POSITION.LANDSCAPE,
+    camera: isPortrait ? CAMERA.PORTRAIT : CAMERA.LANDSCAPE,
+    geometry: isPortrait ? GEOMETRY.PORTRAIT : GEOMETRY.LANDSCAPE,
+  }
 }
 
 /**
- * Gets the appropriate animation configuration based on view mode
+ * Gets the appropriate lerp configuration based on view mode
+ * @param {boolean} isPortrait - Whether in portrait orientation
+ * @returns {Object} Animation lerp configuration
  */
-export const getAnimationConfig = (isPortrait) => {
-  return isPortrait ? ANIMATION_CONFIG.portrait : ANIMATION_CONFIG.landscape
+export const getLerpConfig = (isPortrait) => {
+  // Both portrait and landscape use the same lerp values in this implementation
+  return {
+    button: {
+      text: LERP.BUTTON.TEXT,
+      color: LERP.BUTTON.COLOR
+    },
+    pageView: LERP.PAGE_VIEW,
+    carousel: LERP.CAROUSEL
+  }
 }
 
 /**
- * Gets the appropriate gesture configuration based on view mode
+ * Gets the appropriate gesture threshold configuration based on view mode
+ * @param {boolean} isPortrait - Whether in portrait orientation
+ * @returns {Object} Threshold configuration
  */
 export const getGestureConfig = (isPortrait) => {
-  return isPortrait ? GESTURE_CONFIG.portrait : GESTURE_CONFIG.landscape
+  // Both portrait and landscape use the same threshold values in this implementation
+  return {
+    threshold: 20,
+    dragSensitivity: SENSITIVITY.DRAG,
+    dragThreshold: THRESHOLD.DRAG,
+    interaction: {
+      tap: {
+        maxDuration: THRESHOLD.TAP.MAX_MOVEMENT,
+        maxMovement: THRESHOLD.TAP.MAX_MOVEMENT,
+      },
+      swipe: {
+        minMovement: THRESHOLD.SWIPE.MIN_MOVEMENT,
+        pageThreshold: THRESHOLD.SWIPE.PAGE_TURN,
+        carouselThreshold: THRESHOLD.SWIPE.CAROUSEL,
+      },
+      focus: {
+        debounceTime: 500,
+      },
+      carousel: {
+        middleThreshold: THRESHOLD.CAROUSEL.MIDDLE,
+        wrapThreshold: THRESHOLD.CAROUSEL.WRAP,
+      },
+    }
+  }
 }
 
 /**
  * Handles the page viewing state transitions based on swipe direction
+ * @param {Object} params - Parameters for page transition
+ * @param {number} params.deltaX - Horizontal delta movement
+ * @param {boolean} params.isViewingRightPage - Whether currently viewing right page
+ * @param {number} params.currentPage - Current page index
+ * @param {number} params.maxPages - Maximum number of pages
+ * @returns {Object} New page and viewing state
  */
 export const handlePageViewTransition = ({ deltaX, isViewingRightPage, currentPage, maxPages }) => {
   // Going backward (swipe right)
-  if (deltaX > 50) {
+  if (deltaX > THRESHOLD.SWIPE.PAGE_TURN) {
     if (isViewingRightPage) {
       return { newPage: currentPage, newViewingRightPage: false }
     } else {
@@ -112,7 +96,7 @@ export const handlePageViewTransition = ({ deltaX, isViewingRightPage, currentPa
     }
   }
   // Going forward (swipe left)
-  else if (deltaX < -50) {
+  else if (deltaX < -THRESHOLD.SWIPE.PAGE_TURN) {
     // Check if we're on the last page
     if (currentPage === maxPages - 1 && isViewingRightPage) {
       return { newPage: 0, newViewingRightPage: false }
@@ -133,6 +117,8 @@ export const handlePageViewTransition = ({ deltaX, isViewingRightPage, currentPa
 
 /**
  * Calculates the horizontal offset for page viewing transitions
+ * @param {Object} params - Parameters for offset calculation
+ * @returns {number} New offset value
  */
 export const calculatePageViewOffset = ({
   position,
@@ -143,7 +129,7 @@ export const calculatePageViewOffset = ({
   viewingRightPage,
   page,
   delayedPage,
-  lerpFactor = 0.03,
+  lerpFactor = LERP.PAGE_VIEW,
 }) => {
   const geometryWidth = 3
 
@@ -154,9 +140,9 @@ export const calculatePageViewOffset = ({
 
   // Calculate target horizontal offset based on view mode
   if (isPortrait) {
-    targetOffset = viewingRightPage ? -geometryWidth / 3.8 : geometryWidth / 3.8
+    targetOffset = viewingRightPage ? -geometryWidth / GEOMETRY.PORTRAIT.VIEW_OFFSET : geometryWidth / GEOMETRY.PORTRAIT.VIEW_OFFSET
   } else {
-    targetOffset = delayedPage < 1 ? -geometryWidth / 3.8 : 0
+    targetOffset = delayedPage < 1 ? -geometryWidth / GEOMETRY.LANDSCAPE.VIEW_OFFSET : 0
   }
 
   // Lerp the horizontal offset
@@ -171,19 +157,13 @@ export const calculatePageViewOffset = ({
 
 /**
  * Calculates the focus position of a magazine relative to the camera
+ * @param {Object} params - Parameters for focus position calculation
+ * @returns {THREE.Vector3} Target position vector
  */
 export const calculateFocusPosition = ({ camera, focusedMagazine, magazine, layoutPosition, isPortrait }) => {
   // Different z-distances for portrait and landscape
-  const zDist = isPortrait ? 2.8 : 2.7
+  const zDist = isPortrait ? CAMERA.PORTRAIT.Z_DISTANCE : CAMERA.LANDSCAPE.Z_DISTANCE
   let targetPos = new THREE.Vector3()
-
-  console.log('calculateFocusPosition called:', { 
-    magazine, 
-    focusedMagazine, 
-    isPortrait, 
-    zDist,
-    cameraPosition: camera ? { x: camera.position.x.toFixed(2), y: camera.position.y.toFixed(2), z: camera.position.z.toFixed(2) } : null
-  });
 
   if (focusedMagazine === magazine) {
     // Position the magazine in front of the camera
@@ -192,12 +172,12 @@ export const calculateFocusPosition = ({ camera, focusedMagazine, magazine, layo
     
     // For focused magazines, we need to ensure consistent positioning
     // regardless of the current camera position during animation
-    // Use a fixed z-position of 10 (PORTRAIT_BASE_DISTANCE) for consistency
-    const FIXED_CAMERA_Z = 10;
-    targetPos.z = FIXED_CAMERA_Z;
+    // Use a fixed z-position for consistency
+    const FIXED_CAMERA_Z = 10
+    targetPos.z = FIXED_CAMERA_Z
 
     const forward = new THREE.Vector3(
-      isPortrait ? -0.003 : -0.15, // Different x-offset for portrait/landscape
+      isPortrait ? CAMERA.PORTRAIT.X_OFFSET : CAMERA.LANDSCAPE.X_OFFSET,
       0.0,
       -1,
     )
@@ -205,21 +185,11 @@ export const calculateFocusPosition = ({ camera, focusedMagazine, magazine, layo
       .normalize()
 
     targetPos.addScaledVector(forward, zDist)
-    
-    console.log('Magazine focus position calculated:', { 
-      magazine,
-      targetPos: { x: targetPos.x.toFixed(2), y: targetPos.y.toFixed(2), z: targetPos.z.toFixed(2) },
-      forward: { x: forward.x.toFixed(2), y: forward.y.toFixed(2), z: forward.z.toFixed(2) },
-      zDist,
-      cameraZ: camera.position.z.toFixed(2),
-      fixedCameraZ: FIXED_CAMERA_Z
-    });
 
     // Apply layout position offset if provided
     if (layoutPosition && layoutPosition.length === 3) {
       const [offsetX, offsetY, offsetZ] = layoutPosition
       targetPos.add(new THREE.Vector3(-offsetX, -offsetY, -offsetZ))
-      console.log('Applied layout offset:', { offsetX, offsetY, offsetZ });
     }
   }
 
@@ -228,34 +198,35 @@ export const calculateFocusPosition = ({ camera, focusedMagazine, magazine, layo
 
 /**
  * Calculates which magazine should be in the middle position based on carousel offset
+ * @param {number} targetOffset - Current carousel offset
+ * @param {boolean} isPortrait - Whether in portrait orientation
+ * @returns {string} Magazine identifier ('engineer', 'vague', 'smack')
  */
 export const calculateMiddleMagazine = (targetOffset, isPortrait) => {
-  const { magazine: spacing, total: totalSpacing } = getSpacingConfig(isPortrait)
+  const { magazine: spacing, total: totalSpacing } = isPortrait ? 
+    { magazine: SPACING.PORTRAIT.MAGAZINE, total: SPACING.PORTRAIT.TOTAL } : 
+    { magazine: SPACING.LANDSCAPE.MAGAZINE, total: SPACING.LANDSCAPE.TOTAL }
+    
   const wrappedOffset = (((targetOffset % totalSpacing) + spacing * 4.5) % totalSpacing) - spacing * 1.5
   const index = Math.round(wrappedOffset / spacing) % 3
-  const magazineOrder = ['engineer', 'vague', 'smack']
+  const magazineOrder = ORDER.DEFAULT
   const calculatedIndex = (index + 1) % 3
   return magazineOrder[calculatedIndex]
 }
 
 /**
  * Gets the base index for a magazine in the carousel
+ * @param {string} magazine - Magazine identifier
+ * @returns {number} Base index
  */
-const getBaseIndex = (magazine) => {
-  switch (magazine) {
-    case 'engineer':
-      return 1
-    case 'vague':
-      return 0
-    case 'smack':
-      return 2
-    default:
-      return 0
-  }
+export const getBaseIndex = (magazine) => {
+  const magazineOrder = ORDER.DEFAULT
+  return magazineOrder.indexOf(magazine)
 }
 
 /**
  * Updates magazine position and rotation in the carousel or focused state
+ * @param {Object} params - Parameters for magazine carousel update
  */
 export const updateMagazineCarousel = ({
   magazineRef,
@@ -274,7 +245,7 @@ export const updateMagazineCarousel = ({
   if (!magazineRef) return
 
   const spacingConfig = getSpacingConfig(isPortrait)
-  const animConfig = getAnimationConfig(isPortrait)
+  const lerpConfig = getLerpConfig(isPortrait)
   const gestureConfig = getGestureConfig(isPortrait)
 
   // Initialize needsJump ref if it doesn't exist
@@ -300,7 +271,10 @@ export const updateMagazineCarousel = ({
     setPage(1)
   }
 
-  const { magazine: spacing, total: totalSpacing } = spacingConfig
+  const { magazine: spacing, total: totalSpacing } = isPortrait ?
+    { magazine: SPACING.PORTRAIT.MAGAZINE, total: SPACING.PORTRAIT.TOTAL } :
+    { magazine: SPACING.LANDSCAPE.MAGAZINE, total: SPACING.LANDSCAPE.TOTAL }
+    
   let finalPosition = new THREE.Vector3()
 
   if (focusedMagazine !== magazine) {
@@ -318,14 +292,14 @@ export const updateMagazineCarousel = ({
 
       // Calculate target position exactly as specified
       finalPosition.set(
-        spacingConfig.positions.x + (page > 0 ? spacingConfig.positions.pageOpenOffset : 0),
+        POSITION.PORTRAIT.X + (page > 0 ? SPACING.PORTRAIT.PAGE_OPEN_OFFSET : 0),
         wrappedOffset,
-        spacingConfig.positions.z,
+        POSITION.PORTRAIT.Z,
       )
 
       // Bring current middle magazine closer to camera
       if (currentMiddleMagazine === magazine) {
-        finalPosition.z += spacingConfig.positions.zOffset
+        finalPosition.z += SPACING.PORTRAIT.Z_OFFSET
       }
 
       // Check if we're wrapping around
@@ -342,41 +316,45 @@ export const updateMagazineCarousel = ({
           magazineRef.needsJump = false
         } else {
           // After jump, interpolate to final position
-          magazineRef.position.lerp(finalPosition, animConfig.lerp.carousel)
+          magazineRef.position.lerp(finalPosition, lerpConfig.carousel)
         }
       } else {
         // Reset needsJump when not wrapping
         magazineRef.needsJump = true
         // Smooth interpolation for adjacent positions
-        magazineRef.position.lerp(finalPosition, animConfig.lerp.carousel)
+        magazineRef.position.lerp(finalPosition, lerpConfig.carousel)
       }
     } else {
       // Landscape mode positioning
-      const magazineConfig = spacingConfig.positions[magazine]
+      const magazineConfig = POSITION.LANDSCAPE[magazine.toUpperCase()]
+      const buttonConfig = POSITION.LANDSCAPE.BUTTON
+      const dragOffsetValue = SPACING.LANDSCAPE.DRAG_OFFSET
+      const pageOffsetValue = SPACING.LANDSCAPE.PAGE_OFFSET
+      
       switch (magazine) {
         case 'engineer':
           finalPosition.set(
-            magazineConfig.x +
-              (dragOffset > 0 ? magazineConfig.dragOffset : 0) +
-              (page > 0 ? spacingConfig.positions.button.x : 0),
-            magazineConfig.y,
-            magazineConfig.z - (dragOffset > 0 ? magazineConfig.dragOffset : 0),
+            magazineConfig.X +
+              (dragOffset > 0 ? dragOffsetValue : 0) +
+              (page > 0 ? buttonConfig.X : 0),
+            magazineConfig.Y,
+            magazineConfig.Z - (dragOffset > 0 ? dragOffsetValue : 0),
           )
           break
         case 'vague':
           finalPosition.set(
-            magazineConfig.x + (page > 0 ? spacingConfig.positions.button.x : 0),
-            magazineConfig.y,
-            magazineConfig.z - (page > 0 ? magazineConfig.pageOffset : 0),
+            magazineConfig.X + (page > 0 ? buttonConfig.X : 0),
+            magazineConfig.Y,
+            magazineConfig.Z - (page > 0 ? pageOffsetValue : 0),
           )
           break
         case 'smack':
           finalPosition.set(
-            magazineConfig.x +
-              (dragOffset > 0 ? magazineConfig.dragOffset : 0) +
-              (page > 0 ? spacingConfig.positions.button.x : 0),
-            magazineConfig.y,
-            magazineConfig.z - (dragOffset > 0 ? magazineConfig.dragOffset : 0),
+            magazineConfig.X +
+              (dragOffset > 0 ? dragOffsetValue : 0) +
+              (page > 0 ? buttonConfig.X : 0),
+            magazineConfig.Y,
+            magazineConfig.Z - (dragOffset > 0 ? dragOffsetValue : 0),
           )
           break
       }
@@ -388,7 +366,7 @@ export const updateMagazineCarousel = ({
 
   // Apply position with lerping
   if (magazineRef.position) {
-    magazineRef.position.lerp(finalPosition, animConfig.lerp.carousel)
+    magazineRef.position.lerp(finalPosition, lerpConfig.carousel)
   } else {
     magazineRef.position = finalPosition.clone()
   }
@@ -396,6 +374,10 @@ export const updateMagazineCarousel = ({
 
 /**
  * Performs linear interpolation between two vectors
+ * @param {THREE.Vector3} current - Vector to modify
+ * @param {THREE.Vector3} target - Target vector
+ * @param {number} lerpFactor - Interpolation factor (0-1)
+ * @returns {THREE.Vector3} Modified vector (same as current)
  */
 export const performLerp = (current, target, lerpFactor) => {
   current.lerp(target, lerpFactor)
@@ -404,28 +386,42 @@ export const performLerp = (current, target, lerpFactor) => {
 
 /**
  * Gets the button position configuration
+ * @param {boolean} isPortrait - Whether in portrait orientation
+ * @returns {Object|null} Button position config or null
  */
 export const getButtonPosition = (isPortrait) => {
-  return isPortrait ? null : getSpacingConfig(isPortrait).positions.button
+  return isPortrait ? null : POSITION.LANDSCAPE.BUTTON
 }
 
 /**
  * Calculates the magazine position in landscape mode
+ * @param {string} magazine - Magazine identifier
+ * @param {number} dragOffset - Current drag offset
+ * @param {number} page - Current page number
+ * @param {boolean} isPortrait - Whether in portrait orientation
+ * @returns {THREE.Vector3} Position vector
  */
 export const calculateMagazinePosition = (magazine, dragOffset, page, isPortrait) => {
   const position = new THREE.Vector3()
-  const config = getSpacingConfig(isPortrait)
 
   if (isPortrait) {
-    position.set(config.positions.x + (page > 0 ? config.positions.pageOpenOffset : 0), 0, config.positions.z)
-  } else {
-    const magazineConfig = config.positions[magazine]
     position.set(
-      magazineConfig.x +
-        (dragOffset > 0 ? magazineConfig.dragOffset || 0 : 0) +
-        (page > 0 ? config.positions.button.x : 0),
-      magazineConfig.y,
-      magazineConfig.z - (page > 0 ? magazineConfig.pageOffset || 0 : 0),
+      POSITION.PORTRAIT.X + (page > 0 ? SPACING.PORTRAIT.PAGE_OPEN_OFFSET : 0), 
+      0, 
+      POSITION.PORTRAIT.Z
+    )
+  } else {
+    const magazineConfig = POSITION.LANDSCAPE[magazine.toUpperCase()]
+    const buttonConfig = POSITION.LANDSCAPE.BUTTON
+    const dragOffsetValue = SPACING.LANDSCAPE.DRAG_OFFSET
+    const pageOffsetValue = SPACING.LANDSCAPE.PAGE_OFFSET
+    
+    position.set(
+      magazineConfig.X +
+        (dragOffset > 0 ? dragOffsetValue || 0 : 0) +
+        (page > 0 ? buttonConfig.X : 0),
+      magazineConfig.Y,
+      magazineConfig.Z - (page > 0 ? pageOffsetValue || 0 : 0),
     )
   }
 
@@ -434,38 +430,46 @@ export const calculateMagazinePosition = (magazine, dragOffset, page, isPortrait
 
 /**
  * Checks if a magazine is in the middle position
+ * @param {Object} params - Parameters for middle check
+ * @param {THREE.Vector3} params.position - Current position
+ * @param {boolean} params.isPortrait - Whether in portrait orientation
+ * @returns {boolean} True if magazine is in middle position
  */
 export const isMiddleMagazine = ({ position, isPortrait }) => {
-  const config = getSpacingConfig(isPortrait).interaction.carousel
+  const thresholdValue = THRESHOLD.CAROUSEL.MIDDLE
   if (isPortrait) {
-    return Math.abs(position.y) < config.middleThreshold
+    return Math.abs(position.y) < thresholdValue
   }
-  return Math.abs(position.x) < config.middleThreshold
+  return Math.abs(position.x) < thresholdValue
 }
 
 /**
  * Applies hover effect to magazine position
+ * @param {Object} params - Parameters for hover effect
+ * @param {THREE.Vector3} params.position - Position to modify
+ * @param {boolean} params.isHovered - Whether magazine is hovered
+ * @param {string} params.magazine - Magazine identifier
+ * @param {boolean} params.isPortrait - Whether in portrait orientation
+ * @returns {THREE.Vector3} Updated position
  */
 export const hoverMagazine = ({ position, isHovered, magazine, isPortrait }) => {
-  const spacingConfig = getSpacingConfig(isPortrait)
-  const animConfig = getAnimationConfig(isPortrait)
-
   if (!isPortrait) {
-    const magazineConfig = spacingConfig.positions[magazine]
+    const magazineConfig = POSITION.LANDSCAPE[magazine.toUpperCase()]
     if (magazineConfig) {
       const targetPosition = position.clone()
 
       // Apply z-axis hover effect (moving towards camera)
-      targetPosition.z = magazineConfig.z + (isHovered ? spacingConfig.zOffset : 0)
+      targetPosition.z = magazineConfig.Z + (isHovered ? SPACING.LANDSCAPE.Z_OFFSET : 0)
 
       // Apply x-axis hover effect for side magazines
-      if (magazineConfig.hoverOffset && isHovered) {
-        targetPosition.x = magazineConfig.x + magazineConfig.hoverOffset.x
+      const hoverOffset = HOVER.LANDSCAPE[magazine.toUpperCase()]
+      if (hoverOffset && isHovered) {
+        targetPosition.x = magazineConfig.X + hoverOffset.X
       } else {
-        targetPosition.x = magazineConfig.x
+        targetPosition.x = magazineConfig.X
       }
 
-      performLerp(position, targetPosition, animConfig.lerp.button.text)
+      performLerp(position, targetPosition, LERP.BUTTON.TEXT)
     }
   }
 
@@ -474,6 +478,7 @@ export const hoverMagazine = ({ position, isHovered, magazine, isPortrait }) => 
 
 /**
  * Calculates and applies Float nullification for focused or hovered elements
+ * @param {Object} params - Parameters for float nullification
  */
 export const applyFloatNullification = ({ floatRef, nullifyRef, shouldNullify }) => {
   if (!floatRef || !nullifyRef) return
@@ -491,6 +496,8 @@ export const applyFloatNullification = ({ floatRef, nullifyRef, shouldNullify })
 
 /**
  * Calculates button position with Float nullification
+ * @param {Object} params - Parameters for button position
+ * @returns {THREE.Vector3} Button position
  */
 export const calculateButtonPosition = ({
   position,
@@ -504,16 +511,16 @@ export const calculateButtonPosition = ({
 }) => {
   if (isPortrait || !buttonRef) return position.clone() // Return the current position if in portrait mode
 
-  const config = getSpacingConfig(isPortrait)
-  const buttonConfig = config.positions.button
+  const buttonConfig = POSITION.LANDSCAPE.BUTTON
+  const hoverConfig = HOVER.LANDSCAPE.BUTTON
   const targetPos = new THREE.Vector3()
 
   if (isHovered) {
     // Calculate centered position at bottom of viewport
     targetPos.copy(camera.position)
     const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion).normalize()
-    targetPos.addScaledVector(forward, buttonConfig.hover.z)
-    targetPos.y = buttonConfig.hover.y
+    targetPos.addScaledVector(forward, hoverConfig.Z)
+    targetPos.y = hoverConfig.Y
 
     // Apply Float nullification if needed
     if (floatRef) {
@@ -524,7 +531,7 @@ export const calculateButtonPosition = ({
       targetPos.applyMatrix4(floatInverseMatrix)
     }
   } else {
-    targetPos.set(buttonConfig.x, buttonConfig.y, buttonConfig.z)
+    targetPos.set(buttonConfig.X, buttonConfig.Y, buttonConfig.Z)
   }
 
   return targetPos

@@ -1,8 +1,9 @@
 import React, { useCallback } from 'react'
 import { useSetAtom } from 'jotai'
-import { styleMagazineAtom } from '@/helpers/atoms'
-import { throttle } from '@/helpers/throttleHelpers'
-import { ANIMATION, LAYOUT } from './Constants'
+import { styleMagazineAtom } from '@/state/atoms/global'
+import { throttle } from '@/helpers/global/throttle'
+import { ANIMATION } from '@/constants/contents/animation'
+import { LAYOUT } from '@/constants/contents/layout'
 
 /**
  * HoverDetector component that changes the magazine style based on cursor position
@@ -27,7 +28,7 @@ export default function HoverDetector({ vpWidth }) {
       } else {
         setStyleMagazine('vague')
       }
-    }, ANIMATION.DELAY.HOVER),
+    }, ANIMATION.TIMING.HOVER_DELAY),
     [columnOffset, setStyleMagazine],
   )
 

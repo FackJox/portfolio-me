@@ -1,3 +1,8 @@
+/**
+ * Configuration constants for Contents
+ */
+
+// Skills configuration
 export const skills = {
   creative: {
     ai: { icon: 'ai', title: 'Artificial Intelligence' },
@@ -32,7 +37,7 @@ export const skills = {
     // sequencing: { icon: '4dsequencing', title: '4D Sequencing' },
     // modelling3d: { icon: 'modelling3d', title: '3D Modelling' },
     digitaltwins: { icon: 'digitaltwins', title: 'Game Engines' },
-        systemsarchitecture: { icon: 'systemsarchitecture', title: 'Systems Architecture' },
+    systemsarchitecture: { icon: 'systemsarchitecture', title: 'Systems Architecture' },
     // sensors: { icon: 'sensors', title: 'Sensors' },
     // networking: { icon: 'networking', title: 'Networking' },
     // iot: { icon: 'iot', title: 'IoT' },
@@ -44,6 +49,7 @@ export const skills = {
   },
 }
 
+// Smack Magazine Contents
 export const SmackContents = {
   Contents: {
     magazine: 'smack',
@@ -188,6 +194,7 @@ export const SmackContents = {
   },
 }
 
+// Engineer Magazine Contents
 export const EngineerContents = {
   Contents: {
     magazine: 'engineer',
@@ -297,6 +304,7 @@ export const EngineerContents = {
   },
 }
 
+// Vague Magazine Contents
 export const VagueContents = {
   Contents: {
     magazine: 'vague',
@@ -347,28 +355,4 @@ export const VagueContents = {
     title: 'Contributers',
     skills: [],
   },
-}
-
-/**
- * Transforms the skills configuration into separate arrays for engineering and creative skills
- * @param {Object} skillsConfig - The skills configuration object
- * @returns {Array} Array containing all skills in the correct order for display
- */
-export const transformSkillsConfig = (skillsConfig) => {
-  const engineering = []
-  const creative = []
-
-  Object.entries(skillsConfig).forEach(([category, skillSet]) => {
-    const orderedSkills = Object.values(skillSet)
-    orderedSkills.forEach((skill) => {
-      if (category === 'engineering') {
-        engineering.push({ content: skill.title, isEngineering: true })
-      } else {
-        creative.push({ content: skill.title, isEngineering: false })
-      }
-    })
-  })
-
-  // Return concatenated arrays to maintain column separation
-  return [...creative, ...engineering]
 }

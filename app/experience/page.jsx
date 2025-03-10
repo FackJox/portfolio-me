@@ -5,11 +5,11 @@ import { Suspense } from 'react'
 import { motion } from 'motion/react'
 import DescriptionCarousel from '@/components/dom/DescriptionCarousel'
 import { useAtomValue, useSetAtom } from 'jotai'
-import { titleSlidesAtom } from '@/helpers/atoms'
-import { useViewportMeasurements } from '@/helpers/deviceHelpers'
+import { titleSlidesAtom } from '@/state/atoms/contents'
+import { useViewportMeasurements } from '@/helpers/global/device'
 import HoverDetector from '@/components/canvas/Contents/HoverDetector'
 import Contents from '@/components/canvas/Contents/Contents'
-import { LAYOUT } from '@/components/canvas/Contents/Constants'
+import { LAYOUT } from '@/constants/contents/layout'
 
 const View = dynamic(() => import('@/components/canvas/View').then((mod) => mod.View), {
   ssr: false,

@@ -1,10 +1,10 @@
 import * as THREE from 'three'
 import React, { useEffect, useRef, useState, useCallback, forwardRef, useImperativeHandle } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
-import { useViewportMeasurements, useDeviceOrientation } from '@/helpers/deviceHelpers'
-import { calculateStackPositions, calculateExplosionPositions } from '@/helpers/contentsPositionHelpers'
-import { getSpacingConfig } from '@/helpers/magazinePositionHelpers'
-import { ANIMATION, LAYOUT } from './Constants'
+import { useViewportMeasurements, useDeviceOrientation } from '@/helpers/global/device'
+import { calculateStackPositions, calculateExplosionPositions, getSpacingConfig } from '@/helpers/contents/position'
+import { ANIMATION } from '@/constants/contents/animation'
+import { LAYOUT } from '@/constants/contents/layout'
 import SkillText from './SkillText'
 
 /**
@@ -19,6 +19,12 @@ const SkillStacks = forwardRef(({ skills, onSkillClick, selectedSkill }, ref) =>
   const { camera } = useThree()
   const { vpWidth: pixelWidth, vpHeight: pixelHeight } = useViewportMeasurements(false)
   const isPortrait = useDeviceOrientation();
+
+  // Debug useEffect to log skills
+  useEffect(() => {
+    console.log('SkillStacks received skills:', skills);
+    console.log('Skills array length:', skills?.length);
+  }, [skills]);
 
   // Convert pixel measurements to Three.js units
   const vpWidth = pixelWidth / LAYOUT.VIEWPORT.MAIN_DIVIDER
@@ -74,7 +80,7 @@ const SkillStacks = forwardRef(({ skills, onSkillClick, selectedSkill }, ref) =>
           startTimeRef.current = performance.now()
           setIsReady(true)
           hasInitializedRef.current = true
-        }, ANIMATION.DELAY.INITIAL)
+        }, ANIMATION.TIMING.INITIAL_DELAY)
 
         return () => clearTimeout(timer)
       }
