@@ -53,4 +53,4 @@ export const debounce = (func, wait = 100) => {
       timeoutId = null
     }, wait)
   }
-} 
+}

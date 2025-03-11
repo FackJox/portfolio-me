@@ -8,14 +8,16 @@ import { motion, AnimatePresence } from 'motion/react'
 import Scroll from '@/helpers/components/Scroll'
 
 import {
-  styleMagazineAtom,
   texturesLoadedAtom,
   hdrLoadedAtom,
   allAssetsLoadedAtom,
-  contentsVisibleAtom,
+  styleMagazineAtom,
   scrollTopAtom,
   scrollState,
-} from '@/helpers/atoms'
+} from '@/state/atoms/global'
+import {
+  contentsVisibleAtom,
+} from '@/state/atoms/contents'
 import {
   textureCache,
   getTexturePath,
@@ -25,9 +27,9 @@ import {
   picturesVague,
   hdrLoader,
   getHDRPath,
-} from '@/helpers/textureLoaders'
-import { useDeviceOrientation, getLayoutConfig } from '@/helpers/deviceHelpers'
-import { layoutAnimations, backgroundTransitions } from '@/helpers/animationConfigs'
+} from '@/helpers/global/texture'
+import { useDeviceOrientation, getLayoutConfig } from '@/helpers/global/device'
+import { backgroundTransitions, layoutAnimations } from '@/helpers/global/animation/layout'
 
 // Direct imports for UI components
 import { SmackHeader, SmackButtons, SmackLabel, SmackTopBar } from '@/components/dom/SmackUI'
@@ -69,7 +71,7 @@ const PreloadComponents = ({ children }) => {
       try {
         await Promise.all([
           textureCache.preloadTextures(texturePaths).then(() => setTexturesLoaded(true)),
-          hdrLoader.loadHDR(getHDRPath()).then(() => setHdrLoaded(true)),
+          hdrLoader.loadHDR().then(() => setHdrLoaded(true)),
         ])
         setTimeout(() => setIsLoading(false), 1000)
       } catch (error) {

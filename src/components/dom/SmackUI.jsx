@@ -1,7 +1,7 @@
 import { motion } from 'motion/react'
 import { useRouter } from 'next/navigation'
-import { layoutAnimations } from '@/helpers/animationConfigs'
-import { contentsVisibleAtom } from '@/helpers/atoms'
+import { layoutAnimations } from '@/helpers/global/animation/layout'
+import { contentsVisibleAtom } from '@/state/atoms/contents'
 import { useAtom } from 'jotai'
 
 export const SmackHeader = () => {

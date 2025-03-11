@@ -4,9 +4,10 @@ import { forwardRef, Suspense, useImperativeHandle, useRef, useEffect } from 're
 import { OrbitControls, PerspectiveCamera, Environment, View as ViewImpl, OrthographicCamera } from '@react-three/drei'
 import { Three } from '@/helpers/components/Three'
 import { useAtom } from 'jotai'
-import { hdrLoadedAtom } from '@/helpers/atoms'
-import { hdrLoader } from '@/helpers/textureLoaders'
+import { hdrLoadedAtom } from '@/state/atoms/global'
+import { hdrLoader } from '@/helpers/global/texture'
 import { useThree } from '@react-three/fiber'
+import * as THREE from 'three'
 import { Perf } from 'r3f-perf'
 import CameraDistanceController from '../CameraDistanceController'
 
@@ -28,7 +29,6 @@ export const Common = ({ color }) => {
       {color && <color attach='background' args={[color]} />}
       <PerspectiveCamera makeDefault fov={40} />
       {process.env.NODE_ENV === 'development' && <Perf position='bottom-right' />}
-      {hdrLoaded && <Environment map={hdrLoader.loadedHDR} environmentIntensity={0.5} resolution={256} />}
       <ambientLight intensity={0.1} />
       <directionalLight
         position={[2, 3, 5]}

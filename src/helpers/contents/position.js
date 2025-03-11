@@ -2,11 +2,27 @@
  * Position calculation helper functions for Contents components
  */
 
-// Import necessary dependencies and constants
 import * as THREE from 'three'
 import { SPACING, POSITION } from '@/constants/contents/layout'
 import { TIMING } from '@/constants/contents/animation'
 import { SmackContents, EngineerContents, VagueContents } from '@/constants/contents/config'
+
+/**
+ * Gets the appropriate content spacing configuration based on view mode
+ * @param {boolean} isPortrait - Whether in portrait orientation
+ * @returns {Object} Spacing configuration for current orientation
+ */
+export const getSpacingConfig = (isPortrait) => {
+  return {
+    positions: {
+      button: {
+        hover: {
+          y: -1.2, // Button hover Y position
+        }
+      }
+    }
+  }
+}
 
 /**
  * Calculates the positions for skill text elements in a stacked layout.
@@ -35,15 +51,13 @@ export const calculateStackPositions = (skills, vpWidth, vpHeight, isPortrait = 
   const columnOffset = 0.75 // Distance between columns
   
   // Use appropriate z position based on orientation
-  const zPosition = isPortrait 
-    ? POSITION.PORTRAIT_CONTENT_GROUP 
-    : POSITION.CONTENT_GROUP
+  const zPosition = isPortrait ? POSITION.PORTRAIT_CONTENT_GROUP : POSITION.CONTENT_GROUP
   
   if (isPortrait) {
     // PORTRAIT MODE: Interlace skills vertically
     // Get the total number of skills and calculate fixed vertical spacing
     const totalSkills = creativeSkills.length + engineeringSkills.length
-    // Use fixed spacing instead of viewport-relative spacing
+    // Use fixed spacing from constants
     const verticalSpacing = SPACING.FIXED_SKILL_SPACING_PORTRAIT
     
     // Negative offset for horizontal overlap in the center
@@ -70,7 +84,7 @@ export const calculateStackPositions = (skills, vpWidth, vpHeight, isPortrait = 
     })
   } else {
     // LANDSCAPE MODE: Original column-based layout
-    // Use fixed spacing instead of viewport-relative spacing
+    // Use fixed spacing from constants
     const creativeSpacing = SPACING.FIXED_SKILL_SPACING_LANDSCAPE
     const engineeringSpacing = SPACING.FIXED_SKILL_SPACING_LANDSCAPE
 
@@ -118,9 +132,7 @@ export const calculateExplosionPositions = (skills, vpWidth, vpHeight, clickedCo
   const nonClickedSkills = skills.filter((skill) => skill.content !== clickedContent)
 
   // Use appropriate z position based on orientation
-  const zPosition = isPortrait 
-    ? POSITION.PORTRAIT_CONTENT_GROUP 
-    : POSITION.CONTENT_GROUP
+  const zPosition = isPortrait ? POSITION.PORTRAIT_CONTENT_GROUP : POSITION.CONTENT_GROUP
 
   // Guard: If there are no non-clicked skills, angleStep would be undefined (2π/0)
   // In this case, we don't need to calculate angles as there are no skills to position
@@ -277,4 +289,4 @@ export const computeEffectiveRotation = (currentRotation, threshold, nextThresho
     phase,
     opacity,
   }
-} 
+}

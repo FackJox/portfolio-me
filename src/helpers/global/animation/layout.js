@@ -1,44 +1,17 @@
 /**
- * Animation configurations for the application
+ * Layout animation configurations for UI components
  */
-
-export const ANIMATION_CONFIG = {
-  portrait: {
-    float: {
-      intensity: 0.5,
-      speed: 0.7,
-      rotationIntensity: 2
-    },
-    lerp: {
-      button: {
-        text: 0.1,
-        color: 0.1
-      },
-      pageView: 0.03,
-      carousel: 0.1
-    }
-  },
-  landscape: {
-    float: {
-      intensity: 0.5,
-      speed: 0.7,
-      rotationIntensity: 2
-    },
-    lerp: {
-      button: {
-        text: 0.1,
-        color: 0.1
-      },
-      pageView: 0.03,
-      carousel: 0.1
-    }
-  }
-};
 
 /**
  * Layout animation variants for different UI elements
  */
 export const layoutAnimations = {
+  topBar: {
+    initial: { opacity: 0, y: -20 },
+    animate: { opacity: 1, y: 0 },
+    exit: { opacity: 0, y: 20 },
+    transition: { duration: 0.4 }
+  },
   topBarText: {
     initial: { opacity: 0, y: -20 },
     animate: { opacity: 1, y: 0 },
@@ -62,6 +35,12 @@ export const layoutAnimations = {
       damping: 25
     }
   },
+  header: {
+    initial: { opacity: 0, y: -20 },
+    animate: { opacity: 1, y: 0 },
+    exit: { opacity: 0, y: 20 },
+    transition: { duration: 0.4 }
+  },
   headerContainer: {
     transition: { 
       type: "spring",
@@ -73,6 +52,12 @@ export const layoutAnimations = {
     initial: { opacity: 0, rotateX: 90 },
     animate: { opacity: 1, rotateX: 0 },
     exit: { opacity: 0, rotateX: -90 },
+    transition: { duration: 0.4 }
+  },
+  buttons: {
+    initial: { opacity: 0, x: -20 },
+    animate: { opacity: 1, x: 0 },
+    exit: { opacity: 0, x: 20 },
     transition: { duration: 0.4 }
   },
   buttonsText: {
@@ -97,6 +82,12 @@ export const layoutAnimations = {
       stiffness: 200,
       damping: 25
     }
+  },
+  cta: {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0 },
+    exit: { opacity: 0, y: -20 },
+    transition: { duration: 0.4 }
   },
   CTAtext: {
     initial: { opacity: 0, y: 20 },
@@ -124,4 +115,4 @@ export const backgroundTransitions = {
     vague: '#2C272F',
     engineer: '#200B5F'
   }
-}; 
+};

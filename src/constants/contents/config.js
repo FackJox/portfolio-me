@@ -2,15 +2,6 @@
  * Configuration constants for Contents
  */
 
-// Colors for skill content items
-export const COLORS = {
-  DEFAULT: '#FFFFFF',
-  HOVER: {
-    ENGINEERING: '#90BBFF',
-    CREATIVE: '#FFB79C'
-  }
-}
-
 // Skills configuration
 export const skills = {
   creative: {
@@ -58,7 +49,7 @@ export const skills = {
   },
 }
 
-// Content type configurations
+// Smack Magazine Contents
 export const SmackContents = {
   Contents: {
     magazine: 'smack',
@@ -203,6 +194,7 @@ export const SmackContents = {
   },
 }
 
+// Engineer Magazine Contents
 export const EngineerContents = {
   Contents: {
     magazine: 'engineer',
@@ -312,6 +304,7 @@ export const EngineerContents = {
   },
 }
 
+// Vague Magazine Contents
 export const VagueContents = {
   Contents: {
     magazine: 'vague',
@@ -362,4 +355,4 @@ export const VagueContents = {
     title: 'Contributers',
     skills: [],
   },
-} 
+}

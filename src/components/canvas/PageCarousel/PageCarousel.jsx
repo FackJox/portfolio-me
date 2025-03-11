@@ -4,8 +4,8 @@ import { useFrame } from '@react-three/fiber'
 import { scrollState } from '@/helpers/components/Scroll'
 import { useTexture } from '@react-three/drei'
 import { useSetAtom, useAtomValue } from 'jotai'
-import { carouselReadyAtom } from '@/helpers/atoms'
-import { configureMaterialShader } from '@/helpers/shaderHelpers'
+import { carouselReadyAtom } from '@/state/atoms/global'
+import { configureMaterialShader } from '@/helpers/global/shader'
 import { carouselExitingAtom } from '@/components/dom/DescriptionCarousel'
 
 export const PageCarousel = ({ images = [], onFinish, isExiting = false }) => {

@@ -6,31 +6,71 @@ import { Float, useCursor, useTexture } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import { useGesture } from '@use-gesture/react'
 import * as THREE from 'three'
-import { styleMagazineAtom, magazineViewingStateAtom } from '@/helpers/atoms'
+import { styleMagazineAtom } from '@/state/atoms/global'
+import { magazineViewingStateAtom } from '@/state/atoms/magazines'
 import {
   calculatePageViewOffset,
   hoverMagazine,
   getSpacingConfig,
   applyFloatNullification,
   calculateButtonPosition,
-} from '@/helpers/magazinePositionHelpers'
-import { useDeviceOrientation } from '@/helpers/deviceHelpers'
-import { handleMagazineInteraction, isTapInteraction } from '@/helpers/gestureHelpers'
-import { ANIMATION_CONFIG } from '@/helpers/animationConfigs'
-import { GESTURE_CONFIG } from '@/helpers/gestureHelpers'
+} from '@/helpers/magazines/position'
+import { useDeviceOrientation } from '@/helpers/global/device'
+import { handleMagazineInteraction, isTapInteraction } from '@/helpers/magazines/interaction'
+import { LERP, FLOAT, THRESHOLD } from '@/constants/magazines/animation'
 
-// Helper functions to get configs based on orientation
+// Helper functions to get animation configs based on orientation
 const getAnimationConfig = (isPortrait) => {
-  return isPortrait ? ANIMATION_CONFIG.portrait : ANIMATION_CONFIG.landscape
+  return {
+    float: {
+      intensity: FLOAT.INTENSITY,
+      speed: FLOAT.SPEED,
+      rotationIntensity: FLOAT.ROTATION_INTENSITY
+    },
+    lerp: {
+      button: {
+        text: LERP.BUTTON.TEXT,
+        color: LERP.BUTTON.COLOR
+      },
+      pageView: LERP.PAGE_VIEW,
+      carousel: LERP.CAROUSEL
+    }
+  }
 }
 
 const getGestureConfig = (isPortrait) => {
-  return isPortrait ? GESTURE_CONFIG.portrait : GESTURE_CONFIG.landscape
+  return {
+    threshold: 20,
+    dragSensitivity: 0.01,
+    dragThreshold: THRESHOLD.DRAG,
+    interaction: {
+      tap: {
+        maxDuration: THRESHOLD.TAP.MAX_MOVEMENT,
+        maxMovement: THRESHOLD.TAP.MAX_MOVEMENT,
+      },
+      swipe: {
+        minMovement: THRESHOLD.SWIPE.MIN_MOVEMENT,
+        pageThreshold: THRESHOLD.SWIPE.PAGE_TURN,
+        carouselThreshold: THRESHOLD.SWIPE.CAROUSEL,
+      },
+      focus: {
+        debounceTime: 500,
+      },
+      carousel: {
+        middleThreshold: THRESHOLD.CAROUSEL.MIDDLE,
+        wrapThreshold: THRESHOLD.CAROUSEL.WRAP,
+      },
+    }
+  }
 }
 
 // Helper function to get float config based on orientation
-const getFloatConfig = (isPortrait) => {
-  return getAnimationConfig(isPortrait).float
+const getFloatConfig = () => {
+  return {
+    intensity: FLOAT.INTENSITY,
+    speed: FLOAT.SPEED,
+    rotationIntensity: FLOAT.ROTATION_INTENSITY
+  }
 }
 
 export const Magazine = ({

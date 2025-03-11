@@ -2,12 +2,19 @@ import { Text } from '@react-three/drei'
 import * as THREE from 'three'
 import { useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
-import { ANIMATION_CONFIG } from '@/helpers/animationConfigs'
-import { useDeviceOrientation } from '@/helpers/deviceHelpers'
+import { LERP } from '@/constants/magazines/animation'
+import { useDeviceOrientation } from '@/helpers/global/device'
 
 // Helper function to get animation config based on orientation
-const getAnimationConfig = (isPortrait) => {
-  return isPortrait ? ANIMATION_CONFIG.portrait : ANIMATION_CONFIG.landscape
+const getAnimationConfig = () => {
+  return {
+    lerp: {
+      button: {
+        text: LERP.BUTTON.TEXT,
+        color: LERP.BUTTON.COLOR
+      }
+    }
+  }
 }
 
 export const VagueButton = ({ highlighted }) => {
@@ -15,7 +22,7 @@ export const VagueButton = ({ highlighted }) => {
   const colorRef = useRef(new THREE.Color('#F7F6F7'))
   const baseSize = 0.35
   const isPortrait = useDeviceOrientation()
-  const animConfig = getAnimationConfig(isPortrait)
+  const animConfig = getAnimationConfig()
 
   useFrame(() => {
     if (!textRef.current) return
@@ -60,7 +67,7 @@ export const EngineerButton = ({ highlighted }) => {
   const colorRef = useRef(new THREE.Color('#F7F6F7'))
   const baseSize = 0.25
   const isPortrait = useDeviceOrientation()
-  const animConfig = getAnimationConfig(isPortrait)
+  const animConfig = getAnimationConfig()
 
   useFrame(() => {
     if (!textRef.current) return
@@ -106,7 +113,7 @@ export const SmackButton = ({ highlighted }) => {
   const colorRef = useRef(new THREE.Color('#F7F6F7'))
   const baseSize = 0.3
   const isPortrait = useDeviceOrientation()
-  const animConfig = getAnimationConfig(isPortrait)
+  const animConfig = getAnimationConfig()
 
   useFrame(() => {
     if (!leftTextRef.current || !rightTextRef.current) return

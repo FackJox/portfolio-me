@@ -1,11 +1,13 @@
 import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import { useSetAtom, useAtom } from 'jotai'
-import { styleMagazineAtom, titleSlidesAtom } from '@/helpers/atoms'
+import { styleMagazineAtom } from '@/state/atoms/global'
+import { titleSlidesAtom } from '@/state/atoms/contents'
 import { carouselExitingAtom } from '@/components/dom/DescriptionCarousel'
-import { skills, transformSkillsConfig, SmackContents, EngineerContents } from '@/helpers/contentsConfig'
-import { getTexturePath } from '@/helpers/textureLoaders'
+import { skills, SmackContents, EngineerContents } from '@/constants/contents/config'
+import { transformSkillsConfig } from '@/helpers/contents/utils'
+import { getTexturePath } from '@/helpers/global/texture'
 import { PageCarousel } from '@/components/canvas/PageCarousel/PageCarousel'
-import { LAYOUT } from './Constants'
+import { LAYOUT } from '@/constants/contents/layout'
 import SkillStacks from './SkillStacks'
 import ExperienceQueryParamHandler from '@/components/ExperienceQueryParamHandler'
 
@@ -22,6 +24,28 @@ export default function Contents() {
     const setTitles = useSetAtom(titleSlidesAtom)
     const [isCarouselExiting, setIsCarouselExiting] = useAtom(carouselExitingAtom)
     const skillStackRef = useRef(null)
+
+    // Debug useEffect to log position and rendering of Contents component
+    useEffect(() => {
+        console.log('[Contents] Component mounted');
+        console.log('[Contents] skillsContent:', skillsContent);
+
+        // Check if we're in a WebGL context
+        try {
+            const canvas = document.querySelector('canvas');
+            console.log('[Contents] Canvas element found:', !!canvas);
+            if (canvas) {
+                const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+                console.log('[Contents] WebGL context available:', !!gl);
+            }
+        } catch (err) {
+            console.error('[Contents] Error checking WebGL context:', err);
+        }
+
+        return () => {
+            console.log('[Contents] Component unmounted');
+        };
+    }, [skillsContent]);
 
     // Function to reset all carousel-related state
     const resetCarouselState = useCallback(() => {
@@ -239,6 +263,11 @@ export default function Contents() {
                 ref={skillStackRef}
                 selectedSkill={currentSkill}
             />
+            {/* Debug box to help visualize where SkillStacks should be */}
+            <mesh position={[0, 0, LAYOUT.POSITION.CONTENT_GROUP]}>
+                <boxGeometry args={[0.5, 0.5, 0.5]} />
+                <meshBasicMaterial color="hotpink" wireframe={true} transparent opacity={0.5} />
+            </mesh>
             {carouselPages && (
                 <group position={[0, 0, LAYOUT.POSITION.CAROUSEL]}>
                     <PageCarousel

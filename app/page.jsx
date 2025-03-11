@@ -4,7 +4,7 @@ import dynamic from 'next/dynamic'
 import { Suspense, useEffect, useState } from 'react'
 import { useAtom } from 'jotai'
 import { motion } from 'motion/react'
-import { allAssetsLoadedAtom } from '@/helpers/atoms'
+import { allAssetsLoadedAtom } from '@/state/atoms/global'
 import QueryParamHandler from '@/components/QueryParamHandler'
 
 // Keep dynamic imports for canvas components
