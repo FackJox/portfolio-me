@@ -2,7 +2,7 @@
 
 import { Canvas } from '@react-three/fiber'
 import { Preload } from '@react-three/drei'
-import { r3f } from '@/helpers/global'
+import { r3f } from '@/helpers/global/views'
 import * as THREE from 'three'
 import { Library } from './Magazines/Library'
 
@@ -14,7 +14,7 @@ export default function Scene({ ...props }) {
       {/* @ts-ignore */}
       <r3f.Out />
       <Preload all />
-      
+
     </Canvas>
   )
 }

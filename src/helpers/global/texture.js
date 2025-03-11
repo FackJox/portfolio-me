@@ -111,7 +111,7 @@ export const getHDRPath = () => `/textures/warehouse.hdr`
 export const hdrLoader = {
   loadedHDR: null,
   loadHDR() {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       if (this.loadedHDR) {
         resolve(this.loadedHDR);
         return;
