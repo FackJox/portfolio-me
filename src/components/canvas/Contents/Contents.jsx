@@ -263,11 +263,7 @@ export default function Contents() {
                 ref={skillStackRef}
                 selectedSkill={currentSkill}
             />
-            {/* Debug box to help visualize where SkillStacks should be */}
-            <mesh position={[0, 0, LAYOUT.POSITION.CONTENT_GROUP]}>
-                <boxGeometry args={[0.5, 0.5, 0.5]} />
-                <meshBasicMaterial color="hotpink" wireframe={true} transparent opacity={0.5} />
-            </mesh>
+         
             {carouselPages && (
                 <group position={[0, 0, LAYOUT.POSITION.CAROUSEL]}>
                     <PageCarousel

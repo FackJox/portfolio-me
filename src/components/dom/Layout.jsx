@@ -29,7 +29,7 @@ import {
   getHDRPath,
 } from '@/helpers/global/texture'
 import { useDeviceOrientation, getLayoutConfig } from '@/helpers/global/device'
-import { backgroundTransitions, layoutAnimations } from '@/helpers/global/animation/layout'
+import { backgroundTransitions, layoutAnimations } from '@/helpers/magazines/animation/layout'
 
 // Direct imports for UI components
 import { SmackHeader, SmackButtons, SmackLabel, SmackTopBar } from '@/components/dom/SmackUI'

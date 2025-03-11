@@ -5,5 +5,6 @@
 export * from './throttle';
 export * from './device';
 export * from './animation';
-export * from './shader';
+export * from '../contents/shader';
 export * from './texture';
+export * from './views';

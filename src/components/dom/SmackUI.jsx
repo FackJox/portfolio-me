@@ -1,6 +1,6 @@
 import { motion } from 'motion/react'
 import { useRouter } from 'next/navigation'
-import { layoutAnimations } from '@/helpers/global/animation/layout'
+import { layoutAnimations } from '@/helpers/magazines/animation/layout'
 import { contentsVisibleAtom } from '@/state/atoms/contents'
 import { useAtom } from 'jotai'
 
